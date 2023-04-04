@@ -6,15 +6,28 @@
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
-    "generate": "nuxt generate"
+    "generate": "nuxt generate",
+    "lint": "eslint . --ext .ts,.vue"
   },
   "dependencies": {
+    "@nuxtjs/composition-api": "^0.33.1",
     "core-js": "^3.25.3",
     "element-ui": "^2.15.10",
+    "gmap-vue": "^3.5.4",
     "nuxt": "^2.15.8",
+    "nuxt-gmaps": "^1.2.10",
     "vue": "^2.7.10",
     "vue-server-renderer": "^2.7.10",
-    "vue-template-compiler": "^2.7.10"
+    "vue-template-compiler": "^2.7.10",
+    "vue2-gmap-custom-marker": "^6.1.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@nuxtjs/eslint-config-typescript": "^12.0.0",
+    "eslint": "^8.37.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-nuxt": "^4.0.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.3"
+  }
 }
