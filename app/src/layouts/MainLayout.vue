@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh Lpr lFf">
     <q-header elevated>
       <q-toolbar>
         <q-btn
@@ -12,17 +12,20 @@
         />
 
         <q-toolbar-title>
-          Quasar App
+          GIS App
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <!-- <div>Quasar v{{ $q.version }}</div> -->
+        <div>User name</div>
       </q-toolbar>
     </q-header>
 
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      bordered
+      elevated
+      side="left"
+      behavior="desktop"
     >
       <q-list>
         <q-item-label
@@ -48,13 +51,13 @@
 <script>
 import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
+import { BUTTON } from 'src/constants/18n.js'
 
 const linksList = [
   {
     title: 'Docs',
-    caption: 'quasar.dev',
     icon: 'school',
-    link: 'https://quasar.dev'
+    to: '/map'
   },
   {
     title: 'Github',
