@@ -15,6 +15,7 @@
   "dependencies": {
     "@arcgis/core": "^4.26.5",
     "@quasar/extras": "^1.0.0",
+    "lodash": "^4.17.21",
     "ol": "^7.3.0",
     "quasar": "^2.6.0",
     "vue": "^3.0.0",
