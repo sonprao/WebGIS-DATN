@@ -1,82 +1,219 @@
 <template>
-  <div ref="map-root" class="mapView"></div>
+  <div ref="mapRoot" class="mapView">
+    <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers" />
+    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+  </div>
+  <div ref="popupRef" class="ol-popup">
+    <q-btn
+      ref="popupCloser"
+      class="ol-popup-closer"
+      flat
+      round
+      icon="close"
+      @click="actionClosePopup"
+    ></q-btn>
+    <div ref="popupContent"></div>
+  </div>
 </template>
 
 <script>
-import View from 'ol/View'
-import Map from 'ol/Map'
-import TileLayer from 'ol/layer/Tile'
-import OSM from 'ol/source/OSM'
-
+import View from "ol/View";
+import Map from "ol/Map";
+import { Draw, Modify, Snap } from "ol/interaction";
+import { ScaleLine, defaults as defaultControls } from "ol/control";
+import Overlay from "ol/Overlay";
+import { toLonLat } from "ol/proj";
+import { toStringHDMS } from "ol/coordinate";
+import TileLayer from "ol/layer/Tile";
+import OSM from "ol/source/OSM";
+import { Fill, Stroke, Style } from "ol/style";
 // importing the OpenLayers stylesheet is required for having
 // good looking buttons!
-import 'ol/ol.css'
-import VectorSource from 'ol/source/Vector'
-import GeoJSON from 'ol/format/GeoJSON'
-import VectorLayer from 'ol/layer/Vector'
-// import customjson from '../constants/danang.json'
+import "ol/ol.css";
+import VectorSource from "ol/source/Vector";
+import GeoJSON from "ol/format/GeoJSON";
+import VectorLayer from "ol/layer/Vector";
+import VectorImageLayer from "ol/layer/VectorImage";
+import { unByKey } from "ol/Observable";
 
-import { defineComponent, ref, unref, onMounted, getCurrentInstance } from 'vue'
-import { useQuasar } from 'quasar'
-import { i18n } from 'boot/i18n.js'
+// import customjson from '../constants/danang.json'
+import {
+  defineComponent,
+  ref,
+  unref,
+  onMounted,
+  getCurrentInstance,
+  h,
+  render,
+  createApp,
+} from "vue";
+import { useQuasar } from "quasar";
+import { i18n } from "boot/i18n.js";
+import _difference from "lodash/difference";
+import FloatAction from "src/components/floatAction.vue";
+import FloatControl from "src/components/floatControl.vue";
+import _filterOptions from "../../public/layers.json";
+import testDataJson from "../../public/RungPhongHo.json";
+import {
+  createTextStyle,
+  scaleControl,
+} from "src/utils/openLayers";
+
 export default defineComponent({
-  name: 'MapContainer',
-  components: {},
+  name: "MapContainer",
+  components: {
+    FloatAction,
+    FloatControl,
+  },
   props: {},
   setup(props) {
     // const itext = i18n.global.t('common.user')
-    const vm = getCurrentInstance().proxy 
-    const $q = useQuasar()
-    const $t = i18n.global.t
-    const textSample = $t('success')
-    $q.lang.getLocale()
-    const container = ref(null)
-    // const feature = new GeoJSON().readFeatures(customjson, {
-    //   // this is required since GeoJSON uses latitude/longitude,
-    //   // but the map is rendered using “Web Mercator”
-    //   dataProjection: 'EPSG:3857',
-    //   featureProjection: 'EPSG:3857'
-    // });
+    const vm = getCurrentInstance().proxy;
+    const $q = useQuasar();
+    const $t = i18n.global.t;
+    const layers = ref([]);
+    const floatActionBind = {
+      filterOptions: _filterOptions,
+    };
+    const changeLayers = (_layers) => {
+      if (_layers.length > unref(layers).length) {
+        const newLayer = _difference(_layers, unref(layers));
+        layers.value = _layers;
+        actionAddLayer(newLayer[0]);
+      } else {
+        const newLayer = _difference(unref(layers), _layers);
+        layers.value = _layers;
+        actionRemoveLayer(newLayer[0]);
+      }
+    };
+    const actionRemoveLayer = (url) => {
+      const myDom = _filterOptions.find((option) => option.value === url);
+      unref(map)
+        .getLayers()
+        .getArray()
+        .slice()
+        .some((layer) => {
+          if (layer && layer.get("url") === url) {
+            unref(map).removeLayer(layer);
+            return;
+          }
+        });
+    };
+    const actionAddLayer = (url) => {
+      const myDom = _filterOptions.find((option) => option.value === url);
+      const polygonStyleFunction = function (feature, resolution) {
+        return new Style({
+          stroke: new Stroke({
+            color: myDom.layer_color,
+            width: 1,
+          }),
+          fill: new Fill({
+            color: myDom.layer_color,
+          }),
+          text: createTextStyle(feature, resolution, myDom),
+        });
+      };
+      const vectorLayer = new VectorImageLayer({
+        name: myDom.label,
+        url,
+        source: new VectorSource({
+          format: new GeoJSON(),
+          url,
+        }),
+        style: polygonStyleFunction,
+      });
+      unref(map).addLayer(vectorLayer);
+    };
+    // popup
+    const popupRef = ref(null);
+    const popupContent = ref(null);
+    const popupCloser = ref(null);
+    const popupEvent = ref(null);
+    const overlay = ref(null);
+    const addOverlay = () => {
+      overlay.value = new Overlay({
+        element: unref(popupRef),
+        autoPan: {
+          animation: {
+            duration: 250,
+          },
+        },
+      });
+    };
+    const initPopupEvent = () => {
+      popupEvent.value = unref(map).on("singleclick", function (evt) {
+        unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+          const name = layer?.get("name");
+          const coordinate = evt.coordinate;
+          const hdms = toStringHDMS(toLonLat(coordinate));
 
-    // // a new vector layer is created with the feature
-    // const vectorLayer = new VectorLayer({
-    //   source: new VectorSource({
-    //     features: [feature],
-    //   }),
-    // })
-    const vectorLayer = new VectorLayer({
-      source: new VectorSource({
-        format: new GeoJSON(),
-        url: 'danang.json'
-      }),
-    })
+          unref(popupContent).innerHTML =
+            "<p>" + name + "</p><code>" + hdms + "</code>";
+          unref(overlay).setPosition(coordinate);
+          return feature;
+        });
+      });
+    };
+    const closePopup = (state) => {
+      if (state) {
+        unByKey(unref(popupEvent));
+        unref(overlay).setPosition(undefined);
+      } else {
+        initPopupEvent();
+      }
+    };
+    const actionClosePopup = () => {
+      unref(overlay).setPosition(undefined);
+    };
+    // popup
 
+    // draw
+
+    // draw
+    const map = ref(null);
+    const view = ref(
+      new View({
+        zoom: 11,
+        center: [12031372.797987673, 1801884.1655095597],
+        maxZoom: 17,
+        // constrainResolution: true
+      })
+    );
     onMounted(() => {
+      addOverlay();
+
       // this is where we create the OpenLayers map
-      const map = new Map({
-        // the map will be created using the 'map-root' ref
-        target: vm.$refs['map-root'],
+      map.value = new Map({
+        target: vm.$refs["mapRoot"],
+        controls: [scaleControl],
+        // controls: defaultControls().extend([scaleControl]),
+        overlays: [unref(overlay)],
         layers: [
-          // adding a background tiled layer
           new TileLayer({
-            source: new OSM() // tiles are served by OpenStreetMap
+            source: new OSM(), // tiles are served by OpenStreetMap
           }),
         ],
         // the map view will initially show the whole world
-        view: new View({
-          zoom: 0,
-          center: [0, 0],
-          constrainResolution: true
-        }),
-      })
-      map.addLayer(vectorLayer)
-    })
+        view: unref(view),
+      });
+      initPopupEvent();
+      // vm.$nextTick(() => {
+      // });
+    });
     return {
-      vectorLayer,
-    }
-
-  }
-})
+      // actionAddLayer,
+      map,
+      view,
+      floatActionBind,
+      changeLayers,
+      popupRef,
+      popupCloser,
+      actionClosePopup,
+      popupContent,
+      closePopup,
+    };
+  },
+});
 </script>
 <style scoped>
 html,
@@ -86,8 +223,47 @@ body {
 }
 
 .mapView {
-  height: 1000px;
+  height: 680px;
   width: 100%;
   min-height: inherit;
+}
+.ol-popup {
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #cccccc;
+  bottom: 12px;
+  left: -50px;
+  min-width: 280px;
+}
+.ol-popup:after,
+.ol-popup:before {
+  top: 100%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+.ol-popup:after {
+  border-top-color: white;
+  border-width: 10px;
+  left: 48px;
+  margin-left: -10px;
+}
+.ol-popup:before {
+  border-top-color: #cccccc;
+  border-width: 11px;
+  left: 48px;
+  margin-left: -11px;
+}
+.ol-popup-closer {
+  text-decoration: none;
+  position: absolute;
+  top: 2px;
+  right: 8px;
 }
 </style>

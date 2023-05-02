@@ -5,6 +5,8 @@ export default ({ app }) => {
   // Create I18n instance
   i18n = createI18n({
     locale: 'en-US',
+    // locale: 'vn-VN',
+    legacy: false,
     globalInjection: true,
     messages
   })
