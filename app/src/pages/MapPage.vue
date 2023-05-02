@@ -1,6 +1,7 @@
 <template>
   <div ref="mapRoot" class="mapView">
     <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers" />
+    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
   </div>
   <div ref="popupRef" class="ol-popup">
     <q-btn
@@ -18,19 +19,22 @@
 <script>
 import View from "ol/View";
 import Map from "ol/Map";
-import Overlay from "ol/Overlay.js";
-import { toLonLat } from "ol/proj.js";
-import { toStringHDMS } from "ol/coordinate.js";
+import { Draw, Modify, Snap } from "ol/interaction";
+import { ScaleLine, defaults as defaultControls } from "ol/control";
+import Overlay from "ol/Overlay";
+import { toLonLat } from "ol/proj";
+import { toStringHDMS } from "ol/coordinate";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
-import { Fill, Stroke, Style } from "ol/style.js";
+import { Fill, Stroke, Style } from "ol/style";
 // importing the OpenLayers stylesheet is required for having
 // good looking buttons!
 import "ol/ol.css";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import VectorLayer from "ol/layer/Vector";
-// import VectorImageLayer from 'ol/layer/VectorImage.js';
+import VectorImageLayer from "ol/layer/VectorImage";
+import { unByKey } from "ol/Observable";
 
 // import customjson from '../constants/danang.json'
 import {
@@ -39,18 +43,27 @@ import {
   unref,
   onMounted,
   getCurrentInstance,
+  h,
+  render,
+  createApp,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import _difference from "lodash/difference";
 import FloatAction from "src/components/floatAction.vue";
+import FloatControl from "src/components/floatControl.vue";
 import _filterOptions from "../../public/layers.json";
 import testDataJson from "../../public/RungPhongHo.json";
-import { createTextStyle } from "src/utils/openLayers";
+import {
+  createTextStyle,
+  scaleControl,
+} from "src/utils/openLayers";
+
 export default defineComponent({
   name: "MapContainer",
   components: {
     FloatAction,
+    FloatControl,
   },
   props: {},
   setup(props) {
@@ -82,7 +95,7 @@ export default defineComponent({
         .some((layer) => {
           if (layer && layer.get("url") === url) {
             unref(map).removeLayer(layer);
-            return
+            return;
           }
         });
     };
@@ -100,7 +113,7 @@ export default defineComponent({
           text: createTextStyle(feature, resolution, myDom),
         });
       };
-      const vectorLayer = new VectorLayer({
+      const vectorLayer = new VectorImageLayer({
         name: myDom.label,
         url,
         source: new VectorSource({
@@ -115,8 +128,9 @@ export default defineComponent({
     const popupRef = ref(null);
     const popupContent = ref(null);
     const popupCloser = ref(null);
+    const popupEvent = ref(null);
     const overlay = ref(null);
-    const addOverLay = () => {
+    const addOverlay = () => {
       overlay.value = new Overlay({
         element: unref(popupRef),
         autoPan: {
@@ -126,17 +140,53 @@ export default defineComponent({
         },
       });
     };
+    const initPopupEvent = () => {
+      popupEvent.value = unref(map).on("singleclick", function (evt) {
+        unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+          const name = layer?.get("name");
+          const coordinate = evt.coordinate;
+          const hdms = toStringHDMS(toLonLat(coordinate));
+
+          unref(popupContent).innerHTML =
+            "<p>" + name + "</p><code>" + hdms + "</code>";
+          unref(overlay).setPosition(coordinate);
+          return feature;
+        });
+      });
+    };
+    const closePopup = (state) => {
+      if (state) {
+        unByKey(unref(popupEvent));
+        unref(overlay).setPosition(undefined);
+      } else {
+        initPopupEvent();
+      }
+    };
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
     // popup
 
+    // draw
+
+    // draw
     const map = ref(null);
+    const view = ref(
+      new View({
+        zoom: 11,
+        center: [12031372.797987673, 1801884.1655095597],
+        maxZoom: 17,
+        // constrainResolution: true
+      })
+    );
     onMounted(() => {
+      addOverlay();
+
       // this is where we create the OpenLayers map
-      addOverLay();
       map.value = new Map({
         target: vm.$refs["mapRoot"],
+        controls: [scaleControl],
+        // controls: defaultControls().extend([scaleControl]),
         overlays: [unref(overlay)],
         layers: [
           new TileLayer({
@@ -144,37 +194,23 @@ export default defineComponent({
           }),
         ],
         // the map view will initially show the whole world
-        view: new View({
-          zoom: 11,
-          center: [12031372.797987673, 1801884.1655095597],
-          maxZoom: 17,
-          // constrainResolution: true
-        }),
+        view: unref(view),
       });
-      unref(map).on("singleclick", function (evt) {
-        unref(map).forEachFeatureAtPixel(
-          evt.pixel,
-          (feature, layer) => {
-            const name = layer.get('name')
-            const coordinate = evt.coordinate;
-            const hdms = toStringHDMS(toLonLat(coordinate));
-            
-            unref(popupContent).innerHTML =
-            "<p>" +name+"</p><code>" + hdms + "</code>";
-            unref(overlay).setPosition(coordinate);
-            return feature;
-          }
-        );
-      });
+      initPopupEvent();
+      // vm.$nextTick(() => {
+      // });
     });
     return {
       // actionAddLayer,
+      map,
+      view,
       floatActionBind,
       changeLayers,
       popupRef,
       popupCloser,
       actionClosePopup,
       popupContent,
+      closePopup,
     };
   },
 });
@@ -187,7 +223,7 @@ body {
 }
 
 .mapView {
-  height: 1000px;
+  height: 680px;
   width: 100%;
   min-height: inherit;
 }

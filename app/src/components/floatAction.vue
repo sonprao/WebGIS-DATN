@@ -1,33 +1,56 @@
 <template>
-  <q-page-sticky ref="stickyRef" class="sticky" position="top-right" :offset="fabPos">
-    <q-btn-dropdown
-    class="glossy"
-    color="purple"
-    :label="$t('layers')"
-    >
-        <q-scroll-area
-          style="height: 200px; min-width: 200px;"
+  <q-page-sticky
+    ref="stickyRef"
+    class="sticky"
+    position="top-right"
+    :offset="fabPos"
+  >
+    <q-btn-dropdown class="glossy" color="purple" :label="$t('layers')">
+      <q-scroll-area style="height: 200px; min-width: 200px">
+        <q-input
+          square
+          standout
+          outlined
+          placeholder="Place holder"
+          v-model="groupSearch"
+          @update:model-value="filterGroup"
         >
-          <div class="row no-wrap q-pa-md">
-            <div class="column items-center">
+          <template v-slot:prepend>
+            <q-icon name="place" />
+          </template>
+          <template v-slot:append>
+            <q-icon name="close" @click="groupSearch = ''; groupOptions = filterOptions" class="cursor-pointer" />
+          </template>
+        </q-input>
+        <div class="row no-wrap q-pa-md">
+          <div class="column items-center">
             <q-option-group
               v-model="group"
-              :options="filterOptions"
+              :options="groupOptions"
               color="blue"
               type="checkbox"
-              @update:model-value="(val) => {$emit('changeLayers', val)}"
+              @update:model-value="
+                (val) => {
+                  $emit('changeLayers', val);
+                }
+              "
             >
               <template v-slot:label="opt">
                 <div class="row items-center">
                   <span>{{ opt.label }}</span>
-                  <q-icon :name="opt.icon" style="color: #00FFFF" size="1.5em" class="q-ml-sm"></q-icon>
+                  <q-icon
+                    :name="opt.icon"
+                    style="color: #00ffff"
+                    size="1.5em"
+                    class="q-ml-sm"
+                  ></q-icon>
                 </div>
-            </template>
-          </q-option-group>  
-            </div>
+              </template>
+            </q-option-group>
           </div>
-        </q-scroll-area>
-      </q-btn-dropdown>
+        </div>
+      </q-scroll-area>
+    </q-btn-dropdown>
   </q-page-sticky>
   <!-- <q-page-sticky position="bottom-right" :offset="fabPos">
     <q-fab
@@ -44,11 +67,17 @@
 </template>
 
 <script>
-import { defineComponent, ref, unref, onUpdated, onMounted, getCurrentInstance, computed, h, toRefs } from 'vue'
-import { useQuasar } from 'quasar'
-import { i18n } from 'boot/i18n.js'
+import {
+  defineComponent,
+  ref,
+  unref,
+  getCurrentInstance,
+computed,
+} from "vue";
+import { useQuasar } from "quasar";
+import { i18n } from "boot/i18n.js";
 export default defineComponent({
-  name: 'FloatAction',
+  name: "FloatAction",
   components: {},
   props: {
     filterOptions: {
@@ -62,15 +91,14 @@ export default defineComponent({
   },
   setup(props) {
     // const itext = i18n.global.t('common.user')
-    const vm = getCurrentInstance().proxy 
-    const $q = useQuasar()
-    const $t = i18n.global.t
-    const draggingFab = ref(false)
-    const stickyRef = ref(null)
-    const fabPos = ref([ 10, 10 ])
+    const vm = getCurrentInstance().proxy;
+    const $q = useQuasar();
+    const $t = i18n.global.t;
+    const draggingFab = ref(false);
+    const stickyRef = ref(null);
+    const fabPos = ref([10, 10]);
     const onClick = () => {
-      console.log('Clicked on a fab action')
-    }
+    };
     // const parentHeight = computed(() =>vm.$parent.$el?.offsetHeight)
     // const parentWidth= computed(()=> vm.$parent.$el?.offsetWidth)
     const moveFab = (ev) => {
@@ -81,8 +109,16 @@ export default defineComponent({
       // if (!(coX < 0 || coY < 0 || coX > unref(parentWidth) || coY > unref(parentHeight))) {
       //   fabPos.value = [coX, coY]
       // }
+    };
+    const groupSearch = ref('');
+    const groupOptions = ref(props.filterOptions);
+    const group = ref([]);
+    const filterGroup = (value) => {
+      const _value = value.toLowerCase()
+      groupOptions.value = props.filterOptions.filter((option) => {
+        return option.label.toLowerCase().includes(_value)
+      })
     }
-    const group = ref([])
     return {
       vm,
       stickyRef,
@@ -91,10 +127,12 @@ export default defineComponent({
       onClick,
       moveFab,
       group,
-    }
-
-  }
-})
+      groupOptions,
+      groupSearch,
+      filterGroup,
+    };
+  },
+});
 </script>
 <style scoped>
 html,
