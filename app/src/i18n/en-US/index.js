@@ -8,6 +8,11 @@ export default {
   success: 'Action was successful',
   //profile
   Profile: 'Profile',
+  Email: 'Email',
+  Password: 'Password',
+  "Enter a valid email": "Enter a valid email",
+  "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character": "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character",
+  Login: 'Login',
   Logout: 'Logout',
   //map
   'Zoom in': 'Zoom in',
