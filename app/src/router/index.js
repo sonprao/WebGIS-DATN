@@ -1,6 +1,7 @@
 import { route } from 'quasar/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
+import { useGoogleAuth } from 'vue3-google-login'
 
 /*
  * If not building with SSR mode, you can
@@ -24,6 +25,16 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE)
+  })
+
+  Router.beforeEach((to, from, next) => {
+    const { isAuthenticated } = useGoogleAuth()
+    if (to.meta.requiresAuth && !isAuthenticated.value) {
+    next({ path: 'login' })
+  } else {
+    next()
+  }
+
   })
 
   return Router

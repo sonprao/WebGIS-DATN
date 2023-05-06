@@ -108,6 +108,11 @@ export default defineComponent({
         to: "/profile",
       },
       {
+        title: $t("Login"),
+        icon: "login",
+        to: "/login",
+       },
+      {
         title: $t("Logout"),
         icon: "logout",
         to: "/logout",

@@ -6,6 +6,7 @@
   "author": "nguyen-2020 <nguyen20dang@gmail.com>",
   "private": true,
   "scripts": {
+    "start:rest": "node server.js",
     "lint": "eslint --ext .js,.vue ./",
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"No test specified\" && exit 0",
@@ -14,14 +15,22 @@
   },
   "dependencies": {
     "@arcgis/core": "^4.26.5",
+    "@prisma/client": "^4.13.0",
     "@quasar/extras": "^1.0.0",
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "ol": "^7.3.0",
     "pinia": "^2.0.35",
     "quasar": "^2.6.0",
     "vue": "^3.0.0",
+    "vue-google-signin-button": "^1.0.4",
     "vue-i18n": "^9.0.0",
     "vue-router": "^4.0.0",
+    "vue3-google-login": "^2.0.15",
+    "vue3-google-oauth2": "^1.0.7",
     "vue3-openlayers": "^0.1.75"
   },
   "devDependencies": {
@@ -33,7 +42,8 @@
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-vue": "^9.0.0",
     "postcss": "^8.4.14",
-    "prettier": "^2.5.1"
+    "prettier": "^2.5.1",
+    "prisma": "^4.13.0"
   },
   "engines": {
     "node": "^18 || ^16 || ^14.19",

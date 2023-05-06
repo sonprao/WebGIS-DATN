@@ -31,8 +31,11 @@ module.exports = configure(function (/* ctx */) {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
     boot: [
+      'axios',
+      'pinia',
+      'i18n',
       'vue3openlayers',
-      'i18n'
+      'googleAuth'
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
@@ -87,7 +90,9 @@ module.exports = configure(function (/* ctx */) {
 
       // publicPath: '/',
       // analyze: true,
-      // env: {},
+      env: {
+        LOGOUT_TIMEOUT: JSON.stringify(process.env.LOGOUT_TIMEOUT || '60')
+      },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,
