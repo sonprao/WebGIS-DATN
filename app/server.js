@@ -13,18 +13,17 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 // user
-app.post('/api/users', userAPI.delete)
+app.delete('/api/users', userAPI.delete)
 app.get('/api/users',  userAPI.findUser)
 app.post('/api/users', userAPI.updateOrCreateUser)
 // mapLayer
-app.post('/api/mapLayers',  mapLayerAPI.create)
+app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers', mapLayerAPI.find)
-app.post('/api/mapLayers', mapLayerAPI.update)
-app.post('/api/mapLayers', mapLayerAPI.delete)
+app.delete('/api/mapLayers', mapLayerAPI.delete)
 //location
-app.post('/api/locations',  locationAPI.createOrUpdate)
+app.post('/api/locations',  locationAPI.updateOrCreate)
 app.get('/api/locations', locationAPI.find)
-app.post('/api/locations', locationAPI.delete)
+app.delete('/api/locations', locationAPI.delete)
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server started on port ${process.env.PORT || 3000}`)

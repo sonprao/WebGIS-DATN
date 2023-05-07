@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 
 module.exports = {
-    createOrUpdate: async (req, res) => {
+    updateOrCreate: async (req, res) => {
         const { title = '', description = '', mapLayers = [] } = req.body
         const location = await prisma.location.upsert({
             where: {
@@ -33,6 +33,9 @@ module.exports = {
             where: {
                 id: id,
             },
+            include : {
+                mapLayers : true,
+            }
         })
         res.json(location)
     },
