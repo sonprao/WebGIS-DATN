@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 
 module.exports = {
-  UpdateOrCreateUser: async(req, res) => {
+  updateOrCreateUser: async(req, res) => {
     const {email, sub, family_name, given_name, name } = req.body
     const upsertUser = await prisma.user.upsert({
       where: {
@@ -35,5 +35,15 @@ module.exports = {
     })
     res.json(user)
   },
+
+  delete: async(req, res) => {
+    const { id } = req.query
+    const deleteUser = await prisma.user.delete({
+      where : {
+        id : id,
+      }
+    })
+    res.json(deleteUser)
+  }
 
 }

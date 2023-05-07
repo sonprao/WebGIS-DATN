@@ -32,6 +32,7 @@ model Post {
 model Location {
   id        Int        @id @default(autoincrement())
   title     String
+  description String   @db.LongText
   mapLayers MapLayer[]
 }
 
@@ -40,6 +41,6 @@ model MapLayer {
   title       String
   description String?
   url         String    @db.LongText
-  Location    Location? @relation(fields: [locationId], references: [id])
+  location    Location? @relation(fields: [locationId], references: [id])
   locationId  Int?
 }
