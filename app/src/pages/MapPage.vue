@@ -58,7 +58,11 @@ import {
   createTextStyle,
   scaleControl,
 } from "src/utils/openLayers";
+import {register} from 'ol/proj/proj4';
+import proj4 from 'proj4';
 
+proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
+register(proj4);
 export default defineComponent({
   name: "MapContainer",
   components: {
@@ -174,7 +178,8 @@ export default defineComponent({
     const view = ref(
       new View({
         zoom: 11,
-        center: [12031372.797987673, 1801884.1655095597],
+        projection: 'EPSG:32648',
+        center: [844711,1769598],
         maxZoom: 17,
         // constrainResolution: true
       })
