@@ -131,6 +131,18 @@ export default defineComponent({
         style: polygonStyleFunction,
       });
       unref(map).addLayer(vectorLayer);
+
+      let vectorSource = vectorLayer.getSource();
+      vectorSource.once('change', () => {
+        if (vectorSource.getState() === 'ready') {
+          const extent = vectorSource.getExtent();
+
+          unref(map).getView().fit(extent, {
+            padding: [250, 250, 250, 250],
+            duration: 1000
+          });
+        }
+      });
     };
     // popup
     const popupRef = ref(null);
@@ -178,6 +190,10 @@ export default defineComponent({
     // draw
 
     // draw
+    /**
+     *
+     * @type {Map}
+     */
     const map = ref(null);
     const view = ref(
       new View({
