@@ -62,7 +62,7 @@ import {register} from 'ol/proj/proj4';
 import proj4 from 'proj4';
 proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
 register(proj4);
-proj4.defs('EPSG:4949', '+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +units=m +no_defs');
+proj4.defs('EPSG:5899', '+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.904,-39.303,-111.450,0.00928836,0.01975479,-0.00427372,0.25290627854559 +units=m +no_defs');
 register(proj4);
 export default defineComponent({
   name: "MapContainer",
@@ -182,8 +182,8 @@ export default defineComponent({
     const view = ref(
       new View({
         zoom: 11,
-        projection: 'EPSG:4949',
-        center: [0,0],
+        projection: 'EPSG:5899',
+        center: [548944,1770004],
         maxZoom: 17,
         // constrainResolution: true
       })
