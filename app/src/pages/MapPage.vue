@@ -56,7 +56,7 @@ import _filterOptions from "../../public/layers.json";
 import testDataJson from "../../public/RungPhongHo.json";
 import {
   createTextStyle,
-  scaleControl,
+  scaleControl, zoomMapToLayer,
 } from "src/utils/openLayers";
 import {register} from 'ol/proj/proj4';
 import proj4 from 'proj4';
@@ -131,18 +131,7 @@ export default defineComponent({
         style: polygonStyleFunction,
       });
       unref(map).addLayer(vectorLayer);
-
-      let vectorSource = vectorLayer.getSource();
-      vectorSource.once('change', () => {
-        if (vectorSource.getState() === 'ready') {
-          const extent = vectorSource.getExtent();
-
-          unref(map).getView().fit(extent, {
-            padding: [250, 250, 250, 250],
-            duration: 1000
-          });
-        }
-      });
+      zoomMapToLayer(map, vectorLayer);
     };
     // popup
     const popupRef = ref(null);
