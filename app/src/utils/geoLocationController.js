@@ -1,6 +1,6 @@
-import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
+import {Fill, Stroke, Style, Circle as CircleStyle} from "ol/style";
 import VectorSource from "ol/source/Vector";
-import { Vector as VectorLayer } from "ol/layer";
+import {Vector as VectorLayer} from "ol/layer";
 // geolocation
 import Geolocation from "ol/Geolocation";
 import Feature from "ol/Feature";
@@ -40,6 +40,7 @@ class GeoLocationController {
     this.positionFeature = positionFeature;
     this.vectorLayer = null;
   }
+
   getCurrentLocation() {
     const geolocation = this.geolocation;
     const accuracyFeature = this.accuracyFeature;
@@ -52,18 +53,26 @@ class GeoLocationController {
       geolocation.on("change:position", function () {
         const coordinates = geolocation.getPosition();
         positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-      });
+        this.zoomToLocation(coordinates)
+      }.bind(this));
       this.vectorLayer = new VectorLayer({
         map: this.map,
         source: new VectorSource({
           features: [this.accuracyFeature, this.positionFeature],
         }),
       });
-    }
-    else if (this.vectorLayer) {
+    } else if (this.vectorLayer) {
       this.vectorLayer.set('visible', true, false)
       this.vectorLayer.changed()
+      this.zoomToLocation(this.geolocation.getPosition());
     }
+  }
+
+  zoomToLocation(coordinates) {
+    this.view.fit(coordinates.concat(coordinates), {
+      padding: [250, 250, 250, 250],
+      duration: 1000
+    });
   }
 
   removeCurrentLocation() {

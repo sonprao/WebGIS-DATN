@@ -74,6 +74,20 @@ export const scaleControl = new ScaleLine({
   minWidth: 100,
 });
 
+export const zoomMapToLayer = function (map, vectorLayer) {
+  let vectorSource = vectorLayer.getSource();
+  vectorSource.once('change', () => {
+    if (vectorSource.getState() === 'ready') {
+      const extent = vectorSource.getExtent();
+
+      unref(map).getView().fit(extent, {
+        padding: [250, 250, 250, 250],
+        duration: 1000
+      });
+    }
+  });
+}
+
 // control
 
 // export const getCurrentLocation = (map, view, oldCoordinates) => {

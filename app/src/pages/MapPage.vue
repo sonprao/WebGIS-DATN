@@ -56,9 +56,14 @@ import _filterOptions from "../../public/layers.json";
 import testDataJson from "../../public/RungPhongHo.json";
 import {
   createTextStyle,
-  scaleControl,
+  scaleControl, zoomMapToLayer,
 } from "src/utils/openLayers";
-
+import {register} from 'ol/proj/proj4';
+import proj4 from 'proj4';
+proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
+register(proj4);
+proj4.defs('EPSG:5899', '+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.904,-39.303,-111.450,0.00928836,0.01975479,-0.00427372,0.25290627854559 +units=m +no_defs');
+register(proj4);
 export default defineComponent({
   name: "MapContainer",
   components: {
@@ -113,16 +118,20 @@ export default defineComponent({
           text: createTextStyle(feature, resolution, myDom),
         });
       };
+      const _workspace = 'Danang2';
+      const _name = "cam_le__vn_";
+      const _url =
+        `http://localhost:8080/geoserver/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${_workspace}:${_name}&maxFeatures=50&outputFormat=application%2Fjson`
       const vectorLayer = new VectorImageLayer({
         name: myDom.label,
-        url,
         source: new VectorSource({
           format: new GeoJSON(),
-          url,
+          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Aho_1&maxFeatures=50&outputFormat=application%2Fjson",
         }),
         style: polygonStyleFunction,
       });
       unref(map).addLayer(vectorLayer);
+      zoomMapToLayer(map, vectorLayer);
     };
     // popup
     const popupRef = ref(null);
@@ -170,11 +179,16 @@ export default defineComponent({
     // draw
 
     // draw
+    /**
+     *
+     * @type {Map}
+     */
     const map = ref(null);
     const view = ref(
       new View({
         zoom: 11,
-        center: [12031372.797987673, 1801884.1655095597],
+        projection: 'EPSG:5899',
+        center: [548944,1770004],
         maxZoom: 17,
         // constrainResolution: true
       })
