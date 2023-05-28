@@ -14,15 +14,19 @@ app.use(cors())
 app.use(express.json())
 // user
 app.delete('/api/users', userAPI.delete)
-app.get('/api/users',  userAPI.findUser)
+app.get('/api/users/:id',  userAPI.findUser)
+app.get('/api/users',  userAPI.getAll)
 app.post('/api/users', userAPI.updateOrCreateUser)
+app.put('/api/users/:id', userAPI.activateUser)
 // mapLayer
 app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers', mapLayerAPI.find)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
 //location
-app.post('/api/locations',  locationAPI.updateOrCreate)
-app.get('/api/locations', locationAPI.find)
+app.post('/api/locations', locationAPI.updateOrCreate)
+app.put('/api/locations/:id', locationAPI.update)
+app.get('/api/locations:id', locationAPI.get)
+app.get('/api/locations', locationAPI.getAll)
 app.delete('/api/locations', locationAPI.delete)
 
 app.listen(process.env.PORT || 3000, () => {

@@ -34,6 +34,9 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import VectorLayer from "ol/layer/Vector";
 import VectorImageLayer from "ol/layer/VectorImage";
+import TileWMS from "ol/source/TileWMS";
+import ImageWMS from "ol/source/ImageWMS";
+import { Image as ImageLayer } from 'ol/layer';
 import { unByKey } from "ol/Observable";
 
 // import customjson from '../constants/danang.json'
@@ -98,13 +101,36 @@ export default defineComponent({
         .getArray()
         .slice()
         .some((layer) => {
-          if (layer && layer.get("url") === url) {
+          // if (layer && layer.get("url") === url) {
+          if (layer && layer.get("name") === myDom.label) {
             unref(map).removeLayer(layer);
             return;
           }
         });
     };
     const actionAddLayer = (url) => {
+      // const vectorLayer = new TileLayer({
+      //   extent: [xmin, ymin, xmax, ymax],
+      //   source: new TileWMS({
+      //     url: 'http://localhost:8081/geoserver/ne/wms',
+      //     params: {
+      //       // 'TRANSPARENT': true,
+      //       // 'STYLES': null,
+      //       'LAYERS': 'ne:world',
+      //       'TILED' : true,
+      //       // 'exceptions': 'application/vnd.ogc.se_inimage',
+      //       // WIDTH: 769,
+      //       // HEIGHT: 468,
+      //       // TILED: true,
+      //       // 'VERSION': '1.1.1',
+      //       // // 'SRS': 'EPSG:2044',
+      //       // FORMAT: 'image/png',
+      //       // 'BBOX': xmin + ',' + ymin + ',' + xmax + ',' + ymax,
+      //     },
+      //     serverType: 'geoserver',
+      //     // projection: unref(view).getProjection(),
+      //   })
+      // })
       const myDom = _filterOptions.find((option) => option.value === url);
       const polygonStyleFunction = function (feature, resolution) {
         return new Style({
@@ -129,6 +155,7 @@ export default defineComponent({
           url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Aho_1&maxFeatures=50&outputFormat=application%2Fjson",
         }),
         style: polygonStyleFunction,
+        zindex: 1,
       });
       unref(map).addLayer(vectorLayer);
       zoomMapToLayer(map, vectorLayer);
@@ -190,6 +217,8 @@ export default defineComponent({
         projection: 'EPSG:5899',
         center: [548944,1770004],
         maxZoom: 17,
+        projection: 'EPSG:32648'
+        // extent: [xmin, ymin, xmax, ymax]
         // constrainResolution: true
       })
     );
@@ -211,8 +240,18 @@ export default defineComponent({
         view: unref(view),
       });
       initPopupEvent();
-      // vm.$nextTick(() => {
-      // });
+      vm.$nextTick(() => {
+        // const parser = new WMSCapabilities();
+        // fetch('getcapabilities_1.1.1.xml')
+        //   .then(function (response) {
+        //     return response.text();
+        //   })
+        //   .then(function (text) {
+        //     const result = parser.read(text);
+        //     console.log(result);
+        //     // console.log(JSON.stringify(result, null, 2));
+        //   });
+      });
     });
     return {
       // actionAddLayer,

@@ -23,6 +23,7 @@ model User {
   given_name  String?
   family_name String?
   role        Role @default(USER)
+  activate    Boolean @default(true)  
   posts       Post[]
 }
 
@@ -37,14 +38,18 @@ model Post {
 
 model Location {
   id        Int        @id @default(autoincrement())
-  title     String    @unique
+  name     String    @unique
   description String   @db.LongText
+  workspace String
+  longitude Float @db.Float  @default(0)
+  latitude Float @db.Float  @default(0)
+
   mapLayers MapLayer[]
 }
 
 model MapLayer {
   id        Int        @id @default(autoincrement())
-  title       String
+  name       String
   description String?
   url         String    @db.LongText
   location    Location? @relation(fields: [locationId], references: [id])

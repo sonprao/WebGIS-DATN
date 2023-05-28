@@ -4,8 +4,11 @@ export default {
   Vietnamese: 'Tiếng Việt',
   English: 'Tiếng Anh',
   layers: 'Bộ lọc',
-  failed: 'Action failed',
-  success: 'Action was successful',
+  Warning: 'Cảnh báo',
+  failed: 'Thất bại',
+  success: 'Thành công',
+  'Users management': 'Quản lý các tài khoản',
+  'Locations management': 'Quản lý địa điểm',
   //profile
   Profile: 'Trang cá nhân',
   Email: 'Email',
@@ -22,4 +25,26 @@ export default {
   Area: 'Diện tích',
   'Current location': 'Vị trí hiện tại',
   Help: 'Trợ giúp',
+  // user management
+  'Disable user': 'Vô hiệu hóa người dùng',
+  'Columns': 'Cột',
+  'Email': 'Email',
+  'Name': 'Tên',
+  'Role': 'Vai trò',
+  'Activate': 'Đang hoạt động',
+  'Activate user': 'Kích hoạt người dùng',
+  'Deactivate user': 'Vô hiệu hóa người dùng',
+  // location management
+  Description: 'Mô tả',
+  Longitude: 'Kinh độ',
+  Latitude: 'Vĩ độ',
+  Workspace: 'Workspace',
+  Layers: 'Các lớp bản đồ',
+  Url: 'Url',
+  'Delete location': 'Xóa địa chỉ',
+  // button
+  Save: 'Lưu',
+  Cancel: 'Hủy',
+  // event
+  Update: 'Cập nhật',
 }

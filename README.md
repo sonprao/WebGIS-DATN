@@ -16,3 +16,15 @@ Nuxt project is created with v3 template. Next steps:
   yarn start:rest  (it will run on port 3000 by default)
   if you want to access to prisma database, run: npx prisma studio
   migrate: npx  prisma migrate dev (--create-only, -skip-generate)
+
+
+add this to .env
+  # Environment variables declared in this file are automatically made available to Prisma.
+# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+#mysql://USER:PASSWORD@HOST:PORT/DATABASE 
+DATABASE_URL=
+LOGOUT_TIMEOUT='60'
+GEO_SERVER_URL='http://localhost:8081/geoserver'
