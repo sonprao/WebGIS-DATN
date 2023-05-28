@@ -27,11 +27,29 @@ module.exports = {
     res.json(upsertUser)
   },
   findUser: async(req, res) => {
-    const { id } = req.query
+    const id = req.params.id
     const user = await prisma.user.findUnique({
       where: {
         id,
       },
+    })
+    res.json(user)
+  },
+
+  getAll: async (req, res) => {
+    const users = await prisma.user.findMany()
+    res.json(users)
+  },
+
+
+  activateUser: async (req, res) => {
+    const id = req.params.id
+    const { activate } = req.body
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        activate
+      }
     })
     res.json(user)
   },
