@@ -152,16 +152,45 @@ export default defineComponent({
     const initPopupEvent = () => {
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+          let lastFeature = unref(popupEvent).lastFeature;
+          lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+
           const name = FeatureUtils.getNameOfFeature(feature);
+          feature.originStyle = layer.getStyle();
+          feature.setStyle(new Style({
+            stroke: new Stroke({
+              color: "#FFFFFF",
+              width: 1,
+            }),
+            fill: new Fill({
+              color: "#FFFFFF"
+            }),
+          }))
+          unref(popupEvent).lastFeature = feature;
           const coordinate = evt.coordinate;
           const hdms = toStringHDMS(toLonLat(coordinate));
-
           unref(popupContent).innerHTML =
             "<p>" + name + "</p><code>" + hdms + "</code>";
           unref(overlay).setPosition(coordinate);
           return feature;
         });
       });
+    };
+    const initChangeZoomEvent = () => {
+      unref(map).getView().on('change:resolution', function (event) {
+        const zoom = event.target.getZoom();
+
+        //TODO : hide heavy layer when zoom out
+        // unref(map).getAllLayers().forEach(layers => {
+        //   if (zoom >= calculateZoomForLayer(layer)) { //Tinh toan layer se duoc hien len trong zoom nao
+        //     layers.setVisible(true);
+        //   } else {
+        //     layers.setVisible(false);
+        //   }
+        // })
+        // Perform any other actions based on the new zoom level
+        // ...
+      })
     };
     const closePopup = (state) => {
       if (state) {
@@ -186,10 +215,11 @@ export default defineComponent({
     const map = ref(null);
     const view = ref(
       new View({
-        zoom: 11,
+        zoom: 12,
         projection: 'EPSG:5899',
-        center: [548944,1770004],
+        center: [548944, 1770004],
         maxZoom: 17,
+        minZoom: 11,
         // constrainResolution: true
       })
     );
@@ -211,6 +241,7 @@ export default defineComponent({
         view: unref(view),
       });
       initPopupEvent();
+      initChangeZoomEvent();
       // vm.$nextTick(() => {
       // });
     });
