@@ -55,7 +55,7 @@ import FloatControl from "src/components/floatControl.vue";
 import _filterOptions from "../../public/layers.json";
 import testDataJson from "../../public/RungPhongHo.json";
 import {
-  createTextStyle,
+  createTextStyle, FeatureUtils,
   scaleControl, zoomMapToLayer,
 } from "src/utils/openLayers";
 import {register} from 'ol/proj/proj4';
@@ -126,7 +126,7 @@ export default defineComponent({
         name: myDom.label,
         source: new VectorSource({
           format: new GeoJSON(),
-          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Aho_1&maxFeatures=50&outputFormat=application%2Fjson",
+          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Agiao_thong_utm&maxFeatures=50&outputFormat=application%2Fjson",
         }),
         style: polygonStyleFunction,
       });
@@ -152,7 +152,7 @@ export default defineComponent({
     const initPopupEvent = () => {
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          const name = layer?.get("name");
+          const name = FeatureUtils.getNameOfFeature(feature);
           const coordinate = evt.coordinate;
           const hdms = toStringHDMS(toLonLat(coordinate));
 
