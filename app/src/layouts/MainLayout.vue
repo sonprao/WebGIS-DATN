@@ -28,9 +28,12 @@
             <q-icon name="translate" />
           </template>
         </q-select>
+        <!-- login component -->
+        <q-avatar>
+          <img src="https://cdn.quasar.dev/img/avatar.png">
+        </q-avatar>
       </q-toolbar>
     </q-header>
-
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
@@ -43,6 +46,12 @@
 
         <EssentialLink
           v-for="link in essentialLinks"
+          :key="link.title"
+          v-bind="link"
+        />
+        <q-separator />
+        <EssentialLink
+          v-for="link in adminInteraction"
           :key="link.title"
           v-bind="link"
         />
@@ -91,17 +100,25 @@ export default defineComponent({
     const linksList = computed(() => [
       {
         title: $t("Map"),
-        icon: "straighten",
+        icon: "fa-sharp fa-solid fa-map-location-dot",
         to: "/map",
       },
-      {
-        title: "Github",
-        caption: "github.com/sonprao/WebGIS-DATN",
-        icon: "code",
-        link: "https://github.com/sonprao/WebGIS-DATN",
-      },
     ]);
-     const userIntecraction = computed(() => [
+    const adminInteraction = computed(() => [
+      {
+        title: $t("Users management"),
+        icon: "fa-solid fa-users",
+        to: "/user-management",
+      },
+      {
+        title: $t("Locations management"),
+        icon: "img:icons/location-management.png",
+        to: "/location-management",
+      },
+        // <q-icon name="img:icons/area.png" />
+
+    ])
+    const userIntecraction = computed(() => [
       {
         title: $t("Profile"),
         icon: "account_circle",
@@ -126,6 +143,7 @@ export default defineComponent({
       locale,
       localeOptions,
       essentialLinks: linksList,
+      adminInteraction,
       userIntecraction,
       leftDrawerOpen,
       toggleLeftDrawer() {

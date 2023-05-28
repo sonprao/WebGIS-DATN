@@ -4,8 +4,11 @@ export default {
   Vietnamese: 'Vietnamese',
   English: 'English',
   layers: 'layers',
+  Warning: 'Warning',
   failed: 'Action failed',
   success: 'Action was successful',
+  'Users management': 'Users management',
+  'Locations management': 'Locations management',
   //profile
   Profile: 'Profile',
   Email: 'Email',
@@ -22,4 +25,26 @@ export default {
   Area: 'Area',
   'Current location': 'Current location',
   Help: 'Help',
+  // user management
+  'Disable user': 'Disable user',
+  'Columns': 'Columns',
+  'Email': 'Email',
+  'Name': 'Name',
+  'Role': 'Role',
+  'Activate': 'Activate',
+  'Activate user': 'Activate user',
+  'Deactivate user': 'Deactivate user',
+  // location management
+  Description: 'Description',
+  Longitude: 'Longitude',
+  Latitude: 'Latitude',
+  Workspace: 'Workspace',
+  Layers: 'Layers',
+  Url: 'Url',
+  'Delete location': 'Delete location',
+  // button
+  Save: 'Save',
+  Cancel: 'cancel',
+  // event
+  Update: 'Update',
 }

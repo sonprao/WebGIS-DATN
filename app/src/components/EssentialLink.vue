@@ -1,10 +1,4 @@
 <template>
-  <!-- <q-item
-    clickable
-    tag="a"
-    target="_blank"
-    :href="link"
-  > -->
   <q-item
     v-if="link"  
     clickable

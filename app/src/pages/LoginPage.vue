@@ -1,11 +1,13 @@
 <template>
+  <q-layout>
+    <q-page-container>
   <q-page class="flex flex-center">
     <q-card class="fit" style="max-width: 400px;">
       <q-card-section class="row items-start justify-center q-mt-lg">
         <img src="~assets/quasar-logo-vertical.svg" alt="Quasar logo" style="width: 64px; height: 64px;">
       </q-card-section>
       
-      <q-form v-model="form"  @submit="onSubmit">
+      <q-form v-model="form">
         <q-card-section>
           <div class="q-gutter-md">
             <q-input outlined v-model="username" label="Username"></q-input>
@@ -14,19 +16,23 @@
           </div>
         </q-card-section>
 
-        <q-card-section>
-          <GoogleLogin :callback="callback" popup-type="TOKEN"/>
-          <q-btn label="Submit" type="submit" color="primary"/>
+            <q-card-section class="googleSection">
+              <q-btn label="Submit" type="submit" color="primary"/>
+              <GoogleLogin :callback="callback" popup-type="TOKEN" />
         </q-card-section>
       </q-form>
     </q-card>
   </q-page>
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script>
 import { defineComponent, ref, unref } from 'vue'; 
 import { decodeCredential } from 'vue3-google-login'
-import {login} from 'src/api/user'
+// import { login } from 'src/api/user'
+import { useUserStore } from 'stores/user';
+
 /*
 aud:"447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
 azp: "447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
@@ -45,6 +51,7 @@ sub:"105643192884333657187" */
 export default defineComponent({
   name: 'LoginPage',
   setup() {
+    const store = useUserStore()
     const form = {
       valid: true
     }
@@ -52,28 +59,26 @@ export default defineComponent({
     const password = ref('')
     const callback = async(response) => {
       const userData = decodeCredential(response.credential)
-      console.log("Handle the userData", userData)
-      const responseData = await login({
-        email: userData.email,
-        sub: userData.sub,
-        name: userData.name,
-        given_name: userData.given_name,
-        family_name: userData.family_name,
-      })
-      console.log(responseData)
+      console.log()
+      store.loginUser(userData)
     }
-    const onSubmit = async() => {
+    // const onSubmit = async() => {
      
-      console.log(unref(username))
-      console.log(unref(password))
-    }
+    //   console.log(unref(username))
+    //   console.log(unref(password))
+    // }
     return {
       form,
       username,
       password,
       callback,
-      onSubmit,
+      // onSubmit,
     };
   },
 });
 </script>
+<style scoped>
+.googleSection{
+  text-align: center;
+}
+</style>
