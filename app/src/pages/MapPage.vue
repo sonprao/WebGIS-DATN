@@ -126,7 +126,7 @@ export default defineComponent({
         name: myDom.label,
         source: new VectorSource({
           format: new GeoJSON(),
-          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Agiao_thong_utm&maxFeatures=50&outputFormat=application%2Fjson",
+          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Apolygon&maxFeatures=5000&outputFormat=application%2Fjson",
         }),
         style: polygonStyleFunction,
       });
@@ -159,7 +159,7 @@ export default defineComponent({
           feature.originStyle = layer.getStyle();
           feature.setStyle(new Style({
             stroke: new Stroke({
-              color: "#FFFFFF",
+              color: "#000000",
               width: 1,
             }),
             fill: new Fill({
@@ -169,8 +169,9 @@ export default defineComponent({
           unref(popupEvent).lastFeature = feature;
           const coordinate = evt.coordinate;
           const hdms = toStringHDMS(toLonLat(coordinate));
+          const area = feature.getGeometry().getArea();
           unref(popupContent).innerHTML =
-            "<p>" + name + "</p><code>" + hdms + "</code>";
+            "<p>" + name + "</p><code>" + hdms + "</code>" + "</p><code>" + area + " m2"+ "</code>";
           unref(overlay).setPosition(coordinate);
           return feature;
         });
