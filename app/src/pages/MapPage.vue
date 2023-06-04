@@ -58,7 +58,7 @@ import FloatControl from "src/components/floatControl.vue";
 import _filterOptions from "../../public/layers.json";
 import testDataJson from "../../public/RungPhongHo.json";
 import {
-  createTextStyle,
+  createTextStyle, FeatureUtils,
   scaleControl, zoomMapToLayer,
 } from "src/utils/openLayers";
 import {register} from 'ol/proj/proj4';
@@ -180,16 +180,39 @@ export default defineComponent({
     const initPopupEvent = () => {
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          const name = layer?.get("name");
+          let lastFeature = unref(popupEvent).lastFeature;
+          lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+
+          const name = FeatureUtils.getNameOfFeature(feature);
+          feature.originStyle = layer.getStyle();
+          let selectedStyle = FeatureUtils.getSelectedStyle();
+          feature.setStyle(selectedStyle);
+          unref(popupEvent).lastFeature = feature;
           const coordinate = evt.coordinate;
           const hdms = toStringHDMS(toLonLat(coordinate));
-
+          const area = feature.getGeometry().getArea();
           unref(popupContent).innerHTML =
-            "<p>" + name + "</p><code>" + hdms + "</code>";
+            "<p>" + name + "</p><code>" + hdms + "</code>" + "</p><code>" + area + " m2"+ "</code>";
           unref(overlay).setPosition(coordinate);
           return feature;
         });
       });
+    };
+    const initChangeZoomEvent = () => {
+      unref(map).getView().on('change:resolution', function (event) {
+        const zoom = event.target.getZoom();
+
+        //TODO : hide heavy layer when zoom out
+        // unref(map).getAllLayers().forEach(layers => {
+        //   if (zoom >= calculateZoomForLayer(layer)) { //Tinh toan layer se duoc hien len trong zoom nao
+        //     layers.setVisible(true);
+        //   } else {
+        //     layers.setVisible(false);
+        //   }
+        // })
+        // Perform any other actions based on the new zoom level
+        // ...
+      })
     };
     const closePopup = (state) => {
       if (state) {

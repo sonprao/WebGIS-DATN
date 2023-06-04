@@ -32,6 +32,10 @@ const getText = function (feature, resolution, dom) {
   return text;
 };
 
+
+const convertToCorrectFormat = function (string) {
+  return decodeURIComponent(escape(string));
+}
 export const createTextStyle = function (feature, resolution, dom) {
   const size = "12px";
   const height = 1;
@@ -86,6 +90,32 @@ export const zoomMapToLayer = function (map, vectorLayer) {
       });
     }
   });
+}
+
+export const FeatureUtils = {
+  /**
+   *
+   * @param feature {Feature}
+   */
+  getNameOfFeature: function (feature) {
+    let name = feature.get("name");
+    if (!name) return null;
+    return convertToCorrectFormat(name);
+  },
+
+  getSelectedStyle: function () {
+    return new Style({
+      stroke: new Stroke({
+        color: "red",
+        width: 1,
+      }),
+      fill: new Fill({
+        color: "#FFFFFF",
+      }),
+    })
+  },
+
+  // TODO: get other Properties of the feature here
 }
 
 // control
