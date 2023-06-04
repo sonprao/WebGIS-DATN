@@ -144,15 +144,16 @@ export default defineComponent({
           text: createTextStyle(feature, resolution, myDom),
         });
       };
-      const _workspace = 'Danang2';
-      const _name = "cam_le__vn_";
+      let params = url.split(":");
+      const _workspace = params[0];
+      const _name = params[1];
       const _url =
-        `http://localhost:8080/geoserver/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${_workspace}:${_name}&maxFeatures=50&outputFormat=application%2Fjson`
+        `http://localhost:8080/geoserver/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${_workspace}:${_name}&maxFeatures=5000&outputFormat=application%2Fjson`
       const vectorLayer = new VectorImageLayer({
         name: myDom.label,
         source: new VectorSource({
           format: new GeoJSON(),
-          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Aho_1&maxFeatures=50&outputFormat=application%2Fjson",
+          url: _url,
         }),
         style: polygonStyleFunction,
         zindex: 1,
@@ -217,7 +218,6 @@ export default defineComponent({
         projection: 'EPSG:5899',
         center: [548944,1770004],
         maxZoom: 17,
-        projection: 'EPSG:32648'
         // extent: [xmin, ymin, xmax, ymax]
         // constrainResolution: true
       })

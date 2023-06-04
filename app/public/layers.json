@@ -1,164 +1,98 @@
 [
   {
-    "label": "Đất đơn vị ở",
-    "layer_index": 1,
-    "layer_color": "#FFBA79",
-    "value": "DatDanDung1.json"
-  },
-  {
-    "label": "Đất dịch vụ công cộng đô thị",
-    "layer_index": 1,
-    "layer_color": "#FF252C",
-    "value": "DatDanDung2.json"
-  },
-  {
-    "label": "Đất trường THPT",
-    "layer_index": 1,
-    "layer_color": "#9F3D24",
-    "value": "DatDanDung3.json"
-  },
-  {
-    "label": "Đất cây xanh sử dụng công cộng cấp đô thị",
+    "label": "Đà Nẵng",
     "layer_index": 1,
     "layer_color": "#40C224",
-    "value": "DatDanDung4.json"
+    "value": "danang:dn_hn72"
   },
   {
-    "label": "Đất sử dụng hỗn hợp",
+    "label": "Biển",
+    "layer_index": 1,
+    "layer_color": "#FFBA79",
+    "value": "danang:bien_utm"
+  },
+  {
+    "label": "Sông Cẩm Lệ",
+    "layer_index": 1,
+    "layer_color": "#9F3D24",
+    "value": "danang:cam_le__vn_"
+  },
+  {
+    "label": "Sông Đồng Nghệ",
     "layer_index": 1,
     "layer_color": "#F852A4",
-    "value": "DatDanDung5.json"
+    "value": "danang:dong_nghe__vn_"
   },
   {
-    "label": "Đất công nghiệp",
+    "label": "Giao thông",
     "layer_index": 1,
     "layer_color": "#7E28C7",
-    "value": "DatNgoaiDanDung1.json"
+    "value": "danang:giao_thong_utm"
   },
   {
-    "label": "Đất công nghệ cao và công nghệ thông tin",
+    "label": "Hồ 3",
     "layer_index": 1,
     "layer_color": "#D696EC",
-    "value": "DatNgoaiDanDung2.json"
+    "value": "danang:ho3"
   },
   {
-    "label": "Đất kho tàng",
+    "label": "Hồ 4",
     "layer_index": 1,
-    "layer_color": "#7A7AA0",
-    "value": "DatNgoaiDanDung3.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho4"
   },
   {
-    "label": "Đất trung tâm nghiên cứu đào tạo",
+    "label": "Hồ 5",
     "layer_index": 1,
-    "layer_color": "#70B7D3",
-    "value": "DatNgoaiDanDung4.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho5"
   },
   {
-    "label": "Đất cơ quan",
+    "label": "Hồ 6",
     "layer_index": 1,
-    "layer_color": "#C07B2E",
-    "value": "DatNgoaiDanDung5.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho6"
   },
   {
-    "label": "Đất trung tâm y tế",
+    "label": "Hồ 7",
     "layer_index": 1,
-    "layer_color": "#FE16CA",
-    "value": "DatNgoaiDanDung6.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho7"
   },
   {
-    "label": "Đất du lịch",
+    "label": "Hồ 8",
     "layer_index": 1,
-    "layer_color": "#EB6EE4",
-    "value": "DatNgoaiDanDung7.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho8"
   },
   {
-    "label": "Đất tôn giáo, di tích",
+    "label": "Hồ Cẩm Lệ",
     "layer_index": 1,
-    "layer_color": "#96433F",
-    "value": "DatNgoaiDanDung8.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho_cl"
   },
   {
-    "label": "Đất công trình đầu mối hạ tầng, kỹ thuật",
+    "label": "Hồ Đồng Nghệ",
     "layer_index": 1,
-    "layer_color": "#C6B6DA",
-    "value": "DatNgoaiDanDung9.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho_dong_nghe"
   },
   {
-    "label": "Đất cây xanh chuyên đề",
+    "label": "Hồ Hải Châu",
     "layer_index": 1,
-    "layer_color": "#57B857",
-    "value": "DatNgoaiDanDung10.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho_haichau"
   },
   {
-    "label": "Đất trung tâm TDTT",
+    "label": "Hồ Hòa Trung",
     "layer_index": 1,
-    "layer_color": "#21A221",
-    "value": "DatNgoaiDanDung11.json"
+    "layer_color": "#D696EC",
+    "value": "danang:ho_hoa_trung"
   },
   {
-    "label": "Đất cây xanh cách ly",
+    "label": "Sơ đồ đất",
     "layer_index": 1,
-    "layer_color": "#6CD9BA",
-    "value": "DatNgoaiDanDung12.json"
-  },
-  {
-    "label": "Đất an ninh quốc phòng",
-    "layer_index": 1,
-    "layer_color": "#92A06F",
-    "value": "DatNgoaiDanDung13.json"
-  },
-  {
-    "label": "Đất nghĩa trang",
-    "layer_index": 1,
-    "layer_color": "#D5D5D5",
-    "value": "DatNgoaiDanDung14.json"
-  },
-  {
-    "label": "Đất dự phòng phát triển",
-    "layer_index": 1,
-    "layer_color": "#E4FD95",
-    "value": "DatNgoaiDanDung15.json"
-  },
-  {
-    "label": "Đất ở làng xóm",
-    "layer_index": 1,
-    "layer_color": "#BDBF98",
-    "value": "DatKhac1.json"
-  },
-  {
-    "label": "Đất nông nghiệp",
-    "layer_index": 1,
-    "layer_color": "#7BEE75",
-    "value": "DatKhac2.json"
-  },
-  {
-    "label": "Mặt nước",
-    "layer_index": 1,
-    "layer_color": "#50A8FF",
-    "value": "DatKhac3.json"
-  },
-  {
-    "label": "Rừng đặc dụng",
-    "layer_index": 1,
-    "layer_color": "#06506B",
-    "value": "DatKhac4.json"
-  },
-  {
-    "label": "Rừng Phòng Hộ",
-    "layer_index": 1,
-    "layer_color": "#416B5F",
-    "value": "RungPhongHo.json"
-  },
-  {
-    "label": "Rừng sản xuất",
-    "layer_index": 1,
-    "layer_color": "#71A97C",
-    "value": "DatKhac6.json"
-  },
-  {
-    "label": "Đất trống",
-    "layer_index": 1,
-    "layer_color": "#FF7C9E",
-    "value": "DatKhac7.json"
+    "layer_color": "#D696EC",
+    "value": "danang:polygon"
   }
 ]
