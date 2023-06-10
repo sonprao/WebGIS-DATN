@@ -34,6 +34,7 @@ module.exports = configure(function (/* ctx */) {
       'axios',
       'pinia',
       'i18n',
+      'bus',
       'vue3openlayers',
       'googleAuth'
     ],
