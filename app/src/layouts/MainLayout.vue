@@ -12,22 +12,6 @@
         />
 
         <q-toolbar-title> GIS App </q-toolbar-title>
-
-        <q-select
-          ref="languageRef"
-          emit-value
-          map-options
-          options-dense
-          style="min-width: 150px; padding: 0 10px"
-          :label="$t('Language')"
-          v-model="locale"
-          :options="localeOptions"
-          @popup-hide="blur"
-        >
-          <template v-slot:prepend>
-            <q-icon name="translate" />
-          </template>
-        </q-select>
         <!-- login component -->
         <q-avatar>
           <img src="https://cdn.quasar.dev/img/avatar.png">
@@ -40,10 +24,11 @@
       elevated
       side="left"
       behavior="desktop"
-    >
+      :mini="miniState"
+      @mouseover="miniState =false"
+      @mouseout="miniState =true"
+      >
       <q-list>
-        <q-item-label header></q-item-label>
-
         <EssentialLink
           v-for="link in essentialLinks"
           :key="link.title"
@@ -71,6 +56,7 @@
 </template>
 
 <script>
+import _debounce from "lodash/debounce";
 import { getCurrentInstance, defineComponent, ref, unref, computed } from "vue";
 
 import EssentialLink from "components/EssentialLink.vue";
@@ -86,17 +72,9 @@ export default defineComponent({
 
   setup() {
     const vm = getCurrentInstance().proxy;
-    const { locale } = useI18n({ useScope: "global" });
     const $t = i18n.global.t;
-    const leftDrawerOpen = ref(false);
-    const localeOptions = computed(() => [
-      { value: "en-US", label: $t("English") },
-      { value: "vn-VN", label: $t("Vietnamese") },
-    ]);
-    const languageRef = ref(null);
-    const blur = () => {
-      unref(languageRef).blur();
-    };
+    const leftDrawerOpen = ref(true);
+    const miniState = ref(true);
     const linksList = computed(() => [
       {
         title: $t("Map"),
@@ -125,27 +103,23 @@ export default defineComponent({
         to: "/profile",
       },
       {
-        title: $t("Login"),
-        icon: "login",
-        to: "/login",
+        title: $t("Settings"),
+        icon: "settings",
        },
       {
         title: $t("Logout"),
         icon: "logout",
-        to: "/logout",
+        to: "/login",
       },
     ]);
-
+    
     return {
       vm,
-      languageRef,
-      blur,
-      locale,
-      localeOptions,
       essentialLinks: linksList,
       adminInteraction,
       userIntecraction,
       leftDrawerOpen,
+      miniState,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },

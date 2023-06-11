@@ -19,14 +19,14 @@ export const drawStyle = () => {
 
 export const formatLength = function (line) {
   const length = getLength(line);
-  return length > 100
-    ? Math.round((length / 1000) * 100) / 100 + "" + "km"
-    : Math.round(length * 100) / 100 + " " + "m";
+  return length > 1000
+    ?  Intl.NumberFormat('vi-VN').format(Math.round((length / 1000) * 100) / 100) + " " + "km"
+    : Intl.NumberFormat('vi-VN').format(Math.round(length * 100) / 100) + " " + "m";
 };
 
 export const formatArea = function (polygon) {
   const area = getArea(polygon);
-  return area > 10000
-    ? Math.round((area / 1000000) * 100) / 100 + " " + "km<sup>2</sup>"
-    : Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
+  return area > 1000000
+    ? Intl.NumberFormat('vi-VN').format(Math.round((area / 1000000) * 100) / 100) + " " + "km<sup>2</sup>"
+    : Intl.NumberFormat('vi-VN').format(Math.round(area * 100) / 100) + " " + "m<sup>2</sup>";
 };
