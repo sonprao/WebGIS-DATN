@@ -1,146 +1,98 @@
 <template>
-  <q-page-sticky class="sticky" position="top-left" :offset="[10, 10]">
-    <q-card class="my-card" flat bordered style="width: 250px">
-      <q-tabs v-model="tab" class="text-primary">
-        <q-tab
-          label="Tab one"
-          name="one"
-          @click="
-            () => {
-              expanded = true;
-            }
-          "
-        />
-        <q-tab
-          label="Tab two"
-          name="two"
-          @click="
-            () => {
-              expanded = true;
-            }
-          "
-        />
-        <q-btn
-          flat
-          dense
-          color="grey"
-          :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-          style="height: 100%"
-          @click="expanded = !expanded"
-        />
-      </q-tabs>
-      <q-separator />
-      <q-slide-transition>
-        <div v-show="expanded">
-          <q-tab-panels v-model="tab" animated>
-            <q-tab-panel name="one" style="padding: 0; display: grid">
-              <q-btn-toggle
-                class="toogleClass"
-                style="margin: 10px; place-self: center"
-                no-caps
-                clearable
-                color="white"
-                text-color="#666666"
-                toggle-color="primary"
-                v-model="buttonModel"
-                :options="options"
-                @update:model-value="selectControl"
-                @clear="clearControl"
-              >
-                <template v-slot:one>
-                  <q-badge
-                    v-if="lineStringCount > 0"
-                    color="yellow"
-                    text-color="white"
-                    floating
-                  >
-                    {{ lineStringCount }}
-                  </q-badge>
-                  <q-tooltip>{{ $t("Distance") }}</q-tooltip>
-                </template>
-
-                <template v-slot:two>
-                  <q-icon name="img:icons/area.png" />
-                  <q-tooltip>{{ $t("Area") }}</q-tooltip>
-                  <q-badge
-                    v-if="polygonCount > 0"
-                    color="yellow"
-                    text-color="white"
-                    floating
-                    dense
-                  >
-                    {{ polygonCount }}
-                  </q-badge>
-                </template>
-
-                <template v-slot:three>
-                  <q-tooltip>{{ $t("Current location") }}</q-tooltip>
-                </template>
-              </q-btn-toggle>
-              <q-separator />
-              <q-list overlay v-if="drawList.length > 0">
-                <q-scroll-area
-                  class="drawListClass"
-                  :style="`height: ${drawList.length * 65}px;`"
-                >
-                  <q-item
-                    v-for="(item, index) of drawList"
-                    :key="index"
-                    clickable
-                    @click="zoomToDraw(item.position)"
-                  >
-                    <q-item-section avatar>
-                      <q-icon :name="item.icon" />
-                    </q-item-section>
-
-                    <q-item-section>
-                      <q-item-label>
-                        <span v-html="item.text"></span>
-                      </q-item-label>
-                      <q-item-label caption>
-                        {{ item.time }}
-                      </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <div class="text-grey-8 q-gutter-xs">
-                        <q-btn
-                          class="gt-xs"
-                          size="12px"
-                          color="red"
-                          flat
-                          dense
-                          round
-                          icon="delete"
-                          @click.stop="deleteDraw(index)"
-                        />
-                      </div>
-                    </q-item-section>
-                    <q-separator />
-                  </q-item>
-                </q-scroll-area>
-                <q-separator />
-                <q-btn
-                  flat
-                  dense
-                  color="grey"
-                  icon="delete"
-                  style="float: right"
-                  @click="deleteDraw()"
-                />
-              </q-list>
-            </q-tab-panel>
-
-            <q-tab-panel name="two">
-              With so much content to display at once, and often so little
-              screen real-estate, Cards have fast become the design pattern of
-              choice for many companies, including the likes of Google and
-              Twitter.
-            </q-tab-panel>
-          </q-tab-panels>
-        </div>
-      </q-slide-transition>
-    </q-card>
-  </q-page-sticky>
+  <q-btn-toggle
+    class="toogleClass"
+    style="margin: 10px; place-self: center"
+    no-caps
+    clearable
+    color="white"
+    text-color="#666666"
+    toggle-color="primary"
+    v-model="buttonModel"
+    :options="options"
+    @update:model-value="selectControl"
+    @clear="clearControl"
+  >
+    <template v-slot:one>
+      <q-badge
+        v-if="lineStringCount > 0"
+        color="yellow"
+        text-color="white"
+        floating
+      >
+        {{ lineStringCount }}
+      </q-badge>
+      <q-tooltip>{{ $t("Distance") }}</q-tooltip>
+    </template>
+  
+    <template v-slot:two>
+      <q-icon name="img:icons/area.png" />
+      <q-tooltip>{{ $t("Area") }}</q-tooltip>
+      <q-badge
+        v-if="polygonCount > 0"
+        color="yellow"
+        text-color="white"
+        floating
+        dense
+      >
+        {{ polygonCount }}
+      </q-badge>
+    </template>
+  
+    <template v-slot:three>
+      <q-tooltip>{{ $t("Current location") }}</q-tooltip>
+    </template>
+  </q-btn-toggle>
+  <q-separator />
+  <q-list overlay v-if="drawList.length > 0">
+    <q-scroll-area
+      class="drawListClass"
+      :style="`height: ${drawList.length * 51}px;`"
+    >
+      <q-item
+        v-for="(item, index) of drawList"
+        :key="index"
+        clickable
+        @click="zoomToDraw(item.position)"
+      >
+        <q-item-section avatar>
+          <q-icon :name="item.icon" />
+        </q-item-section>
+  
+        <q-item-section>
+          <q-item-label>
+            <span v-html="item.text"></span>
+          </q-item-label>
+          <q-item-label caption>
+            {{ item.time }}
+          </q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <div class="text-grey-8 q-gutter-xs">
+            <q-btn
+              class="gt-xs"
+              size="12px"
+              color="red"
+              flat
+              dense
+              round
+              icon="delete"
+              @click.stop="deleteDraw(index)"
+            />
+          </div>
+        </q-item-section>
+        <q-separator />
+      </q-item>
+    </q-scroll-area>
+    <q-separator />
+    <q-btn
+      flat
+      dense
+      color="grey"
+      icon="delete"
+      style="float: right"
+      @click="deleteDraw()"
+    />
+  </q-list>
 </template>
 
 <script>
@@ -151,9 +103,11 @@ import {
   defineComponent,
   getCurrentInstance,
   computed,
+  inject,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
 import VectorSource from "ol/source/Vector";
 import VectorLayer from "ol/layer/Vector";
 import Overlay from "ol/Overlay";
@@ -165,23 +119,15 @@ import GeoLocationController from "src/utils/geoLocationController";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 
 export default defineComponent({
-  name: "FloatControl",
+  name: "TabAction",
   components: {},
-  props: {
-    map: {
-      type: Object,
-      default: () => ({}),
-    },
-    view: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
   emits: ["closePopup"],
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    const map = inject('map', {});
+    const view = inject('view', {});
     const continueLineMsg = computed(() =>
       $t("Click to continue drawing the line")
     );
@@ -189,7 +135,6 @@ export default defineComponent({
       $t("Click to continue drawing the polygon")
     );
 
-    const tab = ref("one");
     const buttonModel = ref();
     const options = [
       { icon: "straighten", value: "LineString", slot: "one" },
@@ -259,18 +204,15 @@ export default defineComponent({
 
     const selectControl = (val) => {
       if (!val) {
-        emit("closePopup", false);
         $bus.emit('close-popup', false);
         unref(geoLocation).removeCurrentLocation();
         return;
       }
       if (val !== "place") {
-        emit("closePopup", true);
         $bus.emit('close-popup', true);
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
-        emit("closePopup", true);
         $bus.emit('close-popup', true);
         unref(geoLocation).getCurrentLocation();
       }
@@ -284,9 +226,9 @@ export default defineComponent({
       // });
       // sketch clear
       sketch.value = null;
-      unref(props.map).removeInteraction(unref(draw));
-      unref(props.map).removeInteraction(unref(snap));
-      // unref(props.map).removeLayer(unref(vector));
+      unref(map).removeInteraction(unref(draw));
+      unref(map).removeInteraction(unref(snap));
+      // unref(map).removeLayer(unref(vector));
       draw.value = null;
       snap.value = null;
       // source.value = new VectorSource({ wrapX: false });
@@ -305,8 +247,8 @@ export default defineComponent({
       if (unref(draw)) {
         clearControl();
       }
-      if (!unref(props.map).getLayers().getArray().includes(unref(vector))) {
-        unref(props.map).addLayer(unref(vector));
+      if (!unref(map).getLayers().getArray().includes(unref(vector))) {
+        unref(map).addLayer(unref(vector));
       }
       draw.value = new Draw({
         source: unref(source),
@@ -372,24 +314,24 @@ export default defineComponent({
         // ).length;
       });
 
-      unref(props.map).addInteraction(unref(draw));
+      unref(map).addInteraction(unref(draw));
       createMeasureTooltip();
       createHelpTooltip();
-      movePointer.value = unref(props.map).on(
+      movePointer.value = unref(map).on(
         "pointermove",
         pointerMoveHandler
       );
-      unref(props.map)
+      unref(map)
         .getViewport()
         .addEventListener("mouseout", function () {
           unref(helpTooltipElement).classList.add("hidden");
         });
 
       // snap.value = new Snap({ source: source });
-      // unref(props.map).addInteraction(unref(snap));
+      // unref(map).addInteraction(unref(snap));
     };
     const zoomToDraw = (position) => {
-      props.map.getView().fit(position, {
+      unref(map).getView().fit(position, {
         padding: [100, 100, 100, 100],
         duration: 1000,
       });
@@ -427,7 +369,7 @@ export default defineComponent({
         stopEvent: false,
         insertFirst: false,
       });
-      unref(props.map).addOverlay(unref(measureTooltip));
+      unref(map).addOverlay(unref(measureTooltip));
     };
     const createHelpTooltip = () => {
       if (unref(helpTooltipElement)) {
@@ -442,20 +384,20 @@ export default defineComponent({
         offset: [15, 0],
         positioning: "center-left",
       }); //
-      unref(props.map).addOverlay(unref(helpTooltip));
+      unref(map).addOverlay(unref(helpTooltip));
     };
 
     onMounted(() => {
+      console.log('mounte')
       vm.$nextTick(() => {
         geoLocation.value = new GeoLocationController({
-          map: unref(props.map),
-          view: unref(props.view),
+          map: unref(map),
+          view: unref(view),
         });
       });
     });
     return {
       vm,
-      tab,
       buttonModel,
       options,
       drawList,
@@ -471,15 +413,6 @@ export default defineComponent({
 });
 </script>
 <style lang="scss">
-html,
-body {
-  width: 100%;
-  height: 100%;
-}
-
-.sticky {
-  z-index: 1;
-}
 
 .circle {
   border-radius: 50% !important;
@@ -527,12 +460,15 @@ body {
 
 .drawListClass {
   // max-height: 262px;
-  max-height: 400px;
+  max-height: 60vh;
   max-width: 300px;
 
   .q-scrollarea__content.absolute {
     display: flex;
     flex-direction: column-reverse;
   }
+}
+.q-item__section--avatar {
+  min-width: 30px;
 }
 </style>

@@ -68,10 +68,7 @@ export const createTextStyle = function (feature, resolution, dom) {
 // control
 export const scaleControl = new ScaleLine({
   units: "metric",
-  bar: true,
-  steps: 4,
-  text: true,
-  minWidth: 100,
+  minWidth: 50,
 });
 
 export const zoomMapToLayer = function (map, vectorLayer) {
@@ -89,99 +86,3 @@ export const zoomMapToLayer = function (map, vectorLayer) {
 }
 
 // control
-
-// export const getCurrentLocation = (map, view, oldCoordinates) => {
-//   if (oldCoordinates) return null;
-//   const geolocation = new Geolocation({
-//     // enableHighAccuracy must be set to true to have the heading value.
-//     trackingOptions: {
-//       enableHighAccuracy: false,
-//     },
-//     projection: view.getProjection(),
-//   });
-//   const accuracyFeature = new Feature();
-//   const positionFeature = new Feature();
-//   positionFeature.setStyle(
-//     new Style({
-//       image: new CircleStyle({
-//         radius: 6,
-//         fill: new Fill({
-//           color: "#3399CC",
-//         }),
-//         stroke: new Stroke({
-//           color: "#fff",
-//           width: 2,
-//         }),
-//       }),
-//     })
-//   );
-//   geolocation.setTracking(true);
-//   geolocation.on("change:accuracyGeometry", function () {
-//     accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
-//   });
-//   geolocation.on("change:position", function () {
-//     const coordinates = geolocation.getPosition();
-//     console.log(coordinates);
-//     positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-//   });
-  // const vectorGeo = new VectorLayer({
-  //   map: map,
-  //   source: new VectorSource({
-  //     features: [accuracyFeature, positionFeature],
-  //   }),
-  // });
-  // map.removeLayer(vectorGeo);
-// };
-
-export class GeoLocation {
-  constructor(option = {}) {
-    this.map = option.map;
-    this.view = option.view;
-    this.geolocation = new Geolocation({
-      // enableHighAccuracy must be set to true to have the heading value.
-      trackingOptions: {
-        enableHighAccuracy: false,
-      },
-      projection: this.view.getProjection(),
-    });
-    this.accuracyFeature = new Feature();
-    this.positionFeature = new Feature();
-
-    this.positionFeature.setStyle(
-      new Style({
-        image: new CircleStyle({
-          radius: 6,
-          fill: new Fill({
-            color: "#3399CC",
-          }),
-          stroke: new Stroke({
-            color: "#fff",
-            width: 2,
-          }),
-        }),
-      })
-    );
-    this.geolocation.setTracking(true);
-    this.geolocation.on("change:accuracyGeometry", function () {
-      this.accuracyFeature.setGeometry(this.geolocation.getAccuracyGeometry());
-    });
-    this.geolocation.on("change:position", function () {
-      const coordinates = this.geolocation.getPosition();
-      this.positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-    });
-    // this.vectorGeo = new VectorLayer({
-    //   map: this.map,
-    //   source: new VectorSource({
-    //     features: [this.accuracyFeature, this.positionFeature],
-    //   }),
-    // });
-  }
-  getCurrentLocation() {
-    new VectorLayer({
-      map: this.map,
-      source: new VectorSource({
-        features: [this.accuracyFeature, this.positionFeature],
-      }),
-    });
-  }
-}
