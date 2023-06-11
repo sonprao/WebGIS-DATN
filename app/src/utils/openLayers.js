@@ -11,6 +11,10 @@ import Point from "ol/geom/Point";
 // vue
 import { ref, unref } from "vue";
 import { i18n } from "boot/i18n.js";
+import {
+  CityLandDataFeature,
+  BaseDataFeature
+} from "src/feature/FeatureData.js"
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -83,6 +87,60 @@ export const zoomMapToLayer = function (map, vectorLayer) {
       });
     }
   });
+}
+
+export const FeatureUtils = {
+  /**
+   *
+   * @param feature {Feature}
+   */
+  getNameOfFeature: function (feature) {
+    let name = feature.get("name");
+    if (!name) return null;
+    return convertToCorrectFormat(name);
+  },
+
+  /**
+   *
+   * @param feature {Feature}
+   * @param layer {VectorLayer}
+   * @returns {BaseDataFeature}
+   */
+  getDataOfFeature: function (feature, layer) {
+    /**
+     *
+     * @type {BaseDataFeature}
+     */
+    let featureData;
+      switch (layer.get("name")) {
+        case "Sơ đồ đất":
+          featureData = new CityLandDataFeature();
+          break;
+        default:
+          featureData = new BaseDataFeature();
+          break;
+      }
+      console.log(layer, layer.get("name"));
+      featureData.setData(feature);
+      console.log(featureData, feature);
+      return featureData;
+  },
+  /**
+   *
+   * @param style {}
+   * @returns {Style}
+   */
+  getSelectedStyle: function (style) {
+    return new Style({
+      stroke: new Stroke({
+        color: "BLUE",
+        width: 3,
+      }),
+      fill: style().getFill(),
+    })
+  },
+
+  // TODO: get other Properties of the feature here
 }
 
 // control

@@ -49,8 +49,12 @@ import {
   scaleControl,
   zoomMapToLayer,
   createTextStyle,
+  FeatureUtils,
 } from "src/utils/openLayers";
 
+import {
+  LayerController
+} from "src/utils/layerController";
 
 import {
   defineComponent,
@@ -72,6 +76,7 @@ import FloatAction from "src/components/floatAction.vue";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
 import _filterOptions from "src/constants/layers.json";
+
 export default defineComponent({
   name: "DetailPage",
   components: {
@@ -100,46 +105,52 @@ export default defineComponent({
       }
     };
     const actionRemoveLayer = (url) => {
-      const myDom = _filterOptions.find((option) => option.value === url);
-      unref(map)
-        .getLayers()
-        .getArray()
-        .slice()
-        .some((layer) => {
-          if (layer && layer.get("name") === myDom.label) {
-            unref(map).removeLayer(layer);
-            return;
-          }
-        });
+      // const myDom = _filterOptions.find((option) => option.value === url);
+      // unref(map)
+      //   .getLayers()
+      //   .getArray()
+      //   .slice()
+      //   .some((layer) => {
+      //     if (layer && layer.get("name") === myDom.label) {
+      //       unref(map).removeLayer(layer);
+      //       return;
+      //     }
+      //   });
+      let layer = layerController.getLayer(url);
+      layer.setVisible(false);
     };
     const actionAddLayer = (url) => {
-      const myDom = _filterOptions.find((option) => option.value === url);
-      const polygonStyleFunction = function (feature, resolution) {
-        return new Style({
-          stroke: new Stroke({
-            color: myDom.layer_color,
-            width: 1,
+      let vectorLayer = layerController.getLayer(url);
+      if (!layerController.getLayer(url)) {
+        const myDom = _filterOptions.find((option) => option.value === url);
+        const polygonStyleFunction = function (feature, resolution) {
+          return new Style({
+            stroke: new Stroke({
+              color: "RED",
+              width: 1,
+            }),
+            fill: new Fill({
+              color: myDom.layer_color,
+            }),
+            text: createTextStyle(feature, resolution, myDom),
+          });
+        };
+        const _workspace = 'danang';
+        const _url =
+          `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`
+        vectorLayer = new VectorImageLayer({
+          name: myDom.label,
+          source: new VectorSource({
+            format: new GeoJSON(),
+            url: _url,
           }),
-          fill: new Fill({
-            color: myDom.layer_color,
-          }),
-          text: createTextStyle(feature, resolution, myDom),
+          style: polygonStyleFunction,
+          zindex: 1,
         });
-      };
-      const _workspace = 'danang';
-      const _url =
-        `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=50&outputFormat=application%2Fjson`
-      const vectorLayer = new VectorImageLayer({
-        name: myDom.label,
-        source: new VectorSource({
-          format: new GeoJSON(),
-          url: _url,
-        }),
-        style: polygonStyleFunction,
-        zindex: 1,
-      });
-      unref(map).addLayer(vectorLayer);
-      zoomMapToLayer(map, vectorLayer);
+        layerController.addLayer(url, vectorLayer);
+        unref(map).addLayer(vectorLayer);
+      }
+      vectorLayer.setVisible(true);
     };
     // popup
     const popupRef = ref(null);
@@ -158,17 +169,29 @@ export default defineComponent({
       });
     };
     const initPopupEvent = () => {
+      const highLightFeature = function (feature, layer) {
+        let lastFeature = unref(popupEvent).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        feature.originStyle = layer.getStyle();
+        let selectedStyle = FeatureUtils.getSelectedStyle(layer.getStyle());
+        unref(popupEvent).lastFeature = null;
+        if (feature !== lastFeature) {
+          feature.setStyle(selectedStyle);
+          unref(popupEvent).lastFeature = feature;
+        }
+      }
+
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          const name = layer?.get("name");
+          highLightFeature(feature, layer);
+          const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
           const coordinate = evt.coordinate;
-          const hdms = toStringHDMS(toLonLat(coordinate));
-
-          unref(popupContent).innerHTML =
-            "<p>" + name + "</p><code>" + hdms + "</code>";
+          dataFeature.setLocation(coordinate);
+          unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
           unref(overlay).setPosition(coordinate);
           return feature;
-        });
+        }
+        );
       });
     };
     const closePopup = (state) => {
@@ -190,6 +213,7 @@ export default defineComponent({
      * @type {Map}
      */
     const map = ref(null);
+    const layerController = new LayerController();
     provide('map', map);
     const view = ref(
       new View({
@@ -197,7 +221,7 @@ export default defineComponent({
         projection: 'EPSG:5899',
         center: [547944,1779004],
         maxZoom: 17,
-        extent: [508944, 1750004, 588944, 1800004],
+        // extent: [508944, 1750004, 588944, 1800004],
         // constrainResolution: true
       })
     );

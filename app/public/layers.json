@@ -94,5 +94,11 @@
     "layer_index": 1,
     "layer_color": "#D696EC",
     "value": "danang:polygon"
+  },
+  {
+    "label": "Quận Huyện",
+    "layer_index": 1,
+    "layer_color": "#D696EC",
+    "value": "danang:quan-huyen"
   }
 ]
