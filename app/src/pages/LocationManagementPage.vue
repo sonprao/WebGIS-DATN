@@ -351,9 +351,14 @@ export default defineComponent({
         if (unref(currentPopupRef)) vm.$refs[unref(currentPopupRef)].hide();
       });
     };
-
+ 
     const getAll = async () => {
-      const response = await getAllLocation();
+      const query = {
+        page: 1,
+        per_page: 10,
+        // search: 'namm'.replace(/[^a-zA-Z0-9\s]/g, ''),
+      }
+      const response = await getAllLocation(query);
       return response;
     };
     const locationRows = ref([]);

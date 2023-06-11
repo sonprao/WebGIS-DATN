@@ -5,7 +5,22 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') },
-      { path: 'map', component: () => import('pages/MapPage.vue') },
+      {
+        path: 'map',
+        component: () => import('pages/MapPage/index.vue'),
+        children: [
+          {
+            name: 'NoMapPage',
+            path: '',
+            component: () => import('pages/MapPage/NoMapPage.vue'),
+          },
+          {
+            name: 'DetailPage',
+            path: ':id',
+            component: () => import('pages/MapPage/DetailPage.vue'),
+          }
+        ],
+      },
       { path: 'user-management', component: () => import('pages/UserManagementPage.vue') },
       { path: 'location-management', component: () => import('pages/LocationManagementPage.vue') },
       { path: 'profile', component: () => import('pages/ProfilePage.vue') },
@@ -13,9 +28,6 @@ const routes = [
     ]
   },
   { path: '/login', component: () => import('pages/LoginPage.vue') },
-
-  // Always leave this as last one,
-  // but you can also remove it
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue')

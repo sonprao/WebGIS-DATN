@@ -23,9 +23,9 @@ app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers', mapLayerAPI.find)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
 //location
-app.post('/api/locations', locationAPI.updateOrCreate)
+// app.post('/api/locations', locationAPI.updateOrCreate)
 app.put('/api/locations/:id', locationAPI.update)
-app.get('/api/locations:id', locationAPI.get)
+app.get('/api/locations/:id', locationAPI.get)
 app.get('/api/locations', locationAPI.getAll)
 app.delete('/api/locations', locationAPI.delete)
 

@@ -1,81 +1,86 @@
 <template>
-  <div ref="mapRoot" class="mapView">
-    <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers" />
-    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
-  </div>
-  <div ref="popupRef" class="ol-popup">
-    <q-btn
-      ref="popupCloser"
-      class="ol-popup-closer"
-      flat
-      round
-      icon="close"
-      @click="actionClosePopup"
-    ></q-btn>
-    <div ref="popupContent"></div>
-  </div>
+    <div ref="mapRoot" class="mapView">
+      <FloatZoom v-bind="{ map: map, view: view }"/>
+      <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+      <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers" />
+    </div>
+    <div ref="popupRef" class="ol-popup">
+      <q-btn
+        ref="popupCloser"
+        class="ol-popup-closer"
+        flat
+        round
+        icon="close"
+        @click="actionClosePopup"
+      ></q-btn>
+      <div ref="popupContent"></div>
+    </div>
 </template>
 
 <script>
-import View from "ol/View";
-import Map from "ol/Map";
-import { Draw, Modify, Snap } from "ol/interaction";
-import { ScaleLine, defaults as defaultControls } from "ol/control";
-import Overlay from "ol/Overlay";
+import "ol/ol.css";
+import {  Map,  View,  Overlay } from 'ol';
+
 import { toLonLat } from "ol/proj";
 import { toStringHDMS } from "ol/coordinate";
-import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
 import { Fill, Stroke, Style } from "ol/style";
-// importing the OpenLayers stylesheet is required for having
-// good looking buttons!
-import "ol/ol.css";
-import VectorSource from "ol/source/Vector";
+import { Draw, Modify, Snap } from "ol/interaction";
 import GeoJSON from "ol/format/GeoJSON";
-import VectorLayer from "ol/layer/Vector";
-import VectorImageLayer from "ol/layer/VectorImage";
-import TileWMS from "ol/source/TileWMS";
-import ImageWMS from "ol/source/ImageWMS";
-import { Image as ImageLayer } from 'ol/layer';
+import {
+  OSM,
+  TileWMS,
+  ImageWMS,
+  Vector as VectorSource
+} from 'ol/source';
+import {
+  Tile as TileLayer,
+  Image as ImageLayer,
+  Vector as VectorLayer,
+  VectorImage as VectorImageLayer
+} from 'ol/layer';
 import { unByKey } from "ol/Observable";
-
-// import customjson from '../constants/danang.json'
-import {
-  defineComponent,
-  ref,
-  unref,
-  onMounted,
-  getCurrentInstance,
-  h,
-  render,
-  createApp,
-} from "vue";
-import { useQuasar } from "quasar";
-import { i18n } from "boot/i18n.js";
-import _difference from "lodash/difference";
-import FloatAction from "src/components/floatAction.vue";
-import FloatControl from "src/components/floatControl.vue";
-import _filterOptions from "../../public/layers.json";
-import testDataJson from "../../public/RungPhongHo.json";
-import {
-  createTextStyle,
-  scaleControl, zoomMapToLayer,
-} from "src/utils/openLayers";
 import {register} from 'ol/proj/proj4';
 import proj4 from 'proj4';
 proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
 register(proj4);
 proj4.defs('EPSG:5899', '+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.904,-39.303,-111.450,0.00928836,0.01975479,-0.00427372,0.25290627854559 +units=m +no_defs');
 register(proj4);
+import {
+  scaleControl,
+  zoomMapToLayer,
+  createTextStyle,
+} from "src/utils/openLayers";
+
+
+import {
+  defineComponent,
+  ref,
+  unref,
+  onMounted,
+  onUnmounted,
+  getCurrentInstance,
+  h,
+  render,
+  createApp,
+  provide,
+} from "vue";
+import { useQuasar  } from "quasar";
+import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
+import _difference from "lodash/difference";
+import FloatAction from "src/components/floatAction.vue";
+import FloatControl from "src/components/floatControl/index.vue";
+import FloatZoom from "src/components/floatZoom.vue";
+import _filterOptions from "src/constants/layers.json";
 export default defineComponent({
-  name: "MapContainer",
+  name: "DetailPage",
   components: {
+    FloatZoom,
     FloatAction,
     FloatControl,
   },
   props: {},
   setup(props) {
-    // const itext = i18n.global.t('common.user')
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
@@ -101,7 +106,6 @@ export default defineComponent({
         .getArray()
         .slice()
         .some((layer) => {
-          // if (layer && layer.get("url") === url) {
           if (layer && layer.get("name") === myDom.label) {
             unref(map).removeLayer(layer);
             return;
@@ -109,28 +113,6 @@ export default defineComponent({
         });
     };
     const actionAddLayer = (url) => {
-      // const vectorLayer = new TileLayer({
-      //   extent: [xmin, ymin, xmax, ymax],
-      //   source: new TileWMS({
-      //     url: 'http://localhost:8081/geoserver/ne/wms',
-      //     params: {
-      //       // 'TRANSPARENT': true,
-      //       // 'STYLES': null,
-      //       'LAYERS': 'ne:world',
-      //       'TILED' : true,
-      //       // 'exceptions': 'application/vnd.ogc.se_inimage',
-      //       // WIDTH: 769,
-      //       // HEIGHT: 468,
-      //       // TILED: true,
-      //       // 'VERSION': '1.1.1',
-      //       // // 'SRS': 'EPSG:2044',
-      //       // FORMAT: 'image/png',
-      //       // 'BBOX': xmin + ',' + ymin + ',' + xmax + ',' + ymax,
-      //     },
-      //     serverType: 'geoserver',
-      //     // projection: unref(view).getProjection(),
-      //   })
-      // })
       const myDom = _filterOptions.find((option) => option.value === url);
       const polygonStyleFunction = function (feature, resolution) {
         return new Style({
@@ -144,15 +126,14 @@ export default defineComponent({
           text: createTextStyle(feature, resolution, myDom),
         });
       };
-      const _workspace = 'Danang2';
-      const _name = "cam_le__vn_";
+      const _workspace = 'danang';
       const _url =
-        `http://localhost:8080/geoserver/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${_workspace}:${_name}&maxFeatures=50&outputFormat=application%2Fjson`
+        `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=50&outputFormat=application%2Fjson`
       const vectorLayer = new VectorImageLayer({
         name: myDom.label,
         source: new VectorSource({
           format: new GeoJSON(),
-          url: "http://localhost:8080/geoserver/Danang2/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Danang2%3Aho_1&maxFeatures=50&outputFormat=application%2Fjson",
+          url: _url,
         }),
         style: polygonStyleFunction,
         zindex: 1,
@@ -198,30 +179,29 @@ export default defineComponent({
         initPopupEvent();
       }
     };
+    $bus.on('close-popup', closePopup);
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
     // popup
 
-    // draw
-
-    // draw
     /**
      *
      * @type {Map}
      */
     const map = ref(null);
+    provide('map', map);
     const view = ref(
       new View({
         zoom: 11,
         projection: 'EPSG:5899',
-        center: [548944,1770004],
+        center: [547944,1779004],
         maxZoom: 17,
-        projection: 'EPSG:32648'
-        // extent: [xmin, ymin, xmax, ymax]
+        extent: [508944, 1750004, 588944, 1800004],
         // constrainResolution: true
       })
     );
+    provide('view', view);
     onMounted(() => {
       addOverlay();
 
@@ -229,7 +209,6 @@ export default defineComponent({
       map.value = new Map({
         target: vm.$refs["mapRoot"],
         controls: [scaleControl],
-        // controls: defaultControls().extend([scaleControl]),
         overlays: [unref(overlay)],
         layers: [
           new TileLayer({
@@ -240,21 +219,12 @@ export default defineComponent({
         view: unref(view),
       });
       initPopupEvent();
-      vm.$nextTick(() => {
-        // const parser = new WMSCapabilities();
-        // fetch('getcapabilities_1.1.1.xml')
-        //   .then(function (response) {
-        //     return response.text();
-        //   })
-        //   .then(function (text) {
-        //     const result = parser.read(text);
-        //     console.log(result);
-        //     // console.log(JSON.stringify(result, null, 2));
-        //   });
-      });
     });
+    onUnmounted(() => {
+      $bus.off ('close-popup');
+    });
+
     return {
-      // actionAddLayer,
       map,
       view,
       floatActionBind,
@@ -268,7 +238,7 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
+<style lang="scss" scoped>
 html,
 body {
   width: 100%;
@@ -276,9 +246,16 @@ body {
 }
 
 .mapView {
-  height: 680px;
+  height: 80vh;
   width: 100%;
   min-height: inherit;
+  :global(.ol-scale-bar.ol-unselectable) {
+    margin-left: 50px !important;
+  }
+  :global(.ol-scale-line) {
+    right: 8px !important;
+    left: auto;
+  }
 }
 .ol-popup {
   position: absolute;

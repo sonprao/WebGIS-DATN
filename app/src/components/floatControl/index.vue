@@ -37,6 +37,7 @@
               <tab-action />
             </q-tab-panel>
             <q-tab-panel name="two">
+              <tab-layer />
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -56,11 +57,13 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import tabAction from 'src/components/floatControl/tabAction.vue';
+import TabAction from 'src/components/floatControl/tabAction.vue';
+import TabLayer from 'src/components/floatControl/tabLayer.vue';
 export default defineComponent({
   name: "FloatControl",
   components: {
-    tabAction,
+    TabAction,
+    TabLayer,
   },
   props: {
     map: {
