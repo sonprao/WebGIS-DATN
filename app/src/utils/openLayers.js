@@ -11,6 +11,10 @@ import Point from "ol/geom/Point";
 // vue
 import { ref, unref } from "vue";
 import { i18n } from "boot/i18n.js";
+import {
+  CityLandDataFeature,
+  BaseDataFeature
+} from "src/feature/FeatureData.js"
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -32,10 +36,6 @@ const getText = function (feature, resolution, dom) {
   return text;
 };
 
-
-const convertToCorrectFormat = function (string) {
-  return decodeURIComponent(escape(string));
-}
 export const createTextStyle = function (feature, resolution, dom) {
   const size = "12px";
   const height = 1;
@@ -100,15 +100,43 @@ export const FeatureUtils = {
     return convertToCorrectFormat(name);
   },
 
-  getSelectedStyle: function () {
+  /**
+   *
+   * @param feature {Feature}
+   * @param layer {VectorLayer}
+   * @returns {BaseDataFeature}
+   */
+  getDataOfFeature: function (feature, layer) {
+    /**
+     *
+     * @type {BaseDataFeature}
+     */
+    let featureData;
+      switch (layer.get("name")) {
+        case "Sơ đồ đất":
+          featureData = new CityLandDataFeature();
+          break;
+        default:
+          featureData = new BaseDataFeature();
+          break;
+      }
+      console.log(layer, layer.get("name"));
+      featureData.setData(feature);
+      console.log(featureData, feature);
+      return featureData;
+  },
+  /**
+   *
+   * @param style {}
+   * @returns {Style}
+   */
+  getSelectedStyle: function (style) {
     return new Style({
       stroke: new Stroke({
-        color: "red",
-        width: 1,
+        color: "BLUE",
+        width: 3,
       }),
-      fill: new Fill({
-        color: "#FFFFFF",
-      }),
+      fill: style().getFill(),
     })
   },
 
