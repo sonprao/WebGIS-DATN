@@ -9,6 +9,7 @@ export default {
   success: 'Thành công',
   'Users management': 'Quản lý các tài khoản',
   'Locations management': 'Quản lý địa điểm',
+  'Settings': 'Cài đặt',
   //profile
   Profile: 'Trang cá nhân',
   Email: 'Email',
@@ -25,6 +26,10 @@ export default {
   Area: 'Diện tích',
   'Current location': 'Vị trí hiện tại',
   Help: 'Trợ giúp',
+  // Float control
+  'Click to continue drawing the line': 'Click để tiếp tục vẽ đường',
+  'Click to continue drawing the polygon': 'Click để tiếp tục vẽ hình',
+  'Click to start drawing': 'Click để bắt đầu vẽ',
   // user management
   'Disable user': 'Vô hiệu hóa người dùng',
   'Columns': 'Cột',
@@ -47,4 +52,7 @@ export default {
   Cancel: 'Hủy',
   // event
   Update: 'Cập nhật',
+ // search result
+  'No results': 'Không tìm thấy kết quả',
+  'Location': 'Địa điểm',
 }

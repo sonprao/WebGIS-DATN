@@ -1,91 +1,145 @@
 <template>
-  <q-page-sticky
-    ref="stickyRef"
-    class="sticky"
-    position="top-left"
-    :offset="[10, 10]"
-  >
-    <q-btn-group outline color="white" style="flex-direction: column; gap: 2px">
-      <q-btn
-        color="white"
-        text-color="black"
-        round
-        icon="add"
-        class="circle"
-        @click="zoom('in')"
-      >
-        <q-tooltip>{{ $t("Zoom in") }}</q-tooltip>
-      </q-btn>
-      <q-space />
-      <q-btn
-        color="white"
-        text-color="black"
-        round
-        icon="remove"
-        class="circle"
-        @click="zoom('out')"
-      >
-        <q-tooltip>{{ $t("Zoom out") }}</q-tooltip>
-      </q-btn>
-    </q-btn-group>
-  </q-page-sticky>
-  <q-page-sticky
-    ref="stickyRef"
-    class="sticky"
-    position="top-left"
-    :offset="[80, 10]"
-  >
-    <q-btn-toggle
-      class="toogleClass"
-      rounded
-      no-caps
-      clearable
-      unelevated
-      color="white"
-      text-color="#666666"
-      toggle-color="primary"
-      v-model="model"
-      :options="options"
-      @update:model-value="selectControl"
-      @clear="clearControl"
-    >
-    <template v-slot:one>
-        <q-badge v-if="drawCount > 0 && geomType === 'LineString'" color="white" text-color="blue" floating>
-          {{drawCount}}
-        </q-badge>
-        <q-tooltip>{{ $t("Distance") }}</q-tooltip>
-      </template>
+  <q-page-sticky class="sticky" position="top-left" :offset="[10, 10]">
+    <q-card class="my-card" flat bordered style="width: 250px">
+      <q-tabs v-model="tab" class="text-primary">
+        <q-tab
+          label="Tab one"
+          name="one"
+          @click="
+            () => {
+              expanded = true;
+            }
+          "
+        />
+        <q-tab
+          label="Tab two"
+          name="two"
+          @click="
+            () => {
+              expanded = true;
+            }
+          "
+        />
+        <q-btn
+          flat
+          dense
+          color="grey"
+          :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+          style="height: 100%"
+          @click="expanded = !expanded"
+        />
+      </q-tabs>
+      <q-separator />
+      <q-slide-transition>
+        <div v-show="expanded">
+          <q-tab-panels v-model="tab" animated>
+            <q-tab-panel name="one" style="padding: 0; display: grid">
+              <q-btn-toggle
+                class="toogleClass"
+                style="margin: 10px; place-self: center"
+                no-caps
+                clearable
+                color="white"
+                text-color="#666666"
+                toggle-color="primary"
+                v-model="buttonModel"
+                :options="options"
+                @update:model-value="selectControl"
+                @clear="clearControl"
+              >
+                <template v-slot:one>
+                  <q-badge
+                    v-if="lineStringCount > 0"
+                    color="yellow"
+                    text-color="white"
+                    floating
+                  >
+                    {{ lineStringCount }}
+                  </q-badge>
+                  <q-tooltip>{{ $t("Distance") }}</q-tooltip>
+                </template>
 
-      <template v-slot:two>
-        <q-icon name="img:icons/area.png" />
-        <q-tooltip>{{ $t("Area") }}</q-tooltip>
-        <q-badge v-if="drawCount > 0 && geomType === 'Polygon'" color="white" text-color="blue" floating>
-          {{drawCount}}
-        </q-badge>
-      </template>
+                <template v-slot:two>
+                  <q-icon name="img:icons/area.png" />
+                  <q-tooltip>{{ $t("Area") }}</q-tooltip>
+                  <q-badge
+                    v-if="polygonCount > 0"
+                    color="yellow"
+                    text-color="white"
+                    floating
+                    dense
+                  >
+                    {{ polygonCount }}
+                  </q-badge>
+                </template>
 
-      <template v-slot:three>
-        <q-tooltip>{{ $t("Current location") }}</q-tooltip>
-      </template>
-    </q-btn-toggle>
+                <template v-slot:three>
+                  <q-tooltip>{{ $t("Current location") }}</q-tooltip>
+                </template>
+              </q-btn-toggle>
+              <q-separator />
+              <q-list overlay v-if="drawList.length > 0">
+                <q-scroll-area
+                  class="drawListClass"
+                  :style="`height: ${drawList.length * 65}px;`"
+                >
+                  <q-item
+                    v-for="(item, index) of drawList"
+                    :key="index"
+                    clickable
+                    @click="zoomToDraw(item.position)"
+                  >
+                    <q-item-section avatar>
+                      <q-icon :name="item.icon" />
+                    </q-item-section>
 
-    <q-icon size="md" name="help_outline" style="cursor: pointer">
-      <q-popup-proxy>
-        <q-banner>
-          <template v-slot:avatar>
-            <!-- <q-icon name="straighten" /> -->
-          </template>
-          Double click on draw to set the sketch static.
-        </q-banner>
-        <q-banner>
-          <template v-slot:avatar>
-            <!-- <q-icon name="img:icons/area.png" /> -->
-          </template>
-          While draw, hold shift to draw more flexible.
-        </q-banner>
-      </q-popup-proxy>
-      <q-tooltip>{{ $t("Help") }}</q-tooltip>
-    </q-icon>
+                    <q-item-section>
+                      <q-item-label>
+                        <span v-html="item.text"></span>
+                      </q-item-label>
+                      <q-item-label caption>
+                        {{ item.time }}
+                      </q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <div class="text-grey-8 q-gutter-xs">
+                        <q-btn
+                          class="gt-xs"
+                          size="12px"
+                          color="red"
+                          flat
+                          dense
+                          round
+                          icon="delete"
+                          @click.stop="deleteDraw(index)"
+                        />
+                      </div>
+                    </q-item-section>
+                    <q-separator />
+                  </q-item>
+                </q-scroll-area>
+                <q-separator />
+                <q-btn
+                  flat
+                  dense
+                  color="grey"
+                  icon="delete"
+                  style="float: right"
+                  @click="deleteDraw()"
+                />
+              </q-list>
+            </q-tab-panel>
+
+            <q-tab-panel name="two">
+              With so much content to display at once, and often so little
+              screen real-estate, Cards have fast become the design pattern of
+              choice for many companies, including the likes of Google and
+              Twitter.
+            </q-tab-panel>
+          </q-tab-panels>
+        </div>
+      </q-slide-transition>
+    </q-card>
   </q-page-sticky>
 </template>
 
@@ -109,8 +163,6 @@ import { unByKey } from "ol/Observable";
 
 import GeoLocationController from "src/utils/geoLocationController";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
-const continueLineMsg = "Click to continue drawing the line";
-const continuePolygonMsg = "Click to continue drawing the polygon";
 
 export default defineComponent({
   name: "FloatControl",
@@ -126,17 +178,19 @@ export default defineComponent({
     },
   },
   emits: ["closePopup"],
-  setup(props, {emit}) {
+  setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
-    const zoom = (direction) => {
-      unref(props.map).getView().animate({
-        zoom: unref(props.map).getView().getZoom() + (direction === 'in' ? 0.5 : -0.5),
-        duration: 250,
-      });
-    };
-    const model = ref();
+    const continueLineMsg = computed(() =>
+      $t("Click to continue drawing the line")
+    );
+    const continuePolygonMsg = computed(() =>
+      $t("Click to continue drawing the polygon")
+    );
+
+    const tab = ref("one");
+    const buttonModel = ref();
     const options = [
       { icon: "straighten", value: "LineString", slot: "one" },
       { value: "Polygon", slot: "two" },
@@ -171,8 +225,13 @@ export default defineComponent({
     const sketch = ref(null);
     const draw = ref(null);
     const snap = ref(null);
-    const drawCount = ref(0);
-    const geomType = computed(() => unref(model))
+    const drawList = ref([]);
+    const lineStringCount = computed(
+      () => unref(drawList).filter((draw) => draw.type === "LineString").length
+    );
+    const polygonCount = computed(
+      () => unref(drawList).filter((draw) => draw.type === "Polygon").length
+    );
     // draw type
 
     // draw event
@@ -184,13 +243,13 @@ export default defineComponent({
       if (evt.dragging) {
         return;
       }
-      let helpMsg = "Click to start drawing";
+      let helpMsg = $t("Click to start drawing");
       if (unref(sketch)) {
         const geom = unref(sketch).getGeometry();
         if (geom instanceof Polygon) {
-          helpMsg = continuePolygonMsg;
+          helpMsg = unref(continuePolygonMsg);
         } else if (geom instanceof LineString) {
-          helpMsg = continueLineMsg;
+          helpMsg = unref(continueLineMsg);
         }
       }
       helpTooltipElement.value.innerHTML = helpMsg;
@@ -200,36 +259,37 @@ export default defineComponent({
 
     const selectControl = (val) => {
       if (!val) {
-        emit('closePopup', false)
-        unref(geoLocation).removeCurrentLocation()
-        return
+        emit("closePopup", false);
+        $bus.emit('close-popup', false);
+        unref(geoLocation).removeCurrentLocation();
+        return;
       }
-      if (val !== 'place') {
-        emit('closePopup', true)
+      if (val !== "place") {
+        emit("closePopup", true);
+        $bus.emit('close-popup', true);
         addInteraction(val);
-        unref(geoLocation).removeCurrentLocation()
-      }
-      else {
-        emit('closePopup', true)
-        unref(geoLocation).getCurrentLocation()
+        unref(geoLocation).removeCurrentLocation();
+      } else {
+        emit("closePopup", true);
+        $bus.emit('close-popup', true);
+        unref(geoLocation).getCurrentLocation();
       }
     };
     const clearControl = () => {
       // unbind event movePointer
       unByKey(unref(movePointer));
       // clear tooltip-static
-      drawCount.value = 0;
-      document.querySelectorAll("div.ol-tooltip-static").forEach((d) => {
-        d.remove();
-      });
+      // document.querySelectorAll("div.ol-tooltip-static").forEach((d) => {
+      //   d.remove();
+      // });
       // sketch clear
       sketch.value = null;
       unref(props.map).removeInteraction(unref(draw));
       unref(props.map).removeInteraction(unref(snap));
-      unref(props.map).removeLayer(unref(vector));
+      // unref(props.map).removeLayer(unref(vector));
       draw.value = null;
       snap.value = null;
-      source.value = new VectorSource({ wrapX: false });
+      // source.value = new VectorSource({ wrapX: false });
       vector.value = new VectorLayer({
         source: unref(source),
         style: {
@@ -262,20 +322,44 @@ export default defineComponent({
           .on("change", function (evt) {
             const geom = evt.target;
             let output;
+            let type;
             if (geom instanceof Polygon) {
+              type = "Polygon";
               output = formatArea(geom);
               tooltipCoord = geom.getInteriorPoint().getCoordinates();
             } else if (geom instanceof LineString) {
               output = formatLength(geom);
+              type = "LineString";
               tooltipCoord = geom.getLastCoordinate();
             }
             measureTooltipElement.value.innerHTML = output;
             unref(measureTooltip).setPosition(tooltipCoord);
           });
       });
-      drawEnd.value = unref(draw).on("drawend", function () {
-        const currentDocument = document.querySelectorAll("div.ol-tooltip-static")
+      drawEnd.value = unref(draw).on("drawend", function (evt) {
+        const time = new Date().toLocaleString();
+        evt.feature.setId(time);
+        const currentDocument = document.querySelectorAll(
+          "div.ol-tooltip-static"
+        );
         measureTooltipElement.value.className = `ol-tooltip ol-tooltip-static ${currentDocument.length}`;
+        const geometryType = unref(sketch).getGeometry();
+        // if (geometryType instanceof LineString) {
+        //   lineStringCount.value = unref(lineStringCount) + 1;
+        // } else if (geometryType instanceof Polygon) {
+        //   polygonCount.value = unref(polygonCount) + 1;
+        // }
+        drawList.value[unref(drawList).length] = {
+          text: measureTooltipElement.value.innerHTML,
+          type: geometryType instanceof LineString ? "LineString" : "Polygon",
+          icon:
+            geometryType instanceof LineString
+              ? "straighten"
+              : "img:icons/area.png",
+          time,
+          id: time,
+          position: evt.feature.getGeometry().getExtent(),
+        };
         unref(measureTooltip).setOffset([0, -7]);
         // unset sketch
         sketch.value = null;
@@ -283,7 +367,9 @@ export default defineComponent({
         measureTooltipElement.value = null;
         createMeasureTooltip();
         unByKey(unref(listener));
-        drawCount.value = document.querySelectorAll("div.ol-tooltip-static").length; 
+        // drawCount.value = document.querySelectorAll(
+        //   "div.ol-tooltip-static"
+        // ).length;
       });
 
       unref(props.map).addInteraction(unref(draw));
@@ -301,6 +387,30 @@ export default defineComponent({
 
       // snap.value = new Snap({ source: source });
       // unref(props.map).addInteraction(unref(snap));
+    };
+    const zoomToDraw = (position) => {
+      props.map.getView().fit(position, {
+        padding: [100, 100, 100, 100],
+        duration: 1000,
+      });
+    };
+    const deleteDraw = (index = -1) => {
+      if (index !== -1) {
+        const feature = unref(source).getFeatureById(unref(drawList)[index].id);
+        if (feature) {
+          unref(source).removeFeature(feature);
+        }
+        drawList.value.splice(index, 1);
+        document.querySelectorAll("div.ol-tooltip-static")[index].remove();
+      } else {
+        unref(source).clear();
+        document
+          .querySelectorAll("div.ol-tooltip-static")
+          .forEach((d, idex) => {
+            d.remove();
+          });
+        drawList.value = [];
+      }
     };
     const createMeasureTooltip = () => {
       if (unref(measureTooltipElement)) {
@@ -339,24 +449,28 @@ export default defineComponent({
       vm.$nextTick(() => {
         geoLocation.value = new GeoLocationController({
           map: unref(props.map),
-          view: unref(props.view)
-        })
+          view: unref(props.view),
+        });
       });
     });
     return {
       vm,
-      zoom,
-      model,
+      tab,
+      buttonModel,
       options,
-      drawCount,
-      geomType,
+      drawList,
+      expanded: ref(false),
+      lineStringCount,
+      polygonCount,
       selectControl,
       clearControl,
+      zoomToDraw,
+      deleteDraw,
     };
   },
 });
 </script>
-<style scoped>
+<style lang="scss">
 html,
 body {
   width: 100%;
@@ -409,5 +523,16 @@ body {
 
 .ol-tooltip-static:before {
   border-top-color: #ffcc33;
+}
+
+.drawListClass {
+  // max-height: 262px;
+  max-height: 400px;
+  max-width: 300px;
+
+  .q-scrollarea__content.absolute {
+    display: flex;
+    flex-direction: column-reverse;
+  }
 }
 </style>

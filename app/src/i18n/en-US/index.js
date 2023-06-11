@@ -9,6 +9,7 @@ export default {
   success: 'Action was successful',
   'Users management': 'Users management',
   'Locations management': 'Locations management',
+  'Settings': 'Settings',
   //profile
   Profile: 'Profile',
   Email: 'Email',
@@ -25,6 +26,10 @@ export default {
   Area: 'Area',
   'Current location': 'Current location',
   Help: 'Help',
+  // Float control
+  'Click to continue drawing the line': 'Click to continue drawing the line',
+  'Click to continue drawing the polygon': 'Click to continue drawing the polygon',
+  'Click to start drawing': 'Click to start drawing',
   // user management
   'Disable user': 'Disable user',
   'Columns': 'Columns',
@@ -47,4 +52,7 @@ export default {
   Cancel: 'cancel',
   // event
   Update: 'Update',
+  // search result
+  'No results': 'No results',
+  'Location': 'Location',
 }

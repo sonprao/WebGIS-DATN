@@ -5,7 +5,7 @@
     position="top-right"
     :offset="fabPos"
   >
-    <q-btn-dropdown class="glossy" color="purple" :label="$t('layers')">
+    <q-btn-dropdown class="glossy" color="purple" :label="$t('layers')" persistent>
       <q-scroll-area style="height: 200px; min-width: 200px">
         <q-input
           square
@@ -52,18 +52,6 @@
       </q-scroll-area>
     </q-btn-dropdown>
   </q-page-sticky>
-  <!-- <q-page-sticky position="bottom-right" :offset="fabPos">
-    <q-fab
-      icon="add"
-      direction="up"
-      color="accent"
-      :disable="draggingFab"
-      v-touch-pan.prevent.mouse="moveFab"
-    >
-      <q-fab-action @click="onClick" color="primary" icon="person_add" :disable="draggingFab" />
-      <q-fab-action @click="onClick" color="primary" icon="mail" :disable="draggingFab" />
-    </q-fab>
-  </q-page-sticky> -->
 </template>
 
 <script>
@@ -84,13 +72,8 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    // layers: {
-    //   type: Array,
-    //   default: () => [],
-    // },
   },
   setup(props) {
-    // const itext = i18n.global.t('common.user')
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
@@ -99,19 +82,8 @@ export default defineComponent({
     const fabPos = ref([10, 10]);
     const onClick = () => {
     };
-    // const parentHeight = computed(() =>vm.$parent.$el?.offsetHeight)
-    // const parentWidth= computed(()=> vm.$parent.$el?.offsetWidth)
-    const moveFab = (ev) => {
-      // console.log(unref(parentWidth))
-      // draggingFab.value = ev.isFirst !== true && ev.isFinal !== true
-      // const coX = fabPos.value[0] + ev.delta.x
-      // const coY = fabPos.value[1] - ev.delta.y
-      // if (!(coX < 0 || coY < 0 || coX > unref(parentWidth) || coY > unref(parentHeight))) {
-      //   fabPos.value = [coX, coY]
-      // }
-    };
     const groupSearch = ref('');
-    const groupOptions = ref(props.filterOptions);
+    const groupOptions = computed(() => props.filterOptions);
     const group = ref([]);
     const filterGroup = (value) => {
       const _value = value.toLowerCase()
@@ -125,7 +97,6 @@ export default defineComponent({
       fabPos,
       draggingFab,
       onClick,
-      moveFab,
       group,
       groupOptions,
       groupSearch,

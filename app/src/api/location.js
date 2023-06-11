@@ -10,13 +10,19 @@ export const updateLocation = async (params) => {
   return response.data
 }
 
-export const get = async (params) => {
-  const response = await api.get('locations', params)
-  return response
+export const getLocation = async (params) => {
+  const response = await api.get(`locations/${params.id}`, params)
+  return response.data
 }
 
-export const getAllLocation = async (params) => {
-  const response = await api.get('locations', params)
+export const getAllLocation = async (query) => {
+  const queryURL = new URLSearchParams()
+  Object.entries(query).forEach((i) => {
+    queryURL.append(i[0], i[1])  
+  })
+  const response = await api.get('locations', {
+    params: queryURL
+  })
   return response.data
 }
 

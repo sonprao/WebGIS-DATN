@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -25,6 +26,8 @@ model User {
   role        Role @default(USER)
   activate    Boolean @default(true)  
   posts       Post[]
+
+  @@fulltext([name, email])
 }
 
 model Post {
@@ -45,6 +48,9 @@ model Location {
   latitude Float @db.Float  @default(0)
 
   mapLayers MapLayer[]
+
+  @@fulltext([name])
+  @@fulltext([name, description])
 }
 
 model MapLayer {
@@ -54,4 +60,6 @@ model MapLayer {
   url         String    @db.LongText
   location    Location? @relation(fields: [locationId], references: [id])
   locationId  Int?
+
+  @@fulltext([name, description])
 }
