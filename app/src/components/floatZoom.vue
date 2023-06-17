@@ -14,7 +14,7 @@
         class="circle"
         @click="zoom('in')"
       >
-        <q-tooltip>{{ $t("Zoom in") }}</q-tooltip>
+        <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom in") }}</q-tooltip>
       </q-btn>
       <q-space />
       <q-btn
@@ -25,7 +25,7 @@
         class="circle"
         @click="zoom('out')"
       >
-        <q-tooltip>{{ $t("Zoom out") }}</q-tooltip>
+        <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom out") }}</q-tooltip>
       </q-btn>
     </q-btn-group>
   </q-page-sticky>

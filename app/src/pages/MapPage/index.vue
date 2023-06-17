@@ -1,6 +1,5 @@
 <template>
-  <div style="padding: 10px 0 0 10px">
-    <q-select
+    <!-- <q-select
       ref="locationSearchRef"
       v-model="search"
       use-input
@@ -26,13 +25,12 @@
           </q-item-section>
         </q-item>
       </template>
-    </q-select>
-    <q-layout container style="height: 80vh; padding: 0">
-      <q-page-container class="mapContainer">
-        <router-view :key="search?.id" />
-      </q-page-container>
-    </q-layout>
-  </div>
+    </q-select> -->
+  <q-layout container style="height: 93vh; padding: 0">
+    <q-page-container class="mapContainer">
+      <router-view :key="search?.id" />
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script>
@@ -47,7 +45,6 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-import EssentialLink from "components/EssentialLink.vue";
 import { useI18n } from "vue-i18n";
 import { i18n } from "boot/i18n.js";
 import { getAllLocation, getLocation } from "src/api/location";
