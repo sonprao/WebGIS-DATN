@@ -125,7 +125,7 @@ export const FeatureUtils = {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
             break;
-          case SOIL_TYPE_ID.DAT_RUNG:
+          case SOIL_TYPE_ID.RUNG_PHONG_HO:
             featureData = new ForestLandDataFeature();
             break;
           default:
@@ -173,7 +173,7 @@ export const FeatureUtils = {
     if (soilTypeId === null) return;
     let color = "PURPLE";
     switch (soilTypeId) {
-      case SOIL_TYPE_ID.DAT_RUNG:
+      case SOIL_TYPE_ID.RUNG_PHONG_HO:
         color = "GREEN";
         break;
       case SOIL_TYPE_ID.DAT_DON_VI_O:

@@ -164,7 +164,10 @@ const convertToCorrectFormat = function (string) {
 
 export const SOIL_TYPE_ID = {
   DAT_DON_VI_O: 0,
-  DAT_RUNG: 1,
+  RUNG_PHONG_HO: 1,
+  DAT_DU_LICH:2,
+  DAT_CONG_NGHIEP:3,
+  RUNG_SAN_XUAT:3,
 }
 
 
