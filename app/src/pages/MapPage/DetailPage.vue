@@ -21,7 +21,7 @@
 import "ol/ol.css";
 import {  Map,  View,  Overlay } from 'ol';
 
-import { toLonLat } from "ol/proj";
+import { transform } from "ol/proj";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 import { Draw, Modify, Snap } from "ol/interaction";
@@ -225,7 +225,6 @@ export default defineComponent({
         // constrainResolution: true
       })
     );
-    provide('view', view);
     onMounted(() => {
       addOverlay();
 
@@ -270,7 +269,7 @@ body {
 }
 
 .mapView {
-  height: 80vh;
+  height: 93vh;
   width: 100%;
   min-height: inherit;
   :global(.ol-scale-bar.ol-unselectable) {

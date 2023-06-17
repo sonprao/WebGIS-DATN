@@ -23,7 +23,7 @@
       </q-badge>
       <q-tooltip>{{ $t("Distance") }}</q-tooltip>
     </template>
-  
+
     <template v-slot:two>
       <q-icon name="img:icons/area.png" />
       <q-tooltip>{{ $t("Area") }}</q-tooltip>
@@ -37,7 +37,7 @@
         {{ polygonCount }}
       </q-badge>
     </template>
-  
+
     <template v-slot:three>
       <q-tooltip>{{ $t("Current location") }}</q-tooltip>
     </template>
@@ -57,7 +57,7 @@
         <q-item-section avatar>
           <q-icon :name="item.icon" />
         </q-item-section>
-  
+
         <q-item-section>
           <q-item-label>
             <span v-html="item.text"></span>
@@ -104,6 +104,7 @@ import {
   getCurrentInstance,
   computed,
   inject,
+  watch,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
@@ -122,12 +123,17 @@ export default defineComponent({
   name: "TabAction",
   components: {},
   emits: ["closePopup"],
+  props: {
+    tab: {
+      type: String,
+      default: null,
+    },
+  },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
-    const map = inject('map', {});
-    const view = inject('view', {});
+    const map = inject("map", {});
     const continueLineMsg = computed(() =>
       $t("Click to continue drawing the line")
     );
@@ -165,6 +171,7 @@ export default defineComponent({
           "circle-radius": 7,
           "circle-fill-color": "#ffcc33",
         },
+        zIndex: 10,
       })
     );
     const sketch = ref(null);
@@ -204,34 +211,29 @@ export default defineComponent({
 
     const selectControl = (val) => {
       if (!val) {
-        $bus.emit('close-popup', false);
+        $bus.emit("close-popup", false);
         unref(geoLocation).removeCurrentLocation();
         return;
       }
       if (val !== "place") {
-        $bus.emit('close-popup', true);
+        $bus.emit("close-popup", true);
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
-        $bus.emit('close-popup', true);
+        $bus.emit("close-popup", true);
         unref(geoLocation).getCurrentLocation();
+        clearControl();
       }
     };
     const clearControl = () => {
       // unbind event movePointer
       unByKey(unref(movePointer));
-      // clear tooltip-static
-      // document.querySelectorAll("div.ol-tooltip-static").forEach((d) => {
-      //   d.remove();
-      // });
       // sketch clear
       sketch.value = null;
       unref(map).removeInteraction(unref(draw));
       unref(map).removeInteraction(unref(snap));
-      // unref(map).removeLayer(unref(vector));
       draw.value = null;
       snap.value = null;
-      // source.value = new VectorSource({ wrapX: false });
       vector.value = new VectorLayer({
         source: unref(source),
         style: {
@@ -241,7 +243,13 @@ export default defineComponent({
           "circle-radius": 7,
           "circle-fill-color": "#ffcc33",
         },
+        zIndex: 10,
       });
+      if (unref(measureTooltipElement)) {
+        unref(measureTooltipElement)?.parentNode?.removeChild?.(
+          unref(measureTooltipElement)
+        );
+      }
     };
     const addInteraction = (type) => {
       if (unref(draw)) {
@@ -286,11 +294,6 @@ export default defineComponent({
         );
         measureTooltipElement.value.className = `ol-tooltip ol-tooltip-static ${currentDocument.length}`;
         const geometryType = unref(sketch).getGeometry();
-        // if (geometryType instanceof LineString) {
-        //   lineStringCount.value = unref(lineStringCount) + 1;
-        // } else if (geometryType instanceof Polygon) {
-        //   polygonCount.value = unref(polygonCount) + 1;
-        // }
         drawList.value[unref(drawList).length] = {
           text: measureTooltipElement.value.innerHTML,
           type: geometryType instanceof LineString ? "LineString" : "Polygon",
@@ -309,32 +312,25 @@ export default defineComponent({
         measureTooltipElement.value = null;
         createMeasureTooltip();
         unByKey(unref(listener));
-        // drawCount.value = document.querySelectorAll(
-        //   "div.ol-tooltip-static"
-        // ).length;
       });
 
       unref(map).addInteraction(unref(draw));
       createMeasureTooltip();
       createHelpTooltip();
-      movePointer.value = unref(map).on(
-        "pointermove",
-        pointerMoveHandler
-      );
+      movePointer.value = unref(map).on("pointermove", pointerMoveHandler);
       unref(map)
         .getViewport()
         .addEventListener("mouseout", function () {
           unref(helpTooltipElement).classList.add("hidden");
         });
-
-      // snap.value = new Snap({ source: source });
-      // unref(map).addInteraction(unref(snap));
     };
     const zoomToDraw = (position) => {
-      unref(map).getView().fit(position, {
-        padding: [100, 100, 100, 100],
-        duration: 1000,
-      });
+      unref(map)
+        .getView()
+        .fit(position, {
+          padding: [100, 100, 100, 100],
+          duration: 1000,
+        });
     };
     const deleteDraw = (index = -1) => {
       if (index !== -1) {
@@ -383,16 +379,26 @@ export default defineComponent({
         element: unref(helpTooltipElement),
         offset: [15, 0],
         positioning: "center-left",
-      }); //
+      });
       unref(map).addOverlay(unref(helpTooltip));
     };
 
     onMounted(() => {
-      console.log('mounte')
+      console.log("mounte");
+      watch(
+        () => props.tab,
+        (val) => {
+          if (val !== 'TabAction') {
+            clearControl()
+            buttonModel.value = null
+          }
+
+        }
+      );
       vm.$nextTick(() => {
         geoLocation.value = new GeoLocationController({
           map: unref(map),
-          view: unref(view),
+          view: unref(map).getView(),
         });
       });
     });
@@ -413,7 +419,6 @@ export default defineComponent({
 });
 </script>
 <style lang="scss">
-
 .circle {
   border-radius: 50% !important;
 }
@@ -459,7 +464,6 @@ export default defineComponent({
 }
 
 .drawListClass {
-  // max-height: 262px;
   max-height: 60vh;
   max-width: 300px;
 

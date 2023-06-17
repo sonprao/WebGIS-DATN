@@ -35,7 +35,12 @@ module.exports = {
                 id: id,
             },
             include : {
-                mapLayers : true,
+                mapLayers: true,
+                view: {
+                    include: {
+                        projection: true,
+                    },
+                },
             }
         })
         res.json(location)
@@ -67,6 +72,11 @@ module.exports = {
                     take: parseInt(per_page),
                     include: {
                         mapLayers: true,
+                        view: {
+                        include: {
+                            projection: true,
+                        },
+                },
                     },
                 })
             }
@@ -83,6 +93,11 @@ module.exports = {
                 locations = await prisma.location.findMany({
                     include: {
                         mapLayers: true, // Return all fields
+                        view: {
+                            include: {
+                                projection: true,
+                            },
+                        },
                     },
                 })
             }
@@ -98,11 +113,21 @@ module.exports = {
                 name: req.body.name || undefined,
                 description: req.body.description || undefined,
                 workspace: req.body.workspace || undefined,
-                longitude: parseFloat(req.body.longitude) || undefined,
-                latitude: parseFloat(req.body.latitude) || undefined,
+                view: {
+                    update: {
+                        extent: req.body.view?.extent || undefined,
+                        longitude: parseFloat(req.body.view?.longitude) || 0,
+                        latitude: parseFloat(req.body.view?.latitude) || 0,
+                    }
+                }
             },
             include : {
-                mapLayers : true,
+                mapLayers: true, // Return all fields
+                view: {
+                    include: {
+                        projection: true,
+                    },
+                },
             }
         })
         res.json(updateLocation);
