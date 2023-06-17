@@ -1,20 +1,23 @@
-import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
-import { ScaleLine } from "ol/control";
+import {Fill, Stroke, Text, Style, Circle as CircleStyle} from "ol/style";
+import {ScaleLine} from "ol/control";
 import VectorSource from "ol/source/Vector";
-import { Vector as VectorLayer } from "ol/layer";
-import { Draw, Modify, Snap } from "ol/interaction";
+import {Vector as VectorLayer} from "ol/layer";
+import {Draw, Modify, Snap} from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
 import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 // vue
-import { ref, unref } from "vue";
-import { i18n } from "boot/i18n.js";
+import {ref, unref} from "vue";
+import {i18n} from "boot/i18n.js";
 import {
   CityLandDataFeature,
-  BaseDataFeature
+  BaseDataFeature,
+  RoadDataFeature,
+  SOIL_TYPE_ID, ForestLandDataFeature
 } from "src/feature/FeatureData.js"
+
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -58,8 +61,8 @@ export const createTextStyle = function (feature, resolution, dom) {
     textBaseline: "middle",
     font: font,
     text: getText(feature, resolution, dom),
-    fill: new Fill({ color: fillColor }),
-    stroke: new Stroke({ color: outlineColor, width: 3 }),
+    fill: new Fill({color: fillColor}),
+    stroke: new Stroke({color: outlineColor, width: 3}),
     offsetX: 0,
     offsetY: 0,
     placement: "point",
@@ -112,18 +115,34 @@ export const FeatureUtils = {
      * @type {BaseDataFeature}
      */
     let featureData;
-      switch (layer.get("name")) {
-        case "Sơ đồ đất":
-          featureData = new CityLandDataFeature();
-          break;
-        default:
-          featureData = new BaseDataFeature();
-          break;
+    switch (layer.get("name")) {
+      case "Sơ đồ đất": {
+        switch (feature.get("SoilTypeId")) {
+          case SOIL_TYPE_ID.DAT_DON_VI_O:
+            featureData = new CityLandDataFeature();
+            break;
+          case SOIL_TYPE_ID.DAT_RUNG:
+            featureData = new ForestLandDataFeature();
+            break;
+          default:
+            BaseDataFeature();
+        }
       }
-      console.log(layer, layer.get("name"));
-      featureData.setData(feature);
-      console.log(featureData, feature);
-      return featureData;
+        break;
+      case "Giao thông":
+        featureData = new RoadDataFeature();
+        break;
+      case "": {
+        break;
+      }
+      default:
+        featureData = new BaseDataFeature();
+        break;
+    }
+    console.log(layer, layer.get("name"));
+    featureData.setData(feature);
+    console.log(featureData, feature);
+    return featureData;
   },
   /**
    *

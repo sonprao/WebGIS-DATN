@@ -34,6 +34,7 @@ export class CityLandDataFeature extends BaseDataFeature {
     this.area = null;
     this.location = null;
     this.soilType = null;
+    this.soilTypeId = null;
   }
 
   /**
@@ -64,6 +65,15 @@ export class CityLandDataFeature extends BaseDataFeature {
 export class RoadDataFeature extends BaseDataFeature {
   constructor() {
     super();
+    this.osm_id = null;
+    this.code = null;
+    this.fclass = null;
+    this.name = null;
+    this.ref = null;
+    this.oneWay = null;
+    this.maxSpeed = null;
+    this.bridge = null;
+    this.tunnel = null;
   }
 
   /**
@@ -71,38 +81,89 @@ export class RoadDataFeature extends BaseDataFeature {
    * @param feature {Feature}
    */
   setData(feature) {
+    this.osm_id = feature.get("osm_id");
+    this.code = feature.get("code");
+    this.fclass = feature.get("fclass");
+    this.name = feature.get("name");
+    this.oneWay = feature.get("oneway");
+    this.maxSpeed = feature.get("maxSpeed");
+    this.bridge = feature.get("bridge");
+    this.tunnel = feature.get("tunnel");
+    this.length = feature.getGeometry().getLength();
+
   }
 
   getDisplayHtml() {
     const $t = i18n.global.t;
-    return null;
+    const hdms = toStringHDMS(toLonLat(this.location));
+    let str = "<p>" + convertToCorrectFormat(this.name) + "</p>" +
+      "<p>" + $t('code') + " : " + hdms + "</p>" +
+      "<p>" + $t('fclass') + " : " + $t(this.fclass) + "</p>" +
+      "<p>" + $t('oneWay') + " : " + (this.oneWay) + "</p>" +
+      "<p>" + $t('maxSpeed') + " : " + (this.maxSpeed) + "</p>" +
+      "<p>" + $t('Length') + " : " + (this.length) + "</p>";
+    return str;
   }
+
 }
 
 export class ForestLandDataFeature extends BaseDataFeature {
   constructor() {
     super();
+    this.area = null;
   }
-
   /**
    *
    * @param feature {Feature}
    */
   setData(feature) {
+    this.name = feature.get("name");
+    this.area = feature.getGeometry().getArea();
+    this.soilType = feature.get("SoilType");
   }
 
   getDisplayHtml() {
     const $t = i18n.global.t;
-    return null;
+    const hdms = toStringHDMS(toLonLat(this.location));
+    let str = "<p>" + (this.name) + "</p>" +
+      "<p>" + $t('Location') + " : " + hdms + "</p>" +
+      "<p>" + $t('Area') + " : " + Math.round(this.area) + " m2 " + "</p>" +
+      "<p>" + $t('SoilType') + " : " + (this.soilType) + "</p>";
+    return str;
   }
 }
 
 export class RiverDataFeature extends BaseDataFeature {
+  constructor() {
+    super();
+  }
+  setData(feature) {
+    this.area = feature.getArea();
+    this.name = feature.get("Name");
+  }
 
+  getDisplayHtml() {
+    const $t = i18n.global.t;
+    const hdms = toStringHDMS(toLonLat(this.location));
+    let str = "<p>" + (this.name) + "</p>" +
+      "<p>" + $t("location") + (hdms) + "</p>" +
+      "<p>" + $t("area") + (this.area) + "</p>";
+    return str;
+  }
 }
 
 const convertToCorrectFormat = function (string) {
   return decodeURIComponent(escape(string));
+}
+
+// SoilTypeID:
+// Dat rung: 1
+// Dat don vi o : 0
+//
+
+export const SOIL_TYPE_ID = {
+  DAT_RUNG : 0,
+  DAT_DON_VI_O : 1,
 }
 
 
