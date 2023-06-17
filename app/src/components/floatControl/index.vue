@@ -1,10 +1,10 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
-    <q-card class="my-card" flat bordered style="width: 250px">
+    <q-card class="my-card" flat bordered style="width: 300px">
       <q-tabs v-model="tab" class="text-primary">
         <q-tab
-          label="Tab one"
-          name="one"
+          label="Action"
+          name="TabAction"
           @click="
             () => {
               expanded = true;
@@ -12,8 +12,8 @@
           "
         />
         <q-tab
-          label="Tab two"
-          name="two"
+          label="Layer"
+          name="TabLayer"
           @click="
             () => {
               expanded = true;
@@ -32,11 +32,11 @@
       <q-separator />
       <q-slide-transition>
         <div v-show="expanded">
-          <q-tab-panels v-model="tab" animated :keep-alive="true" :keep-alive-include="['one', 'two']">
-            <q-tab-panel name="one" style="padding: 0; display: grid">
-              <tab-action />
+          <q-tab-panels v-model="tab" animated :keep-alive="true">
+            <q-tab-panel name="TabAction" style="padding: 0; display: grid">
+              <tab-action :tab="tab" />
             </q-tab-panel>
-            <q-tab-panel name="two">
+            <q-tab-panel name="TabLayer" style="padding: 0; display: grid">
               <tab-layer />
             </q-tab-panel>
           </q-tab-panels>
@@ -81,7 +81,7 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
 
-    const tab = ref("one");
+    const tab = ref(null);
     const expanded = ref(false);
     return {
       vm,

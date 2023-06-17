@@ -18,17 +18,19 @@
 
 <script>
 import "ol/ol.css";
-import {
-  Map as Map,
-  View as View,
-  Overlay as Overlay,
-} from 'ol';
+import { Map, View, Overlay } from 'ol';
+import { toStringHDMS } from "ol/coordinate";
+import { Fill, Stroke, Style } from "ol/style";
 
 import {  OSM as OSM} from 'ol/source';
 import {  Tile as TileLayer } from 'ol/layer';
 import { unByKey } from "ol/Observable";
-import {scaleControl} from "src/utils/openLayers";
-
+import { scaleControl } from "src/utils/openLayers";
+import { transform } from "ol/proj";
+import {register} from 'ol/proj/proj4';
+import proj4 from 'proj4';
+proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
+register(proj4);
 
 import {
   defineComponent,
@@ -81,15 +83,15 @@ export default defineComponent({
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
-     const initPopupEvent = () => {
+    const initPopupEvent = () => {
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
           const name = layer?.get("name");
           const coordinate = evt.coordinate;
-          const hdms = toStringHDMS(toLonLat(coordinate));
+          const hdms = toStringHDMS(transform(coordinate, 'EPSG:5899',  'EPSG:4326')).replace('N ', 'N\n');
 
           unref(popupContent).innerHTML =
-            "<p>" + name + "</p><code>" + hdms + "</code>";
+            "<p>" + name + "</p><pre>" + hdms + "</pre>";
           unref(overlay).setPosition(coordinate);
           return feature;
         });
@@ -110,7 +112,6 @@ export default defineComponent({
         maxZoom: 12,
       })
     );
-    provide('view', view);
     onMounted(() => {
       addOverlay();
 
@@ -126,6 +127,7 @@ export default defineComponent({
         // the map view will initially show the whole world
         view: unref(view),
       });
+      initPopupEvent();
     });
     return {
       map,
@@ -147,7 +149,7 @@ body {
 }
 
 .mapView {
-  height: 80vh;
+  height: 93vh;
   width: 100%;
   min-height: inherit;
   :global(.ol-scale-bar.ol-unselectable) {

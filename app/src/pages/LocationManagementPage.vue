@@ -45,10 +45,10 @@
             {{ props.row.description }}
           </q-td>
           <q-td key="longitude" :props="props">
-            {{ props.row.longitude }}
+            {{ props.row?.view?.longitude }}
           </q-td>
           <q-td key="latitude" :props="props">
-            {{ props.row.latitude }}
+            {{ props.row?.view?.latitude }}
           </q-td>
           <q-td key="workspace" :props="props">
             {{ props.row.workspace }}
@@ -96,13 +96,15 @@
                   :label="$t('Description')"
                 />
                 <q-input
-                  v-model="scope.value.longitude"
+                  v-model="scope.value.view.longitude"
+                  type="number"
                   dense
                   autofocus
                   :label="$t('Longitude')"
                 />
                 <q-input
-                  v-model="scope.value.latitude"
+                  v-model="scope.value.view.latitude"
+                  type="number"
                   dense
                   autofocus
                   :label="$t('Latitude')"
@@ -189,6 +191,7 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { getAllLocation, updateLocation } from "src/api/location";
+import { transformProjection } from "src/utils/openLayers.js";
 export default defineComponent({
   name: "LocationManagementPage",
   setup() {
@@ -297,7 +300,10 @@ export default defineComponent({
         field: "url",
       },
     ]);
-
+    const formatLongLat = (center) => {
+      const _center = JSON.parse(center?? '{}')
+      return _center
+    }
     const saveEdit = async (value, props) => {
       const updateParams = {
         id: value.id,
@@ -307,10 +313,45 @@ export default defineComponent({
         updateParams.description = value.description;
       if (value.workspace !== props.workspace)
         updateParams.workspace = value.workspace;
-      if (value.longitude !== props.longitude)
-        updateParams.longitude = value.longitude;
-      if (value.latitude !== props.latitude)
-        updateParams.latitude = value.latitude;
+      if (value.view?.latitude !== props.view.latitude) {
+        Object.assign(updateParams, {
+          ...updateParams,
+          view: {
+            ...updateParams.view,
+            latitude: value.view?.latitude,
+          }
+        })
+      }
+          updateParams.view.latitude = value.view.latitude;
+      if (value.view?.longitude !== props.view.longitude) {
+        Object.assign(updateParams, {
+          ...updateParams,
+          view: {
+            ...updateParams.view,
+            longitude: value.view?.longitude,
+          }
+        })
+      }
+      const longLat = transformProjection({
+        to: props.view?.projection?.name || 'EPSG:4326',
+        definition: props.view?.projection?.definition || '',
+        coordinates: [
+          parseFloat(value.view?.longitude || props.view.longitude),
+          parseFloat(value.view?.latitude || props.view.latitude)
+        ]
+      })
+      Object.assign(updateParams, {
+        ...updateParams,
+        view: {
+          ...updateParams.view,
+          extent: JSON.stringify([
+            longLat[0] - 44000, // min lat
+            longLat[1] - 29000, // min long
+            longLat[0] + 50000, // max lat
+            longLat[1] + 29000, // min long
+          ])
+        }
+      })
       const response = await updateLocation(updateParams);
       const currentRow = locationRows.value.find(
         (row) => row.id === response.id
@@ -378,6 +419,7 @@ export default defineComponent({
       mapColumns,
       locationRows,
       pagination,
+      formatLongLat,
       saveEdit,
       deleteLocation,
       currentPopupRef,

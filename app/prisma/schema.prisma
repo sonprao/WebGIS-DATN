@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
@@ -23,8 +23,8 @@ model User {
   name        String?
   given_name  String?
   family_name String?
-  role        Role @default(USER)
-  activate    Boolean @default(true)  
+  role        Role    @default(USER)
+  activate    Boolean @default(true)
   posts       Post[]
 
   @@fulltext([name, email])
@@ -40,22 +40,41 @@ model Post {
 }
 
 model Location {
-  id        Int        @id @default(autoincrement())
-  name     String    @unique
-  description String   @db.LongText
-  workspace String
-  longitude Float @db.Float  @default(0)
-  latitude Float @db.Float  @default(0)
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String @db.LongText
+  workspace   String
 
   mapLayers MapLayer[]
+  view      MapView?
 
   @@fulltext([name])
   @@fulltext([name, description])
 }
 
+model MapView {
+  id           Int         @id @default(autoincrement())
+  projectionId Int?
+  projection   Projection? @relation(fields: [projectionId], references: [id])
+  zoom         Float       @default(10) @db.Float
+  maxZoom      Float       @default(18) @db.Float
+  longitude    Float       @default(0) @db.Float
+  latitude     Float       @default(0) @db.Float
+  extent       String      @db.LongText
+  location     Location    @relation(fields: [locationId], references: [id])
+  locationId   Int         @unique
+}
+
+model Projection {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  definition String    @db.LongText
+  mapViews   MapView[]
+}
+
 model MapLayer {
-  id        Int        @id @default(autoincrement())
-  name       String
+  id          Int       @id @default(autoincrement())
+  name        String
   description String?
   url         String    @db.LongText
   location    Location? @relation(fields: [locationId], references: [id])
