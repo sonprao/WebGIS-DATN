@@ -159,31 +159,35 @@ export const FeatureUtils = {
         color: "BLUE",
         width: 3,
       }),
-      fill: style().getFill(),
+      fill: style.getFill(),
     })
   },
 
   /**
    *
-   * @param soilTypeID {SOIL_TYPE_ID}
+   * @param feature {Feature}
+   * @param
    */
-  getStyleBySoilType: function (soilTypeID, style) {
+  setStyleBySoilType: function (feature) {
+    let soilTypeId = feature.get("SoilTypeId");
+    if (soilTypeId === null) return;
     let color = "PURPLE";
-    switch (soilTypeID) {
+    switch (soilTypeId) {
       case SOIL_TYPE_ID.DAT_RUNG:
         color = "GREEN";
-        return;
+        break;
       case SOIL_TYPE_ID.DAT_DON_VI_O:
         color = "PURPLE";
-        return;
+        break;
     }
-    return new Style({
-      stroke: style().getStroke(),
-      fill: new Fill ({
-        color:color
+    let style = feature.getStyle();
+    feature.setStyle( new Style({
+      stroke : style.getStroke(),
+      fill : new Fill({
+        color : color
       })
-    })
-  }
+    }))
+  },
 
   // TODO: get other Properties of the feature here
 }

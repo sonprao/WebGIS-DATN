@@ -138,7 +138,7 @@ export default defineComponent({
         };
         const _workspace = 'danang';
         const _url =
-          `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`
+          `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=20000&outputFormat=application%2Fjson`
         vectorLayer = new VectorImageLayer({
           name: myDom.label,
           source: new VectorSource({
@@ -154,11 +154,8 @@ export default defineComponent({
         let vectorSource = vectorLayer.getSource();
         vectorSource.once('change', () => {
           vectorSource.getFeatures().forEach((feature) => {
-            let soilTypeId = feature.get("SoilTypeId");
-            if (soilTypeId !== null)
-              feature.setStyle(FeatureUtils.getStyleBySoilType(soilTypeId, polygonStyleFunction))
-            else
-              feature.setStyle(polygonStyleFunction.bind(feature))
+            feature.setStyle(vectorLayer.getStyle()());
+            FeatureUtils.setStyleBySoilType(feature);
           })
         });
       }
@@ -185,7 +182,7 @@ export default defineComponent({
         let lastFeature = unref(popupEvent).lastFeature;
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
         feature.originStyle = feature.getStyle();
-        let selectedStyle = FeatureUtils.getSelectedStyle(layer.getStyle());
+        let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
         unref(popupEvent).lastFeature = null;
         if (feature !== lastFeature) {
           feature.setStyle(selectedStyle);
