@@ -57,7 +57,8 @@ export class CityLandDataFeature extends BaseDataFeature {
       "<p>" + $t('Area') + " : " + Math.round(this.area) + " m2 " + "</p>" +
       "<p>" + $t('Owner') + " : " + (this.ownerName) + "</p>" +
       "<p>" + $t('SoilType') + " : " + (this.soilType) + "</p>" +
-      "<p>" + $t('Status') + " : " + (this.progress) + "</p>";
+      "<p>" + $t('Status') + " : " + (this.progress) + "</p>" +
+      "<p>" + $t('SoilTypeId') + " : " + (this.soilTypeId) + "</p>";
     return str;
   }
 }
@@ -89,8 +90,6 @@ export class RoadDataFeature extends BaseDataFeature {
     this.maxSpeed = feature.get("maxSpeed");
     this.bridge = feature.get("bridge");
     this.tunnel = feature.get("tunnel");
-    this.length = feature.getGeometry().getLength();
-
   }
 
   getDisplayHtml() {
@@ -100,8 +99,8 @@ export class RoadDataFeature extends BaseDataFeature {
       "<p>" + $t('code') + " : " + hdms + "</p>" +
       "<p>" + $t('fclass') + " : " + $t(this.fclass) + "</p>" +
       "<p>" + $t('oneWay') + " : " + (this.oneWay) + "</p>" +
-      "<p>" + $t('maxSpeed') + " : " + (this.maxSpeed) + "</p>" +
-      "<p>" + $t('Length') + " : " + (this.length) + "</p>";
+      "<p>" + $t('maxSpeed') + " : " + (this.maxSpeed) + "</p>"
+    ;
     return str;
   }
 
@@ -112,6 +111,7 @@ export class ForestLandDataFeature extends BaseDataFeature {
     super();
     this.area = null;
   }
+
   /**
    *
    * @param feature {Feature}
@@ -137,6 +137,7 @@ export class RiverDataFeature extends BaseDataFeature {
   constructor() {
     super();
   }
+
   setData(feature) {
     this.area = feature.getArea();
     this.name = feature.get("Name");
@@ -162,8 +163,8 @@ const convertToCorrectFormat = function (string) {
 //
 
 export const SOIL_TYPE_ID = {
-  DAT_RUNG : 0,
-  DAT_DON_VI_O : 1,
+  DAT_DON_VI_O: 0,
+  DAT_RUNG: 1,
 }
 
 

@@ -1,30 +1,30 @@
 <template>
-    <div ref="mapRoot" class="mapView">
-      <FloatZoom v-bind="{ map: map, view: view }"/>
-      <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
-      <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers" />
-    </div>
-    <div ref="popupRef" class="ol-popup">
-      <q-btn
-        ref="popupCloser"
-        class="ol-popup-closer"
-        flat
-        round
-        icon="close"
-        @click="actionClosePopup"
-      ></q-btn>
-      <div ref="popupContent"></div>
-    </div>
+  <div ref="mapRoot" class="mapView">
+    <FloatZoom v-bind="{ map: map, view: view }"/>
+    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup"/>
+    <FloatAction v-bind="floatActionBind" @changeLayers="changeLayers"/>
+  </div>
+  <div ref="popupRef" class="ol-popup">
+    <q-btn
+      ref="popupCloser"
+      class="ol-popup-closer"
+      flat
+      round
+      icon="close"
+      @click="actionClosePopup"
+    ></q-btn>
+    <div ref="popupContent"></div>
+  </div>
 </template>
 
 <script>
 import "ol/ol.css";
-import {  Map,  View,  Overlay } from 'ol';
+import {Map, View, Overlay} from 'ol';
 
-import { transform } from "ol/proj";
-import { toStringHDMS } from "ol/coordinate";
-import { Fill, Stroke, Style } from "ol/style";
-import { Draw, Modify, Snap } from "ol/interaction";
+import {transform} from "ol/proj";
+import {toStringHDMS} from "ol/coordinate";
+import {Fill, Stroke, Style} from "ol/style";
+import {Draw, Modify, Snap} from "ol/interaction";
 import GeoJSON from "ol/format/GeoJSON";
 import {
   OSM,
@@ -38,9 +38,10 @@ import {
   Vector as VectorLayer,
   VectorImage as VectorImageLayer
 } from 'ol/layer';
-import { unByKey } from "ol/Observable";
+import {unByKey} from "ol/Observable";
 import {register} from 'ol/proj/proj4';
 import proj4 from 'proj4';
+
 proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
 register(proj4);
 proj4.defs('EPSG:5899', '+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.904,-39.303,-111.450,0.00928836,0.01975479,-0.00427372,0.25290627854559 +units=m +no_defs');
@@ -68,9 +69,9 @@ import {
   createApp,
   provide,
 } from "vue";
-import { useQuasar  } from "quasar";
-import { i18n } from "boot/i18n.js";
-import { $bus } from "boot/bus.js";
+import {useQuasar} from "quasar";
+import {i18n} from "boot/i18n.js";
+import {$bus} from "boot/bus.js";
 import _difference from "lodash/difference";
 import FloatAction from "src/components/floatAction.vue";
 import FloatControl from "src/components/floatControl/index.vue";
@@ -149,6 +150,17 @@ export default defineComponent({
         });
         layerController.addLayer(url, vectorLayer);
         unref(map).addLayer(vectorLayer);
+
+        let vectorSource = vectorLayer.getSource();
+        vectorSource.once('change', () => {
+          vectorSource.getFeatures().forEach((feature) => {
+            let soilTypeId = feature.get("SoilTypeId");
+            if (soilTypeId !== null)
+              feature.setStyle(FeatureUtils.getStyleBySoilType(soilTypeId, polygonStyleFunction))
+            else
+              feature.setStyle(polygonStyleFunction.bind(feature))
+          })
+        });
       }
       vectorLayer.setVisible(true);
     };
@@ -172,7 +184,7 @@ export default defineComponent({
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        feature.originStyle = layer.getStyle();
+        feature.originStyle = feature.getStyle();
         let selectedStyle = FeatureUtils.getSelectedStyle(layer.getStyle());
         unref(popupEvent).lastFeature = null;
         if (feature !== lastFeature) {
@@ -183,14 +195,14 @@ export default defineComponent({
 
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          highLightFeature(feature, layer);
-          const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
-          const coordinate = evt.coordinate;
-          dataFeature.setLocation(coordinate);
-          unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-          unref(overlay).setPosition(coordinate);
-          return feature;
-        }
+            highLightFeature(feature, layer);
+            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+            const coordinate = evt.coordinate;
+            dataFeature.setLocation(coordinate);
+            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+            unref(overlay).setPosition(coordinate);
+            return feature;
+          }
         );
       });
     };
@@ -219,7 +231,7 @@ export default defineComponent({
       new View({
         zoom: 11,
         projection: 'EPSG:5899',
-        center: [547944,1779004],
+        center: [547944, 1779004],
         maxZoom: 17,
         // extent: [508944, 1750004, 588944, 1800004],
         // constrainResolution: true
@@ -244,7 +256,7 @@ export default defineComponent({
       initPopupEvent();
     });
     onUnmounted(() => {
-      $bus.off ('close-popup');
+      $bus.off('close-popup');
     });
 
     return {
@@ -272,14 +284,17 @@ body {
   height: 93vh;
   width: 100%;
   min-height: inherit;
+
   :global(.ol-scale-bar.ol-unselectable) {
     margin-left: 50px !important;
   }
+
   :global(.ol-scale-line) {
     right: 8px !important;
     left: auto;
   }
 }
+
 .ol-popup {
   position: absolute;
   background-color: white;
@@ -291,6 +306,7 @@ body {
   left: -50px;
   min-width: 280px;
 }
+
 .ol-popup:after,
 .ol-popup:before {
   top: 100%;
@@ -301,18 +317,21 @@ body {
   position: absolute;
   pointer-events: none;
 }
+
 .ol-popup:after {
   border-top-color: white;
   border-width: 10px;
   left: 48px;
   margin-left: -10px;
 }
+
 .ol-popup:before {
   border-top-color: #cccccc;
   border-width: 11px;
   left: 48px;
   margin-left: -11px;
 }
+
 .ol-popup-closer {
   text-decoration: none;
   position: absolute;

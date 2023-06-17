@@ -1,26 +1,27 @@
-import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
-import { ScaleLine } from "ol/control";
+import {Fill, Stroke, Text, Style, Circle as CircleStyle} from "ol/style";
+import {ScaleLine} from "ol/control";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
   VectorImage as VectorImageLayer
 } from "ol/layer";
 import GeoJSON from "ol/format/GeoJSON";
-import { Draw, Modify, Snap } from "ol/interaction";
+import {Draw, Modify, Snap} from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
 import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 // vue
-import { ref, unref } from "vue";
-import { i18n } from "boot/i18n.js";
+import {ref, unref} from "vue";
+import {i18n} from "boot/i18n.js";
 import {
   CityLandDataFeature,
   BaseDataFeature,
   RoadDataFeature,
   SOIL_TYPE_ID, ForestLandDataFeature
 } from "src/feature/FeatureData.js"
+
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -64,8 +65,8 @@ export const createTextStyle = function (feature, resolution, dom) {
     textBaseline: "middle",
     font: font,
     text: getText(feature, resolution, dom),
-    fill: new Fill({ color: fillColor }),
-    stroke: new Stroke({ color: outlineColor, width: 3 }),
+    fill: new Fill({color: fillColor}),
+    stroke: new Stroke({color: outlineColor, width: 3}),
     offsetX: 0,
     offsetY: 0,
     placement: "point",
@@ -128,7 +129,7 @@ export const FeatureUtils = {
             featureData = new ForestLandDataFeature();
             break;
           default:
-            BaseDataFeature();
+            featureData = new CityLandDataFeature();
         }
       }
         break;
@@ -162,16 +163,38 @@ export const FeatureUtils = {
     })
   },
 
+  /**
+   *
+   * @param soilTypeID {SOIL_TYPE_ID}
+   */
+  getStyleBySoilType: function (soilTypeID, style) {
+    let color = "PURPLE";
+    switch (soilTypeID) {
+      case SOIL_TYPE_ID.DAT_RUNG:
+        color = "GREEN";
+        return;
+      case SOIL_TYPE_ID.DAT_DON_VI_O:
+        color = "PURPLE";
+        return;
+    }
+    return new Style({
+      stroke: style().getStroke(),
+      fill: new Fill ({
+        color:color
+      })
+    })
+  }
+
   // TODO: get other Properties of the feature here
 }
 
 // control
-import { transform } from "ol/proj";
+import {transform} from "ol/proj";
 import proj4 from "proj4";
-import { register } from "ol/proj/proj4";
+import {register} from "ol/proj/proj4";
 
 export const transformProjection = (option) => {
-  const { from = 'EPSG:4326', to = 'EPSG:4326', definition = '', coordinates = [0, 0] } = option
+  const {from = 'EPSG:4326', to = 'EPSG:4326', definition = '', coordinates = [0, 0]} = option
   if (from !== 'EPSG:4326') {
     proj4.defs(from, definition);
   } else if (to !== 'EPSG:4326') {
@@ -189,21 +212,21 @@ export const getGeoJsonUrl = function (workspace, urlName) {
 export const randomColor = function () {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`
 }
-export const actionAddLayer = ({ layer, workspace, map }) => {
+export const actionAddLayer = ({layer, workspace, map}) => {
   // for (const [index, ly] of Object.entries(unref(map).getLayers().getArray())) {
   //   if (ly instanceof VectorImageLayer && ly.get('id') === layer.id) {
   //     ly.setVisible(true)
   //     return
   //   }
   // }
-   const currentLayer = unref(map).getLayers().getArray().find(
+  const currentLayer = unref(map).getLayers().getArray().find(
     (ly) => ly.get('id') === layer.id && ly instanceof VectorImageLayer
-   )
+  )
   if (currentLayer) {
     currentLayer.setVisible(true)
     return
   }
-  const color =  randomColor()
+  const color = randomColor()
   const polygonStyleFunction = function (feature, resolution) {
     return new Style({
       stroke: new Stroke({
