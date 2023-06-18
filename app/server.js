@@ -18,6 +18,11 @@ app.get('/api/users/:id',  userAPI.findUser)
 app.get('/api/users',  userAPI.getAll)
 app.post('/api/users', userAPI.updateOrCreateUser)
 app.put('/api/users/:id', userAPI.activateUser)
+app.post('/api/login', userAPI.login)
+app.post('/api/login-google', userAPI.loginGoogle)
+// profile
+app.get('/api/profile',  userAPI.getAll)
+
 // mapLayer
 app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers', mapLayerAPI.find)

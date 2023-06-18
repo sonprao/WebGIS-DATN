@@ -37,11 +37,13 @@ import {
   ref,
   unref,
   onMounted,
+  onUnmounted,
   getCurrentInstance,
   provide,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
 export default defineComponent({
@@ -80,6 +82,7 @@ export default defineComponent({
         initPopupEvent();
       }
     };
+    $bus.on('close-popup', closePopup);
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
@@ -128,6 +131,9 @@ export default defineComponent({
         view: unref(view),
       });
       initPopupEvent();
+    });
+    onUnmounted(() => {
+      $bus.off('close-popup');
     });
     return {
       map,

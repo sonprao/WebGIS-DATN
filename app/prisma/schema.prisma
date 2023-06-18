@@ -17,15 +17,28 @@ enum Role {
 }
 
 model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String   @db.VarChar(32)
+  role        Role    @default(USER)
+  activate    Boolean @default(true)
+  posts    Post[]
+  profile  Profile?
+
+  @@fulltext([email])
+  @@fulltext([email, password])
+}
+
+model Profile {
   id          String  @id @default(uuid())
   sub         String  @unique
   email       String  @unique
   name        String?
   given_name  String?
   family_name String?
-  role        Role    @default(USER)
-  activate    Boolean @default(true)
-  posts       Post[]
+  picture     String  @db.LongText
+  user        User    @relation(fields: [userId], references: [id])
+  userId      String  @unique
 
   @@fulltext([name, email])
 }

@@ -106,19 +106,22 @@ export default defineComponent({
     const search = ref("");
     const hint = ref("");
     const options = ref([]);
+    const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
-      if (val.length < 1) {
-        abort();
-        return;
+      if (val.length < 2) {
+        // abort();
+        update(async () => { 
+          options.value = unref(defaultOptions)
+        })
+      } else {
+        update(async () => {
+          const query = {
+            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
+          };
+          const response = await getAllLocation(query);
+          options.value = response;
+        });
       }
-      update(async () => {
-        const query = {
-          search: val,
-          search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
-        };
-        const response = await getAllLocation(query);
-        options.value = response;
-      });
     };
     const location = ref(null);
     provide("location", location);
@@ -179,6 +182,13 @@ export default defineComponent({
     }
     onMounted(() => {
       console.log('tablayer mounted')
+      const query = {
+          page: 1,
+          per_page: 10,
+        };
+      getAllLocation(query).then((response) => {
+        defaultOptions.value = response; 
+      });
       watch(
         () => layerCheckbox.value,
         (newVal, oldVal) => {

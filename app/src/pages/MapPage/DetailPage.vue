@@ -244,7 +244,7 @@ export default defineComponent({
       initPopupEvent();
     });
     onUnmounted(() => {
-      $bus.off ('close-popup');
+      $bus.off('close-popup');
     });
 
     return {
