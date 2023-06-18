@@ -128,7 +128,7 @@ export default defineComponent({
           return new Style({
             stroke: new Stroke({
               color: "RED",
-              width: 1,
+              width: 0.25,
             }),
             fill: new Fill({
               color: myDom.layer_color,
@@ -217,7 +217,6 @@ export default defineComponent({
     };
 
       // popup
-
     /**
      *
      * @type {Map}
