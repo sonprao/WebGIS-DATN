@@ -125,7 +125,7 @@ export const FeatureUtils = {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
             break;
-          case SOIL_TYPE_ID.RUNG_PHONG_HO:
+          case SOIL_TYPE_ID.RUNG_DAC_DUNG:
             featureData = new ForestLandDataFeature();
             break;
           default:
@@ -166,19 +166,35 @@ export const FeatureUtils = {
   /**
    *
    * @param feature {Feature}
-   * @param
+     * @param
    */
   setStyleBySoilType: function (feature) {
     let soilTypeId = feature.get("SoilTypeId");
-    if (soilTypeId === null) return;
-    let color = "PURPLE";
+    let color;
     switch (soilTypeId) {
-      case SOIL_TYPE_ID.RUNG_PHONG_HO:
-        color = "GREEN";
+      case SOIL_TYPE_ID.RUNG_DAC_DUNG:
+        color = "#00AE46";
         break;
       case SOIL_TYPE_ID.DAT_DON_VI_O:
-        color = "PURPLE";
+        color = "#C959D1";
         break;
+      case SOIL_TYPE_ID.RUNG_PHONG_HO:
+        color = "#71FF6F";
+        break;
+      case SOIL_TYPE_ID.DAT_DU_LICH:
+        color = "#FF5A99";
+        break;
+      case SOIL_TYPE_ID.DAT_DICH_VU:
+        color = "#F3A64B";
+        break;
+      case SOIL_TYPE_ID.DAT_CONG_NGHIEP:
+        color = "#FFFF1D";
+        break;
+      case SOIL_TYPE_ID.RUNG_SAN_XUAT:
+        color = "#85B66F";
+        break;
+      default:
+        color = "WHITE";
     }
     let style = feature.getStyle();
     feature.setStyle( new Style({

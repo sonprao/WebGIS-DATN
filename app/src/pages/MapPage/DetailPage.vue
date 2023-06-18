@@ -138,7 +138,7 @@ export default defineComponent({
         };
         const _workspace = 'danang';
         const _url =
-          `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=20000&outputFormat=application%2Fjson`
+          `${process.env.GEO_SERVER_URL}/${_workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`
         vectorLayer = new VectorImageLayer({
           name: myDom.label,
           source: new VectorSource({
@@ -215,7 +215,8 @@ export default defineComponent({
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
-    // popup
+
+      // popup
 
     /**
      *
