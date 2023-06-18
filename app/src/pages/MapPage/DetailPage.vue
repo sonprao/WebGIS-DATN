@@ -216,6 +216,15 @@ export default defineComponent({
       unref(overlay).setPosition(undefined);
     };
 
+
+    const actionUpdateFeature = (layerName, feature, dataFeature) => {
+      const geoserverUrl = process.env.GEO_SERVER_URL;
+      const workspace = "danang";
+      const datastores = "ows";
+      const apiUrl = `${geoserverUrl}/rest/workspaces/${workspace}/datastores/${datastores}/featuretypes/${layerName}/features/${feature.getId()}`;
+      
+    }
+
       // popup
     /**
      *
