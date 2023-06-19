@@ -7,6 +7,8 @@ export default {
   Warning: 'Cảnh báo',
   failed: 'Thất bại',
   success: 'Thành công',
+  Delete: 'Xóa',
+  Download: 'Tải xuống',
   'Users management': 'Quản lý các tài khoản',
   'Locations management': 'Quản lý địa điểm',
   'Settings': 'Cài đặt',

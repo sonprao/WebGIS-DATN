@@ -39,7 +39,7 @@ const routes = [
           authRequired: true,
         },
       },
-      { path: 'profile', component: () => import('pages/ProfilePage.vue') },
+      { path: 'profile', component: () => import('pages/ProfilePage/index.vue') },
       // { path: 'logout', component: () => import('pages/LogoutPage.vue') },
     ]
   },

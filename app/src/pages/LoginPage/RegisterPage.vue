@@ -1,5 +1,5 @@
 <template>
-  <!-- <img src="" class="wave" alt="login-wave"> -->
+  <img src="~assets/background.jpg" class="wave" alt="login-wave">
   <div class="row" style="height: 90vh">
     <div class="col-0 col-md-6 flex justify-center content-center"></div>
     <div
@@ -14,9 +14,9 @@
         <q-card-section class="row items-start justify-center q-mt-lg">
           <q-avatar size="103px" class="absolute-center shadow-10">
             <img
-              src="~assets/quasar-logo-vertical.svg"
+              src="~assets/bach-khoa.jpg"
               alt="Quasar logo"
-              style="width: 64px; height: 64px"
+              style="width: 80px; height: 80px"
             />
           </q-avatar>
         </q-card-section>

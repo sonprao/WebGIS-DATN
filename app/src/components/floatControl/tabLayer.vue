@@ -94,7 +94,7 @@ import { register } from "ol/proj/proj4";
 import _difference from "lodash/difference";
 import { getAllLocation, getLocation } from "src/api/location";
 import {MAP_LAYERS} from "src/constants/layer.js";
-import { actionAddLayer, transformProjection } from "src/utils/openLayers.js";
+import { actionAddLayerGeoJSON, actionAddLayerWMS, transformProjection } from "src/utils/openLayers.js";
 export default defineComponent({
   name: "TabLayer",
   components: {},
@@ -200,7 +200,8 @@ export default defineComponent({
               if (currentLayer.vectorLayer) {
                 layer.vectorLayer?.setVisible?.(true)
               } else {
-                currentLayer.vectorLayer = actionAddLayer({ layer, workspace, map })
+                currentLayer.vectorLayer = actionAddLayerGeoJSON({ layer, workspace, map })
+                // currentLayer.vectorLayer = actionAddLayerWMS({ layer, workspace, map })
               }
             })
           } else {

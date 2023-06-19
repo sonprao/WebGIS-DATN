@@ -10,8 +10,8 @@ export const loginGoogle = async (params) => {
   return response.data
 }
 
-export const update = async (params) => {
-  const response = await api.update('users', params)
+export const updateUser = async (params) => {
+  const response = await api.put(`users/${params.id}`, params);
   return response.data
 }
 
