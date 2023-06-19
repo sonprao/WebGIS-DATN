@@ -5,6 +5,7 @@ import {Vector as VectorLayer} from "ol/layer";
 import Geolocation from "ol/Geolocation";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
+import { transform } from "ol/proj";
 
 
 export class LayerController {
@@ -22,8 +23,24 @@ export class LayerController {
    */
   addLayer(layerId, layer) {
     if (!this.layers[layerId]) {
-        this.layers[layerId] = layer;
+      this.layers[layerId] = layer;
     }
+  }
+
+  findFeatureByGPS(long, lat, fromProj = "EPSG:4326", desProj = "EPSG:5899") {
+    let layerPolygon = this.getLayerPolygon();
+    if (!layerPolygon) return;
+    const point = new Point([lat,long]);
+    point.transform(fromProj, desProj);
+    layerPolygon.getSource().getFeatures().forEach((feature) => {
+      if (feature.getGeometry().intersectsCoordinate(point.getCoordinates())) {
+        return feature;
+      }
+    })
+  }
+
+  getLayerPolygon() {
+    return this.layers["danang:polygon"];
   }
 
   /**

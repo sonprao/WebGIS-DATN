@@ -20,7 +20,7 @@ import { ref, unref } from "vue";
 import { i18n } from "boot/i18n.js";
 import {
   CityLandDataFeature,
-  BaseDataFeature,
+  BaseDataFeature, SOIL_TYPE_ID, ForestLandDataFeature, RoadDataFeature,
 } from "src/feature/FeatureData.js";
 const $t = i18n.global.t;
 
@@ -122,9 +122,25 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Sơ đồ đất":
-        featureData = new CityLandDataFeature();
+      case "Polygon": {
+        switch (feature.get("SoilTypeId")) {
+          case SOIL_TYPE_ID.DAT_DON_VI_O:
+            featureData = new CityLandDataFeature();
+            break;
+          case SOIL_TYPE_ID.RUNG_DAC_DUNG:
+            featureData = new ForestLandDataFeature();
+            break;
+          default:
+            featureData = new CityLandDataFeature();
+        }
+      }
         break;
+      case "Giao Thông":
+        featureData = new RoadDataFeature();
+        break;
+      case "": {
+        break;
+      }
       default:
         featureData = new BaseDataFeature();
         break;
@@ -145,8 +161,50 @@ export const FeatureUtils = {
         color: "BLUE",
         width: 3,
       }),
-      fill: style().getFill(),
-    });
+      fill: style.getFill(),
+    })
+  },
+
+  /**
+   *
+   * @param feature {Feature}
+     * @param
+   */
+  setStyleBySoilType: function (feature) {
+    let soilTypeId = feature.get("SoilTypeId");
+    let color;
+    switch (soilTypeId) {
+      case SOIL_TYPE_ID.RUNG_DAC_DUNG:
+        color = "#00AE46";
+        break;
+      case SOIL_TYPE_ID.DAT_DON_VI_O:
+        color = "#C959D1";
+        break;
+      case SOIL_TYPE_ID.RUNG_PHONG_HO:
+        color = "#71FF6F";
+        break;
+      case SOIL_TYPE_ID.DAT_DU_LICH:
+        color = "#FF5A99";
+        break;
+      case SOIL_TYPE_ID.DAT_DICH_VU:
+        color = "#F3A64B";
+        break;
+      case SOIL_TYPE_ID.DAT_CONG_NGHIEP:
+        color = "#FFFF1D";
+        break;
+      case SOIL_TYPE_ID.RUNG_SAN_XUAT:
+        color = "#85B66F";
+        break;
+      default:
+        color = "WHITE";
+    }
+    let style = feature.getStyle();
+    feature.setStyle( new Style({
+      stroke : style.getStroke(),
+      fill : new Fill({
+        color : color
+      })
+    }))
   },
 
   // TODO: get other Properties of the feature here
@@ -175,7 +233,7 @@ export const transformProjection = (option) => {
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=50&outputFormat=application%2Fjson`;
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
 };
 export const randomColor = function () {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -199,11 +257,11 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   const polygonStyleFunction = function (feature, resolution) {
     return new Style({
       stroke: new Stroke({
-        // color,//layer.layer_color,
-        width: 1,
+        color: "RED",
+        width: 0.25,
       }),
       fill: new Fill({
-        color, //layer.layer_color,
+        color,
       }),
       text: createTextStyle(feature, resolution, layer),
     });
@@ -218,9 +276,16 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     style: polygonStyleFunction,
     zindex: 1,
   });
+
+  let vectorSource = vectorLayer.getSource();
+  vectorSource.once('change', () => {
+    vectorSource.getFeatures().forEach((feature) => {
+      feature.setStyle(vectorLayer.getStyle()());
+      FeatureUtils.setStyleBySoilType(feature);
+    })
+  });
   unref(map).addLayer(vectorLayer);
   return vectorLayer;
-  // zoomMapToLayer(map, vectorLayer);
 };
 
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
