@@ -56,7 +56,7 @@
             </q-badge>
           </q-td>
           <q-td key="activate" :props="props">
-            <q-toggle v-model="props.row.activate"
+            <q-toggle :disable="props.row.role==='ADMIN'"  v-model="props.row.activate"
             @update:model-value="toggle(props.row)">
               <q-tooltip>{{ $t("Activate user") }}</q-tooltip>
             </q-toggle>

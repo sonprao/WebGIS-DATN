@@ -345,10 +345,10 @@ export default defineComponent({
         view: {
           ...updateParams.view,
           extent: JSON.stringify([
-            longLat[0] - 44000, // min lat
-            longLat[1] - 29000, // min long
+            longLat[0] - 54000, // min lat
+            longLat[1] - 30000, // min long
             longLat[0] + 50000, // max lat
-            longLat[1] + 29000, // min long
+            longLat[1] + 30000, // min long
           ])
         }
       })

@@ -94,7 +94,7 @@ import { register } from "ol/proj/proj4";
 import _difference from "lodash/difference";
 import { getAllLocation, getLocation } from "src/api/location";
 import {MAP_LAYERS} from "src/constants/layer.js";
-import { actionAddLayer, transformProjection } from "src/utils/openLayers.js";
+import { actionAddLayerGeoJSON, actionAddLayerWMS, transformProjection } from "src/utils/openLayers.js";
 export default defineComponent({
   name: "TabLayer",
   components: {},
@@ -106,19 +106,22 @@ export default defineComponent({
     const search = ref("");
     const hint = ref("");
     const options = ref([]);
+    const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
-      if (val.length < 1) {
-        abort();
-        return;
+      if (val.length < 2) {
+        // abort();
+        update(async () => { 
+          options.value = unref(defaultOptions)
+        })
+      } else {
+        update(async () => {
+          const query = {
+            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
+          };
+          const response = await getAllLocation(query);
+          options.value = response;
+        });
       }
-      update(async () => {
-        const query = {
-          search: val,
-          search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
-        };
-        const response = await getAllLocation(query);
-        options.value = response;
-      });
     };
     const location = ref(null);
     provide("location", location);
@@ -179,6 +182,13 @@ export default defineComponent({
     }
     onMounted(() => {
       console.log('tablayer mounted')
+      const query = {
+          page: 1,
+          per_page: 10,
+        };
+      getAllLocation(query).then((response) => {
+        defaultOptions.value = response; 
+      });
       watch(
         () => layerCheckbox.value,
         (newVal, oldVal) => {
@@ -190,7 +200,8 @@ export default defineComponent({
               if (currentLayer.vectorLayer) {
                 layer.vectorLayer?.setVisible?.(true)
               } else {
-                currentLayer.vectorLayer = actionAddLayer({ layer, workspace, map })
+                currentLayer.vectorLayer = actionAddLayerGeoJSON({ layer, workspace, map })
+                // currentLayer.vectorLayer = actionAddLayerWMS({ layer, workspace, map })
               }
             })
           } else {

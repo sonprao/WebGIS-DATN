@@ -22,8 +22,8 @@ import { Map, View, Overlay } from 'ol';
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
-import {  OSM as OSM} from 'ol/source';
-import {  Tile as TileLayer } from 'ol/layer';
+import {  OSM, ImageWMS} from 'ol/source';
+import {  Tile as TileLayer, Image } from 'ol/layer';
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
@@ -37,13 +37,16 @@ import {
   ref,
   unref,
   onMounted,
+  onUnmounted,
   getCurrentInstance,
   provide,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
+
 export default defineComponent({
   name: "NoMapPage",
   components: {
@@ -80,6 +83,7 @@ export default defineComponent({
         initPopupEvent();
       }
     };
+    $bus.on('close-popup', closePopup);
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
@@ -114,20 +118,37 @@ export default defineComponent({
     );
     onMounted(() => {
       addOverlay();
+      const wmsSource = new ImageWMS({
+        url: `${process.env.GEO_SERVER_URL}/ne/wms`,
+        params: {
+          'LAYERS': 'ne:world',
+          'FORMAT': 'image/png' // Specify the desired image format
+        },
+        serverType: 'geoserver'
+      });
+
+      // Create a new Image layer
+      const imageLayer = new Image({
+        source: wmsSource
+      });
 
       map.value = new Map({
         target: vm.$refs["mapRoot"],
         controls: [scaleControl],
         overlays: [unref(overlay)],
         layers: [
-          new TileLayer({
-            source: new OSM(), // tiles are served by OpenStreetMap
-          }),
+          imageLayer
+          // new TileLayer({
+          //   source: new OSM(), // tiles are served by OpenStreetMap
+          // }),
         ],
         // the map view will initially show the whole world
         view: unref(view),
       });
       initPopupEvent();
+    });
+    onUnmounted(() => {
+      $bus.off('close-popup');
     });
     return {
       map,

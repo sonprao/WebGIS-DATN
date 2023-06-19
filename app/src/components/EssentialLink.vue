@@ -1,5 +1,15 @@
 <template>
-  <q-item v-if="to" clickable :to="to">
+  <q-item v-if="to && show" clickable :to="to">
+    <q-item-section v-if="icon" avatar>
+      <q-icon :name="icon" />
+    </q-item-section>
+
+    <q-item-section>
+      <q-item-label>{{ title }}</q-item-label>
+      <q-item-label caption>{{ caption }}</q-item-label>
+    </q-item-section>
+  </q-item>
+  <q-item v-else-if="action && show" clickable @click="action">
     <q-item-section v-if="icon" avatar>
       <q-icon :name="icon" />
     </q-item-section>
@@ -10,7 +20,7 @@
     </q-item-section>
   </q-item>
   <q-expansion-item
-    v-else
+    v-else-if="show"
     dense
     class="settingsClass"
     :icon="icon"
@@ -62,6 +72,14 @@ export default defineComponent({
     to: {
       type: String,
       default: "",
+    },
+    action: {
+      type: Function,
+      default: null,
+    },
+    show: {
+      type: Boolean,
+      default: true,
     },
     icon: {
       type: String,
