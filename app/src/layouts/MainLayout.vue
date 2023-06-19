@@ -14,7 +14,7 @@
         <q-toolbar-title> GIS App </q-toolbar-title>
         <!-- login component -->
         <q-avatar>
-          <img src="https://cdn.quasar.dev/img/avatar.png">
+          <img :src="profile.picture">
         </q-avatar>
       </q-toolbar>
     </q-header>
@@ -77,7 +77,7 @@ export default defineComponent({
     const $t = i18n.global.t;
     const router = useRouter();
     const userStore = useUserStore();
-    const { role } = userStore.getUser;
+    const { role, profile } = userStore.getUser;
     const leftDrawerOpen = ref(true);
     const miniState = ref(true);
     const linksList = computed(() => [
@@ -130,6 +130,7 @@ export default defineComponent({
       userIntecraction,
       leftDrawerOpen,
       miniState,
+      profile,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },

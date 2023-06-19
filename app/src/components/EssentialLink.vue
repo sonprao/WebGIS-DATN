@@ -75,7 +75,7 @@ export default defineComponent({
     },
     action: {
       type: Function,
-      default: () => {},
+      default: null,
     },
     show: {
       type: Boolean,

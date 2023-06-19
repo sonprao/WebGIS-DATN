@@ -7,6 +7,8 @@ export default {
   Warning: 'Warning',
   failed: 'Action failed',
   success: 'Action was successful',
+  Delete: 'Delete',
+  Download: 'Download',
   'Users management': 'Users management',
   'Locations management': 'Locations management',
   'Settings': 'Settings',

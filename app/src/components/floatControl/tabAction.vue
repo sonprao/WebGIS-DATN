@@ -71,13 +71,33 @@
             <q-btn
               class="gt-xs"
               size="12px"
-              color="red"
               flat
               dense
               round
-              icon="delete"
-              @click.stop="deleteDraw(index)"
-            />
+              icon="more_vert"
+              @click.stop=""
+            >
+              <q-menu>
+                <q-list dense>
+                  <q-item
+                    clickable
+                    v-close-popup
+                    @click.stop="deleteDraw(index)"
+                  >
+                    <q-item-section>{{ $t("Delete") }}</q-item-section>
+                    <q-item-section avatar>
+                      <q-icon name="delete" />
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="downloadDraw(index)">
+                    <q-item-section>{{ $t("Download") }}</q-item-section>
+                    <q-item-section avatar>
+                      <q-icon name="download" />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </div>
         </q-item-section>
         <q-separator />
@@ -109,14 +129,16 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
+import { Feature } from "ol";
 import VectorSource from "ol/source/Vector";
 import VectorLayer from "ol/layer/Vector";
 import Overlay from "ol/Overlay";
 import { LineString, Polygon } from "ol/geom";
 import { Draw } from "ol/interaction";
 import { unByKey } from "ol/Observable";
-
+import GeoJSON from "ol/format/GeoJSON";
 import GeoLocationController from "src/utils/geoLocationController";
+import { writeGeoJSON } from "src/utils/openLayers";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 
 export default defineComponent({
@@ -350,6 +372,22 @@ export default defineComponent({
         drawList.value = [];
       }
     };
+
+    const downloadDraw = async (index = -1) => {
+      if (index !== -1) {
+        const feature = unref(source).getFeatureById(unref(drawList)[index].id);
+        if (feature) {
+          const geoJsonData = await writeGeoJSON({feature, map: unref(map)});
+          const downloadLink = document.createElement("a");
+          downloadLink.href =
+            "data:text/json;charset=utf-8," + encodeURIComponent(geoJsonData);
+          downloadLink.download = "drawn_features.geojson";
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+      }
+    };
     const createMeasureTooltip = () => {
       if (unref(measureTooltipElement)) {
         unref(measureTooltipElement)?.parentNode?.removeChild?.(
@@ -388,11 +426,10 @@ export default defineComponent({
       watch(
         () => props.tab,
         (val) => {
-          if (val !== 'TabAction') {
-            clearControl()
-            buttonModel.value = null
+          if (val !== "TabAction") {
+            clearControl();
+            buttonModel.value = null;
           }
-
         }
       );
       vm.$nextTick(() => {
@@ -414,6 +451,7 @@ export default defineComponent({
       clearControl,
       zoomToDraw,
       deleteDraw,
+      downloadDraw,
     };
   },
 });

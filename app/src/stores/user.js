@@ -18,6 +18,9 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
+    setProfile(profile) {
+      this.user.profile = profile
+    },
     setUser (user) {
       this.user = user
     },

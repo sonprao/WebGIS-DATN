@@ -1,7 +1,13 @@
 <template>
-  <!-- <img src="" class="wave" alt="login-wave"> -->
+  <img src="~assets/background.jpg" class="wave" alt="login-wave">
   <div class="row" style="height: 90vh">
-    <div class="col-0 col-md-6 flex justify-center content-center"></div>
+    <div class="col-0 col-md-6 flex justify-center content-center">
+       <!-- <img
+          src="~assets/quasar-logo-vertical.svg"
+          alt="Quasar logo"
+          style="width: 90vh; height: 90vh"
+        /> -->
+    </div>
     <div
       v-bind:class="{
         'justify-center': $q.screen.md || $q.screen.sm || $q.screen.xs,
@@ -14,9 +20,9 @@
         <q-card-section class="row items-start justify-center q-mt-lg">
           <q-avatar size="103px" class="absolute-center shadow-10">
             <img
-              src="~assets/quasar-logo-vertical.svg"
+              src="~assets/bach-khoa.jpg"
               alt="Quasar logo"
-              style="width: 64px; height: 64px"
+              style="width: 80px; height: 80px"
             />
           </q-avatar>
         </q-card-section>
@@ -39,9 +45,8 @@
               :rules="rules.username"
               lazy-rules
               @update:model-value="clearError"
-            ></q-input>
+            />
             <q-input
-              outlined
               v-model="password"
               type="password"
               name="password"
@@ -57,10 +62,11 @@
               >
               <q-btn
                 class="full-width"
-                color="primary"
-                label="Login"
                 type="submit"
+                color="primary"
+                text-color="white"
                 rounded
+                label="Login"
               ></q-btn>
               <GoogleLogin :callback="callback" popup-type="TOKEN" />
             </div>

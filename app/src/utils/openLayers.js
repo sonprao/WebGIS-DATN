@@ -1,9 +1,11 @@
 import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
 import { ScaleLine } from "ol/control";
+import { ImageWMS } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
-  VectorImage as VectorImageLayer
+  VectorImage as VectorImageLayer,
+  Image,
 } from "ol/layer";
 import GeoJSON from "ol/format/GeoJSON";
 import { Draw, Modify, Snap } from "ol/interaction";
@@ -12,13 +14,14 @@ import Geolocation from "ol/Geolocation";
 import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
+
 // vue
 import { ref, unref } from "vue";
 import { i18n } from "boot/i18n.js";
 import {
   CityLandDataFeature,
-  BaseDataFeature
-} from "src/feature/FeatureData.js"
+  BaseDataFeature,
+} from "src/feature/FeatureData.js";
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -81,17 +84,19 @@ export const scaleControl = new ScaleLine({
 
 export const zoomMapToLayer = function (map, vectorLayer) {
   let vectorSource = vectorLayer.getSource();
-  vectorSource.once('change', () => {
-    if (vectorSource.getState() === 'ready') {
+  vectorSource.once("change", () => {
+    if (vectorSource.getState() === "ready") {
       const extent = vectorSource.getExtent();
 
-      unref(map).getView().fit(extent, {
-        padding: [250, 250, 250, 250],
-        duration: 1000
-      });
+      unref(map)
+        .getView()
+        .fit(extent, {
+          padding: [250, 250, 250, 250],
+          duration: 1000,
+        });
     }
   });
-}
+};
 
 export const FeatureUtils = {
   /**
@@ -116,18 +121,18 @@ export const FeatureUtils = {
      * @type {BaseDataFeature}
      */
     let featureData;
-      switch (layer.get("name")) {
-        case "Sơ đồ đất":
-          featureData = new CityLandDataFeature();
-          break;
-        default:
-          featureData = new BaseDataFeature();
-          break;
-      }
-      console.log(layer, layer.get("name"));
-      featureData.setData(feature);
-      console.log(featureData, feature);
-      return featureData;
+    switch (layer.get("name")) {
+      case "Sơ đồ đất":
+        featureData = new CityLandDataFeature();
+        break;
+      default:
+        featureData = new BaseDataFeature();
+        break;
+    }
+    console.log(layer, layer.get("name"));
+    featureData.setData(feature);
+    console.log(featureData, feature);
+    return featureData;
   },
   /**
    *
@@ -141,11 +146,11 @@ export const FeatureUtils = {
         width: 3,
       }),
       fill: style().getFill(),
-    })
+    });
   },
 
   // TODO: get other Properties of the feature here
-}
+};
 
 // control
 import { transform } from "ol/proj";
@@ -153,39 +158,44 @@ import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
 
 export const transformProjection = (option) => {
-  const { from = 'EPSG:4326', to = 'EPSG:4326', definition = '', coordinates = [0, 0] } = option
-  if (from !== 'EPSG:4326') {
+  const {
+    from = "EPSG:4326",
+    to = "EPSG:4326",
+    definition = "",
+    coordinates = [0, 0],
+  } = option;
+  if (from !== "EPSG:4326") {
     proj4.defs(from, definition);
-  } else if (to !== 'EPSG:4326') {
+  } else if (to !== "EPSG:4326") {
     proj4.defs(to, definition);
   }
   register(proj4);
 
   return transform(coordinates, from, to);
-
-}
+};
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=50&outputFormat=application%2Fjson`
-}
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=50&outputFormat=application%2Fjson`;
+};
 export const randomColor = function () {
-  return `#${Math.floor(Math.random() * 16777215).toString(16)}`
-}
-export const actionAddLayer = ({ layer, workspace, map }) => {
+  return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+};
+export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   // for (const [index, ly] of Object.entries(unref(map).getLayers().getArray())) {
   //   if (ly instanceof VectorImageLayer && ly.get('id') === layer.id) {
   //     ly.setVisible(true)
   //     return
   //   }
   // }
-   const currentLayer = unref(map).getLayers().getArray().find(
-    (ly) => ly.get('id') === layer.id && ly instanceof VectorImageLayer
-   )
+  const currentLayer = unref(map)
+    .getLayers()
+    .getArray()
+    .find((ly) => ly.get("id") === layer.id && ly instanceof VectorImageLayer);
   if (currentLayer) {
-    currentLayer.setVisible(true)
-    return
+    currentLayer.setVisible(true);
+    return;
   }
-  const color =  randomColor()
+  const color = randomColor();
   const polygonStyleFunction = function (feature, resolution) {
     return new Style({
       stroke: new Stroke({
@@ -209,6 +219,37 @@ export const actionAddLayer = ({ layer, workspace, map }) => {
     zindex: 1,
   });
   unref(map).addLayer(vectorLayer);
-  return vectorLayer
+  return vectorLayer;
   // zoomMapToLayer(map, vectorLayer);
+};
+
+export const actionAddLayerWMS = ({ layer, workspace, map }) => {
+  const wmsSource = new ImageWMS({
+    url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
+    params: {
+      LAYERS: layer.url,
+      FORMAT: "image/png",
+    },
+    serverType: "geoserver",
+  });
+
+  // Create a new Image layer
+  const imageLayer= new Image({
+    source: wmsSource,
+  });
+  unref(map).addLayer(imageLayer);
+  return imageLayer
+};
+
+export const writeGeoJSON = (option) => {
+  const { feature, map } = option;
+  const geoJsonFormat = new GeoJSON();
+  const geometry = feature.getGeometry();
+  const sourceProjection = unref(map).getView().getProjection();
+  const targetProjection = "EPSG:4326";
+  const transformedGeometry = geometry
+    .clone()
+    .transform(sourceProjection, targetProjection);
+  const transformedFeature = new Feature(transformedGeometry);
+  return geoJsonFormat.writeFeature(transformedFeature);
 };
