@@ -9,6 +9,8 @@ import routes from './routes'
  * async/await or return a Promise which resolves
  * with the Router instance.
  */
+import { useUserStore } from 'src/stores/user';
+// console.log(store)
 
 export default route(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
@@ -24,6 +26,25 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE)
   })
+
+  Router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    const { role } = userStore.getUser
+    if (to?.meta?.authRequired) {
+      if (role === 'ADMIN') {
+        next()
+      } else {
+        next({ path: '/' })
+      }
+    } else if (to?.meta?.public){
+      next()
+    }
+    else {
+      if (!userStore.getIsLogin) {
+        next({ path: '/login' })
+      } else next()
+    }
+});
   return Router
 })
   
