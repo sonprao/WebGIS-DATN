@@ -46,7 +46,9 @@ import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
-
+import {
+  FeatureUtils,
+} from "src/utils/openLayers";
 export default defineComponent({
   name: "NoMapPage",
   components: {
@@ -88,17 +90,28 @@ export default defineComponent({
       unref(overlay).setPosition(undefined);
     };
     const initPopupEvent = () => {
+      const highLightFeature = function (feature, layer) {
+        let lastFeature = unref(popupEvent).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        feature.originStyle = feature.getStyle();
+        let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
+        unref(popupEvent).lastFeature = null;
+        if (feature !== lastFeature) {
+          feature.setStyle(selectedStyle);
+          unref(popupEvent).lastFeature = feature;
+        }
+      }
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          const name = layer?.get("name");
-          const coordinate = evt.coordinate;
-          const hdms = toStringHDMS(transform(coordinate, 'EPSG:5899',  'EPSG:4326')).replace('N ', 'N\n');
-
-          unref(popupContent).innerHTML =
-            "<p>" + name + "</p><pre>" + hdms + "</pre>";
-          unref(overlay).setPosition(coordinate);
-          return feature;
-        });
+            highLightFeature(feature, layer);
+            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+            const coordinate = evt.coordinate;
+            dataFeature.setLocation(coordinate);
+            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+            unref(overlay).setPosition(coordinate);
+            return feature;
+          }
+        );
       });
     };
     // popup
@@ -137,10 +150,10 @@ export default defineComponent({
         controls: [scaleControl],
         overlays: [unref(overlay)],
         layers: [
-          imageLayer
-          // new TileLayer({
-          //   source: new OSM(), // tiles are served by OpenStreetMap
-          // }),
+          imageLayer,
+          new TileLayer({
+            source: new OSM(), // tiles are served by OpenStreetMap
+          }),
         ],
         // the map view will initially show the whole world
         view: unref(view),

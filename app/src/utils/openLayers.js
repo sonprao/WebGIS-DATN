@@ -20,7 +20,7 @@ import { ref, unref } from "vue";
 import { i18n } from "boot/i18n.js";
 import {
   CityLandDataFeature,
-  BaseDataFeature,
+  BaseDataFeature, SOIL_TYPE_ID, ForestLandDataFeature, RoadDataFeature,
 } from "src/feature/FeatureData.js";
 const $t = i18n.global.t;
 
@@ -122,7 +122,7 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Sơ đồ đất": {
+      case "Polygon": {
         switch (feature.get("SoilTypeId")) {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
@@ -135,7 +135,7 @@ export const FeatureUtils = {
         }
       }
         break;
-      case "Giao thông":
+      case "Giao Thông":
         featureData = new RoadDataFeature();
         break;
       case "": {
@@ -233,7 +233,7 @@ export const transformProjection = (option) => {
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=50&outputFormat=application%2Fjson`;
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
 };
 export const randomColor = function () {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -257,11 +257,11 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   const polygonStyleFunction = function (feature, resolution) {
     return new Style({
       stroke: new Stroke({
-        // color,//layer.layer_color,
-        width: 1,
+        color: "RED",
+        width: 0.25,
       }),
       fill: new Fill({
-        color, //layer.layer_color,
+        color,
       }),
       text: createTextStyle(feature, resolution, layer),
     });
@@ -276,9 +276,16 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     style: polygonStyleFunction,
     zindex: 1,
   });
+
+  let vectorSource = vectorLayer.getSource();
+  vectorSource.once('change', () => {
+    vectorSource.getFeatures().forEach((feature) => {
+      feature.setStyle(vectorLayer.getStyle()());
+      FeatureUtils.setStyleBySoilType(feature);
+    })
+  });
   unref(map).addLayer(vectorLayer);
   return vectorLayer;
-  // zoomMapToLayer(map, vectorLayer);
 };
 
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
