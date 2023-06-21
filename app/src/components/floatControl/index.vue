@@ -1,43 +1,29 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 300px">
-      <q-tabs v-model="tab" class="text-primary">
-        <q-tab
-          label="Action"
-          name="TabAction"
-          @click="
-            () => {
-              expanded = true;
-            }
-          "
-        />
-        <q-tab
-          label="Layer"
-          name="TabLayer"
-          @click="
-            () => {
-              expanded = true;
-            }
-          "
-        />
-        <q-btn
-          flat
-          dense
-          color="grey"
-          :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-          style="height: 100%"
-          @click="expanded = !expanded"
-        />
+      <q-tabs v-model="tabModel" class="bg-teal text-white">
+        <q-tab v-for="(tab, index) of tabList" 
+          :key="index"
+          :label="tab.label"
+          :name="tab.component"
+          @click="() => {
+            expanded = true;
+          }
+          " />
+        <q-btn flat dense :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" style="height: 100%"
+          @click="expanded = !expanded" />
       </q-tabs>
       <q-separator />
       <q-slide-transition>
         <div v-show="expanded">
-          <q-tab-panels v-model="tab" animated :keep-alive="true">
-            <q-tab-panel name="TabAction" style="padding: 0; display: grid">
-              <tab-action :tab="tab" />
-            </q-tab-panel>
-            <q-tab-panel name="TabLayer" style="padding: 0; display: grid">
-              <tab-layer />
+          <q-tab-panels v-model="tabModel" animated :keep-alive="true" class="shadow-10 rounded-borders">
+            <q-tab-panel
+              v-for="(tab, index) of tabList"
+              :key="index"
+              :name="tab.component"
+              class="panelClass"
+            >
+              <component :is="tab.component" v-bind="tab.props" />
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -58,12 +44,13 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import TabAction from 'src/components/floatControl/tabAction.vue';
-import TabLayer from 'src/components/floatControl/tabLayer.vue';
+import TabLocation from 'src/components/floatControl/TabLocation.vue';
+
 export default defineComponent({
   name: "FloatControl",
   components: {
-    TabAction,
-    TabLayer,
+    "tab-action": TabAction,
+    "tab-location":TabLocation,
   },
   props: {
     map: {
@@ -81,12 +68,27 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
 
-    const tab = ref(null);
+    const tabModel = ref('tab-action');
     const expanded = ref(false);
+    const tabList = computed(() => [
+      {
+        label: $t('Action'),
+        component: 'tab-action',
+        props: {
+          tab: tabModel,
+        },
+      },
+      {
+        label: $t('Location'),
+        component: 'tab-location',
+      },
+    ])
+
     return {
-      vm,
-      tab,
+      vm, 
+      tabModel,
       expanded,
+      tabList,
     };
   },
 });
@@ -100,5 +102,10 @@ body {
 
 .stickyClass {
   z-index: 1;
+}
+
+.panelClass {
+  padding: 0; 
+  display: grid;
 }
 </style>

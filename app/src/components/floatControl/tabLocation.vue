@@ -28,17 +28,24 @@
       </template>
     </q-select>
     <q-separator />
+    <q-input v-if="dataLayers.length > 0" :label="$t('Search layer')" />
+    <q-checkbox
+      v-if="dataLayers.length > 0"
+      v-model="layerCheckAll"
+      :val="true"
+      color="primary"
+      label="Select All"
+      @update:model-value="selectAll"
+    />
     <q-list overlay>
-      <q-checkbox
-        v-if="dataLayers.length > 0"
-        v-model="layerCheckAll"
-        :val="true"
-        color="primary"
-        label="Select All"
-        @update:model-value="selectAll"
-        />
-      <q-scroll-area class="layerClass">
-        <q-item v-for="(item, index) of dataLayers" :key="item.id + index">
+      <q-virtual-scroll
+        class="layerClass"
+        :items="dataLayers"
+        separator
+        v-slot="{ item, index }"
+      >
+        <!-- <q-scroll-area class="layerClass"> -->
+        <q-item :key="item.id + index">
           <q-item-section avatar>
             <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
           </q-item-section>
@@ -66,7 +73,8 @@
           </q-item-section>
           <q-separator />
         </q-item>
-      </q-scroll-area>
+        <!-- </q-scroll-area> -->
+      </q-virtual-scroll>
     </q-list>
   </div>
 </template>
@@ -93,10 +101,14 @@ import { register } from "ol/proj/proj4";
 
 import _difference from "lodash/difference";
 import { getAllLocation, getLocation } from "src/api/location";
-import {MAP_LAYERS} from "src/constants/layer.js";
-import { actionAddLayerGeoJSON, actionAddLayerWMS, transformProjection } from "src/utils/openLayers.js";
+import { MAP_LAYERS } from "src/constants/layer.js";
+import {
+  actionAddLayerGeoJSON,
+  actionAddLayerWMS,
+  transformProjection,
+} from "src/utils/openLayers.js";
 export default defineComponent({
-  name: "TabLayer",
+  name: "TabLocation",
   components: {},
   setup() {
     const vm = getCurrentInstance().proxy;
@@ -110,9 +122,9 @@ export default defineComponent({
     const filterFn = (val, update, abort) => {
       if (val.length < 2) {
         // abort();
-        update(async () => { 
-          options.value = unref(defaultOptions)
-        })
+        update(async () => {
+          options.value = unref(defaultOptions);
+        });
       } else {
         update(async () => {
           const query = {
@@ -130,23 +142,24 @@ export default defineComponent({
     const layerCheckAll = ref([]);
     const selectAll = (value, event) => {
       if (value[0]) {
-        layerCheckbox.value = unref(dataLayers)
+        layerCheckbox.value = unref(dataLayers);
       } else {
-        layerCheckbox.value = []
+        layerCheckbox.value = [];
       }
-    }
+    };
     const onClearSearch = () => {
       dataLayers.value = [];
       layerCheckbox.value = [];
       layerCheckAll.value = [];
-    }
+    };
     const setModel = async (val) => {
       if (val) {
         location.value = await getLocation({ id: val.id });
         onClearSearch();
         dataLayers.value = unref(location).mapLayers;
         if (unref(location).view) {
-          const { longitude, latitude, extent, zoom, maxZoom } = unref(location).view;
+          const { longitude, latitude, extent, zoom, maxZoom } =
+            unref(location).view;
           if (unref(location).view.projection) {
             const { name: projectionName, definition: projectionDef } =
               unref(location).view.projection;
@@ -155,8 +168,8 @@ export default defineComponent({
             const center = transformProjection({
               to: projectionName,
               definition: projectionDef,
-              coordinates: [longitude, latitude]
-            })
+              coordinates: [longitude, latitude],
+            });
             const newView = new View({
               projection: projectionName,
               center,
@@ -175,47 +188,55 @@ export default defineComponent({
     };
     const actionFocusLayer = (vectorLayer) => {
       const extent = vectorLayer?.getSource?.()?.getExtent?.();
-      unref(map).getView().fit(extent, {
-              padding: [250, 250, 250, 250],
-              duration: 1000
-            });
-    }
+      unref(map)
+        .getView()
+        .fit(extent, {
+          padding: [250, 250, 250, 250],
+          duration: 1000,
+        });
+    };
     onMounted(() => {
-      console.log('tablayer mounted')
+      console.log("TabLocation mounted");
       const query = {
-          page: 1,
-          per_page: 10,
-        };
+        page: 1,
+        per_page: 10,
+      };
       getAllLocation(query).then((response) => {
-        defaultOptions.value = response; 
+        defaultOptions.value = response;
       });
       watch(
         () => layerCheckbox.value,
         (newVal, oldVal) => {
           if (newVal.length > oldVal.length) {
-          const diff = _difference(newVal, oldVal)
-          const { workspace } = unref(location)
+            const diff = _difference(newVal, oldVal);
+            const { workspace } = unref(location);
             diff.forEach((layer) => {
-              const currentLayer = unref(dataLayers).find((l) => layer.id === l.id)
+              const currentLayer = unref(dataLayers).find(
+                (l) => layer.id === l.id
+              );
               if (currentLayer.vectorLayer) {
-                layer.vectorLayer?.setVisible?.(true)
+                layer.vectorLayer?.setVisible?.(true);
               } else {
-                currentLayer.vectorLayer = actionAddLayerGeoJSON({ layer, workspace, map })
+                currentLayer.vectorLayer = actionAddLayerGeoJSON({
+                  layer,
+                  workspace,
+                  map,
+                });
                 // currentLayer.vectorLayer = actionAddLayerWMS({ layer, workspace, map })
               }
-            })
+            });
           } else {
-            const diff = _difference(oldVal, newVal)
-            const { workspace } = unref(location)
+            const diff = _difference(oldVal, newVal);
+            const { workspace } = unref(location);
             diff.forEach((layer) => {
               if (layer.vectorLayer) {
-                layer.vectorLayer?.setVisible?.(false)
+                layer.vectorLayer?.setVisible?.(false);
               }
-            })
+            });
           }
         }
       );
-    })
+    });
     onUnmounted(() => {
       console.log("unmounted");
     });
@@ -238,6 +259,8 @@ export default defineComponent({
 </script>
 <style lang="scss">
 .layerClass {
+  border-top-left-radius: 1px;
+  border-top-right-radius: 1px;
   height: 100vh;
   max-height: 55vh;
   max-width: 300px;
@@ -246,5 +269,33 @@ export default defineComponent({
     // display: flex;
     // flex-direction: column-reverse;
   }
+}
+
+::-webkit-scrollbar {
+  height: 12px;
+  width: 14px;
+  background: transparent;
+  z-index: 12;
+  overflow: visible;
+  cursor: auto !important;
+}
+
+::-webkit-scrollbar-thumb {
+  width: 10px;
+  background-color: $primary;
+  border-radius: 10px;
+  z-index: 12;
+  border: 4px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  transition: background-color 0.32s ease-in-out;
+  margin: 4px;
+  min-height: 32px;
+  min-width: 32px;
+  cursor: auto !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $primary;
+  cursor: auto !important;
 }
 </style>

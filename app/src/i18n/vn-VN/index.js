@@ -9,6 +9,7 @@ export default {
   success: 'Thành công',
   Delete: 'Xóa',
   Download: 'Tải xuống',
+  Detail: 'Chi tiết',
   'Users management': 'Quản lý các tài khoản',
   'Locations management': 'Quản lý địa điểm',
   'Settings': 'Cài đặt',
@@ -29,6 +30,8 @@ export default {
   'Current location': 'Vị trí hiện tại',
   Help: 'Trợ giúp',
   // Float control
+  'Layer': 'Layer',
+  'Action': 'Action',
   'Click to continue drawing the line': 'Click để tiếp tục vẽ đường',
   'Click to continue drawing the polygon': 'Click để tiếp tục vẽ hình',
   'Click to start drawing': 'Click để bắt đầu vẽ',
@@ -57,4 +60,13 @@ export default {
  // search result
   'No results': 'Không tìm thấy kết quả',
   'Location': 'Địa điểm',
+  // displayhtml
+  'Owner': 'Người sở hữu',
+  'Soil type': 'Loại đất',
+  'Status': 'Trạng thái',
+  'Soil type id': 'Id loại đất',
+  'Code': 'Mã',
+  'Fclass': 'Fclass',
+  'One way': 'Một chiều',
+  'Max speed': 'Tốc độ tối đa',
 }

@@ -1,17 +1,19 @@
+import { Map, View } from 'ol';
+
 import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
 import { ScaleLine } from "ol/control";
-import { ImageWMS } from "ol/source";
+import { ImageWMS, TileWMS } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
   VectorImage as VectorImageLayer,
   Image,
+  Tile as TileLayer,
 } from "ol/layer";
 import GeoJSON from "ol/format/GeoJSON";
 import { Draw, Modify, Snap } from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
-import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 
@@ -211,7 +213,7 @@ export const FeatureUtils = {
 };
 
 // control
-import { transform } from "ol/proj";
+import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
 
@@ -288,8 +290,13 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   return vectorLayer;
 };
 
+  /**
+   *
+   * @param {{ map: Map}} params
+   * @returns {Style}
+   */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const wmsSource = new ImageWMS({
+  const wmsSource = new TileWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
@@ -299,10 +306,20 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   });
 
   // Create a new Image layer
-  const imageLayer= new Image({
+  const imageLayer= new TileLayer({
     source: wmsSource,
+    extent: transformExtent()
+    // style: new Style({
+    //   stroke: new Stroke({ color: "rgba(0, 0, 0, 0)" }),
+    //   fill: new Fill({color: 'rgba(0, 0, 0, 0'}),
+    // })
   });
   unref(map).addLayer(imageLayer);
+  // const imageRenderer = unref(map).getRenderer().getLayerRenderer(imageLayer);
+  // imageRenderer.addEventListener('onclick', function (event) {
+  //   const coordinates = event.coordinate;
+  //   console.log(coordinates)
+  // })
   return imageLayer
 };
 
@@ -318,3 +335,9 @@ export const writeGeoJSON = (option) => {
   const transformedFeature = new Feature(transformedGeometry);
   return geoJsonFormat.writeFeature(transformedFeature);
 };
+
+
+export const distanceBetweenPoints = (latlng1, latlng2) => {
+  const line = LineString([latlng1, latlng2]);
+  return Math.round(line.getLength() * 100) / 100;
+}

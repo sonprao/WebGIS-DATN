@@ -1,7 +1,8 @@
 <template>
     <div ref="mapRoot" class="mapView">
-      <FloatZoom v-bind="{ map: map, view: view }" />
+      <FloatZoom />
       <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+      <FloatDetail v-if="showDetail" v-model="showDetail" />
     </div>
     <div ref="popupRef" class="ol-popup">
       <q-btn
@@ -23,7 +24,7 @@ import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
 import {  OSM, ImageWMS} from 'ol/source';
-import {  Tile as TileLayer, Image } from 'ol/layer';
+import {  Tile as TileLayer, Image, Vector as VectorLayer } from 'ol/layer';
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
@@ -44,6 +45,7 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
+import FloatDetail from "src/components/floatDetail/index.vue";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
 import {
@@ -52,14 +54,22 @@ import {
 export default defineComponent({
   name: "NoMapPage",
   components: {
-    FloatZoom,
+    FloatDetail,
     FloatControl,
+    FloatZoom,
   },
   props: {},
   setup(props) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    //
+    const showDetail = ref(true);
+    const onShowDetail = (html) => {
+      showDetail.value = true;
+      console.log(html);
+    }
+    $bus.on('on-show-detail', onShowDetail);
     // popup
     const popupRef = ref(null);
     const popupContent = ref(null);
@@ -103,6 +113,7 @@ export default defineComponent({
       }
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+            if (layer instanceof VectorLayer) return
             highLightFeature(feature, layer);
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
             const coordinate = evt.coordinate;
@@ -150,7 +161,7 @@ export default defineComponent({
         controls: [scaleControl],
         overlays: [unref(overlay)],
         layers: [
-          imageLayer,
+          // imageLayer,
           new TileLayer({
             source: new OSM(), // tiles are served by OpenStreetMap
           }),
@@ -162,10 +173,12 @@ export default defineComponent({
     });
     onUnmounted(() => {
       $bus.off('close-popup');
+      $bus.off('on-show-detail');
     });
     return {
       map,
       view,
+      showDetail,
       popupRef,
       popupCloser,
       actionClosePopup,
@@ -236,3 +249,4 @@ body {
   right: 8px;
 }
 </style>
+

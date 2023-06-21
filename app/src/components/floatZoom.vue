@@ -7,22 +7,22 @@
   >
     <q-btn-group outline color="white" style="flex-direction: column; gap: 2px">
       <q-btn
-        color="white"
-        text-color="black"
+        color="teal"
+        text-color="white"
         round
         icon="add"
-        class="circle"
+        class="circle shadow-3"
         @click="zoom('in')"
       >
         <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom in") }}</q-tooltip>
       </q-btn>
       <q-space />
       <q-btn
-        color="white"
-        text-color="black"
+        color="teal"
+        text-color="white"
         round
         icon="remove"
-        class="circle"
+        class="circle shadow-3"
         @click="zoom('out')"
       >
         <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom out") }}</q-tooltip>
@@ -39,6 +39,7 @@ import {
   defineComponent,
   getCurrentInstance,
   computed,
+  inject,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
@@ -46,27 +47,17 @@ import { i18n } from "boot/i18n.js";
 export default defineComponent({
   name: "FloatZoom",
   components: {},
-  props: {
-    map: {
-      type: Object,
-      default: () => ({}),
-    },
-    view: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-  setup(props, { emit }) {
+  setup() {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
-
+    const map = inject("map", {});
     const zoom = (direction) => {
-      unref(props.map)
+      unref(map)
         .getView()
         .animate({
           zoom:
-            unref(props.map).getView().getZoom() +
+            unref(map).getView().getZoom() +
             (direction === "in" ? 0.5 : -0.5),
           duration: 250,
         });
