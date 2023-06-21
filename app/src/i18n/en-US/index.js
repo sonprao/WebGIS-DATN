@@ -7,6 +7,9 @@ export default {
   Warning: 'Warning',
   failed: 'Action failed',
   success: 'Action was successful',
+  Delete: 'Delete',
+  Download: 'Download',
+  Detail: 'Detail',
   'Users management': 'Users management',
   'Locations management': 'Locations management',
   'Settings': 'Settings',
@@ -27,6 +30,8 @@ export default {
   'Current location': 'Current location',
   Help: 'Help',
   // Float control
+  'Layer': 'Layer',
+  'Action': 'Action',
   'Click to continue drawing the line': 'Click to continue drawing the line',
   'Click to continue drawing the polygon': 'Click to continue drawing the polygon',
   'Click to start drawing': 'Click to start drawing',
@@ -55,4 +60,13 @@ export default {
   // search result
   'No results': 'No results',
   'Location': 'Location',
+  // displayhtml
+  'Owner': 'Owner',
+  'Soil type': 'Soil type',
+  'Status': 'Status',
+  'Soil type id': 'Soil type id',
+  'Code': 'Code',
+  'Fclass': 'Fclass',
+  'One way': 'One way',
+  'Max speed': 'Max speed',
 }

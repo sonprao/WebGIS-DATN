@@ -1,9 +1,20 @@
 import { api } from 'boot/axios';
 
 export const login = async (params) => {
-  const response = await api.post('users', params)
+  const response = await api.post('login', params)
   return response.data
-} 
+}
+
+export const loginGoogle = async (params) => {
+  const response = await api.post('login-google', params)
+  return response.data
+}
+
+export const updateUser = async (params) => {
+  const response = await api.put(`users/${params.id}`, params);
+  return response.data
+}
+
 
 export const find = async (params) => {
   const response = await api.get('users', params);

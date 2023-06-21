@@ -149,12 +149,11 @@ import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 
 export default defineComponent({
   name: "TabAction",
-  components: {
-  },
+  components: {},
   emits: ["closePopup"],
   props: {
     tab: {
-      type: Object,
+      type: String,
       default: null,
     },
   },
@@ -386,7 +385,6 @@ export default defineComponent({
         if (feature) {
           const geoJsonData = await writeGeoJSON({feature, map: unref(map)});
           console.log(geoJsonData)
-          $bus.emit("on-show-detail", geoJsonData);
         }
       }
     }
@@ -441,9 +439,9 @@ export default defineComponent({
     onMounted(() => {
       console.log("mounte");
       watch(
-        () => unref(props.tab),
+        () => props.tab,
         (val) => {
-          if (val !== "tab-action") {
+          if (val !== "TabAction") {
             clearControl();
             buttonModel.value = null;
           }
@@ -458,7 +456,6 @@ export default defineComponent({
     });
     return {
       vm,
-      map,
       buttonModel,
       options,
       drawList,

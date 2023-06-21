@@ -14,7 +14,7 @@
         <q-toolbar-title> GIS App </q-toolbar-title>
         <!-- login component -->
         <q-avatar>
-          <img src="https://cdn.quasar.dev/img/avatar.png">
+          <img :src="profile.picture">
         </q-avatar>
       </q-toolbar>
     </q-header>
@@ -62,6 +62,8 @@ import { getCurrentInstance, defineComponent, ref, unref, computed } from "vue";
 import EssentialLink from "components/EssentialLink.vue";
 import { useI18n } from "vue-i18n";
 import { i18n } from "boot/i18n.js";
+import { useUserStore } from 'stores/user';
+import { useRoute, useRouter } from "vue-router";
 
 export default defineComponent({
   name: "MainLayout",
@@ -73,6 +75,9 @@ export default defineComponent({
   setup() {
     const vm = getCurrentInstance().proxy;
     const $t = i18n.global.t;
+    const router = useRouter();
+    const userStore = useUserStore();
+    const { role, profile } = userStore.getUser;
     const leftDrawerOpen = ref(true);
     const miniState = ref(true);
     const linksList = computed(() => [
@@ -87,11 +92,13 @@ export default defineComponent({
         title: $t("Users management"),
         icon: "fa-solid fa-users",
         to: "/user-management",
+        show: role === 'ADMIN',
       },
       {
         title: $t("Locations management"),
         icon: "img:icons/location-management.png",
         to: "/location-management",
+        show: role === 'ADMIN',
       },
         // <q-icon name="img:icons/area.png" />
 
@@ -109,7 +116,10 @@ export default defineComponent({
       {
         title: $t("Logout"),
         icon: "logout",
-        to: "/login",
+        action: () => {
+          userStore.clearUser();
+          router.push({name: 'LoginPage'})
+        },
       },
     ]);
     
@@ -120,6 +130,7 @@ export default defineComponent({
       userIntecraction,
       leftDrawerOpen,
       miniState,
+      profile,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
       },

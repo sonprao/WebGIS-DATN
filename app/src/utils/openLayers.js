@@ -1,27 +1,29 @@
-import {Fill, Stroke, Text, Style, Circle as CircleStyle} from "ol/style";
-import {ScaleLine} from "ol/control";
+import { Map, View } from 'ol';
+
+import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
+import { ScaleLine } from "ol/control";
+import { ImageWMS, TileWMS } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
-  VectorImage as VectorImageLayer
+  VectorImage as VectorImageLayer,
+  Image,
+  Tile as TileLayer,
 } from "ol/layer";
 import GeoJSON from "ol/format/GeoJSON";
-import {Draw, Modify, Snap} from "ol/interaction";
+import { Draw, Modify, Snap } from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
-import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
+
 // vue
-import {ref, unref} from "vue";
-import {i18n} from "boot/i18n.js";
+import { ref, unref } from "vue";
+import { i18n } from "boot/i18n.js";
 import {
   CityLandDataFeature,
-  BaseDataFeature,
-  RoadDataFeature,
-  SOIL_TYPE_ID, ForestLandDataFeature
-} from "src/feature/FeatureData.js"
-
+  BaseDataFeature, SOIL_TYPE_ID, ForestLandDataFeature, RoadDataFeature,
+} from "src/feature/FeatureData.js";
 const $t = i18n.global.t;
 
 const getText = function (feature, resolution, dom) {
@@ -65,8 +67,8 @@ export const createTextStyle = function (feature, resolution, dom) {
     textBaseline: "middle",
     font: font,
     text: getText(feature, resolution, dom),
-    fill: new Fill({color: fillColor}),
-    stroke: new Stroke({color: outlineColor, width: 3}),
+    fill: new Fill({ color: fillColor }),
+    stroke: new Stroke({ color: outlineColor, width: 3 }),
     offsetX: 0,
     offsetY: 0,
     placement: "point",
@@ -84,17 +86,19 @@ export const scaleControl = new ScaleLine({
 
 export const zoomMapToLayer = function (map, vectorLayer) {
   let vectorSource = vectorLayer.getSource();
-  vectorSource.once('change', () => {
-    if (vectorSource.getState() === 'ready') {
+  vectorSource.once("change", () => {
+    if (vectorSource.getState() === "ready") {
       const extent = vectorSource.getExtent();
 
-      unref(map).getView().fit(extent, {
-        padding: [250, 250, 250, 250],
-        duration: 1000
-      });
+      unref(map)
+        .getView()
+        .fit(extent, {
+          padding: [250, 250, 250, 250],
+          duration: 1000,
+        });
     }
   });
-}
+};
 
 export const FeatureUtils = {
   /**
@@ -120,7 +124,7 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Sơ đồ đất": {
+      case "Polygon": {
         switch (feature.get("SoilTypeId")) {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
@@ -133,7 +137,7 @@ export const FeatureUtils = {
         }
       }
         break;
-      case "Giao thông":
+      case "Giao Thông":
         featureData = new RoadDataFeature();
         break;
       case "": {
@@ -206,55 +210,60 @@ export const FeatureUtils = {
   },
 
   // TODO: get other Properties of the feature here
-}
+};
 
 // control
-import {transform} from "ol/proj";
+import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
-import {register} from "ol/proj/proj4";
+import { register } from "ol/proj/proj4";
 
 export const transformProjection = (option) => {
-  const {from = 'EPSG:4326', to = 'EPSG:4326', definition = '', coordinates = [0, 0]} = option
-  if (from !== 'EPSG:4326') {
+  const {
+    from = "EPSG:4326",
+    to = "EPSG:4326",
+    definition = "",
+    coordinates = [0, 0],
+  } = option;
+  if (from !== "EPSG:4326") {
     proj4.defs(from, definition);
-  } else if (to !== 'EPSG:4326') {
+  } else if (to !== "EPSG:4326") {
     proj4.defs(to, definition);
   }
   register(proj4);
 
   return transform(coordinates, from, to);
-
-}
+};
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=50&outputFormat=application%2Fjson`
-}
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
+};
 export const randomColor = function () {
-  return `#${Math.floor(Math.random() * 16777215).toString(16)}`
-}
-export const actionAddLayer = ({layer, workspace, map}) => {
+  return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+};
+export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   // for (const [index, ly] of Object.entries(unref(map).getLayers().getArray())) {
   //   if (ly instanceof VectorImageLayer && ly.get('id') === layer.id) {
   //     ly.setVisible(true)
   //     return
   //   }
   // }
-  const currentLayer = unref(map).getLayers().getArray().find(
-    (ly) => ly.get('id') === layer.id && ly instanceof VectorImageLayer
-  )
+  const currentLayer = unref(map)
+    .getLayers()
+    .getArray()
+    .find((ly) => ly.get("id") === layer.id && ly instanceof VectorImageLayer);
   if (currentLayer) {
-    currentLayer.setVisible(true)
-    return
+    currentLayer.setVisible(true);
+    return;
   }
-  const color = randomColor()
+  const color = randomColor();
   const polygonStyleFunction = function (feature, resolution) {
     return new Style({
       stroke: new Stroke({
-        // color,//layer.layer_color,
-        width: 1,
+        color: "RED",
+        width: 0.25,
       }),
       fill: new Fill({
-        color, //layer.layer_color,
+        color,
       }),
       text: createTextStyle(feature, resolution, layer),
     });
@@ -269,7 +278,66 @@ export const actionAddLayer = ({layer, workspace, map}) => {
     style: polygonStyleFunction,
     zindex: 1,
   });
+
+  let vectorSource = vectorLayer.getSource();
+  vectorSource.once('change', () => {
+    vectorSource.getFeatures().forEach((feature) => {
+      feature.setStyle(vectorLayer.getStyle()());
+      FeatureUtils.setStyleBySoilType(feature);
+    })
+  });
   unref(map).addLayer(vectorLayer);
-  return vectorLayer
-  // zoomMapToLayer(map, vectorLayer);
+  return vectorLayer;
 };
+
+  /**
+   *
+   * @param {{ map: Map}} params
+   * @returns {Style}
+   */
+export const actionAddLayerWMS = ({ layer, workspace, map }) => {
+  const wmsSource = new TileWMS({
+    url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
+    params: {
+      LAYERS: layer.url,
+      FORMAT: "image/png",
+    },
+    serverType: "geoserver",
+  });
+
+  // Create a new Image layer
+  const imageLayer= new TileLayer({
+    source: wmsSource,
+    extent: transformExtent()
+    // style: new Style({
+    //   stroke: new Stroke({ color: "rgba(0, 0, 0, 0)" }),
+    //   fill: new Fill({color: 'rgba(0, 0, 0, 0'}),
+    // })
+  });
+  unref(map).addLayer(imageLayer);
+  // const imageRenderer = unref(map).getRenderer().getLayerRenderer(imageLayer);
+  // imageRenderer.addEventListener('onclick', function (event) {
+  //   const coordinates = event.coordinate;
+  //   console.log(coordinates)
+  // })
+  return imageLayer
+};
+
+export const writeGeoJSON = (option) => {
+  const { feature, map } = option;
+  const geoJsonFormat = new GeoJSON();
+  const geometry = feature.getGeometry();
+  const sourceProjection = unref(map).getView().getProjection();
+  const targetProjection = "EPSG:4326";
+  const transformedGeometry = geometry
+    .clone()
+    .transform(sourceProjection, targetProjection);
+  const transformedFeature = new Feature(transformedGeometry);
+  return geoJsonFormat.writeFeature(transformedFeature);
+};
+
+
+export const distanceBetweenPoints = (latlng1, latlng2) => {
+  const line = LineString([latlng1, latlng2]);
+  return Math.round(line.getLength() * 100) / 100;
+}

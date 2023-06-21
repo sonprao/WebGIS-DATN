@@ -1,7 +1,8 @@
 <template>
     <div ref="mapRoot" class="mapView">
-      <FloatZoom v-bind="{ map: map, view: view }" />
+      <FloatZoom />
       <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+      <FloatDetail v-if="showDetail" v-model="showDetail" />
     </div>
     <div ref="popupRef" class="ol-popup">
       <q-btn
@@ -22,8 +23,8 @@ import { Map, View, Overlay } from 'ol';
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
-import {  OSM as OSM} from 'ol/source';
-import {  Tile as TileLayer } from 'ol/layer';
+import {  OSM, ImageWMS} from 'ol/source';
+import {  Tile as TileLayer, Image, Vector as VectorLayer } from 'ol/layer';
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
@@ -37,24 +38,38 @@ import {
   ref,
   unref,
   onMounted,
+  onUnmounted,
   getCurrentInstance,
   provide,
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
+import FloatDetail from "src/components/floatDetail/index.vue";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
+import {
+  FeatureUtils,
+} from "src/utils/openLayers";
 export default defineComponent({
   name: "NoMapPage",
   components: {
-    FloatZoom,
+    FloatDetail,
     FloatControl,
+    FloatZoom,
   },
   props: {},
   setup(props) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    //
+    const showDetail = ref(true);
+    const onShowDetail = (html) => {
+      showDetail.value = true;
+      console.log(html);
+    }
+    $bus.on('on-show-detail', onShowDetail);
     // popup
     const popupRef = ref(null);
     const popupContent = ref(null);
@@ -80,21 +95,34 @@ export default defineComponent({
         initPopupEvent();
       }
     };
+    $bus.on('close-popup', closePopup);
     const actionClosePopup = () => {
       unref(overlay).setPosition(undefined);
     };
     const initPopupEvent = () => {
+      const highLightFeature = function (feature, layer) {
+        let lastFeature = unref(popupEvent).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        feature.originStyle = feature.getStyle();
+        let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
+        unref(popupEvent).lastFeature = null;
+        if (feature !== lastFeature) {
+          feature.setStyle(selectedStyle);
+          unref(popupEvent).lastFeature = feature;
+        }
+      }
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          const name = layer?.get("name");
-          const coordinate = evt.coordinate;
-          const hdms = toStringHDMS(transform(coordinate, 'EPSG:5899',  'EPSG:4326')).replace('N ', 'N\n');
-
-          unref(popupContent).innerHTML =
-            "<p>" + name + "</p><pre>" + hdms + "</pre>";
-          unref(overlay).setPosition(coordinate);
-          return feature;
-        });
+            if (layer instanceof VectorLayer) return
+            highLightFeature(feature, layer);
+            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+            const coordinate = evt.coordinate;
+            dataFeature.setLocation(coordinate);
+            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+            unref(overlay).setPosition(coordinate);
+            return feature;
+          }
+        );
       });
     };
     // popup
@@ -114,12 +142,26 @@ export default defineComponent({
     );
     onMounted(() => {
       addOverlay();
+      const wmsSource = new ImageWMS({
+        url: `${process.env.GEO_SERVER_URL}/ne/wms`,
+        params: {
+          'LAYERS': 'ne:world',
+          'FORMAT': 'image/png' // Specify the desired image format
+        },
+        serverType: 'geoserver'
+      });
+
+      // Create a new Image layer
+      const imageLayer = new Image({
+        source: wmsSource
+      });
 
       map.value = new Map({
         target: vm.$refs["mapRoot"],
         controls: [scaleControl],
         overlays: [unref(overlay)],
         layers: [
+          // imageLayer,
           new TileLayer({
             source: new OSM(), // tiles are served by OpenStreetMap
           }),
@@ -129,9 +171,14 @@ export default defineComponent({
       });
       initPopupEvent();
     });
+    onUnmounted(() => {
+      $bus.off('close-popup');
+      $bus.off('on-show-detail');
+    });
     return {
       map,
       view,
+      showDetail,
       popupRef,
       popupCloser,
       actionClosePopup,
@@ -202,3 +249,4 @@ body {
   right: 8px;
 }
 </style>
+
