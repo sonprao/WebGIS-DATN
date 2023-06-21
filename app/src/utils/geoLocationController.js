@@ -49,15 +49,17 @@ class GeoLocationController {
   }
 
   updateGeolocation() {
-    const viewProjection = this.view.getProjection();
+    const viewProjection = this.view.getProjection(); // View cu chua update
+    const newViewProj = this.map.getView().getProjection(); // View da update
+    console.log(viewProjection, newViewProj);
     const coordinates = this.geolocation.getPosition();
-
+    // console.log(coordinates);
     if (coordinates) {
-      const transformedCoordinates = transform(coordinates, viewProjection, 'EPSG:4326');
+      const transformedCoordinates = transform(coordinates, viewProjection, newViewProj);
 
       // Perform actions with the updated geolocation coordinates
-      this.geolocation.setPosition(transformedCoordinates);
-      console.log('Geolocation Coordinates:', transformedCoordinates);
+      this.positionFeature.setGeometry(transformedCoordinates ? new Point(transformedCoordinates) : null);
+      // console.log('Geolocation Coordinates:', transformedCoordinates, coordinates);
     }
   }
 
@@ -73,7 +75,7 @@ class GeoLocationController {
       geolocation.on("change:position", function () {
         const coordinates = geolocation.getPosition();
         positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-        this.zoomToLocation(coordinates);
+        this.zoomToLocation(this.geolocation.getPosition());
       }.bind(this));
       this.vectorLayer = new VectorLayer({
         map: this.map,
@@ -86,6 +88,7 @@ class GeoLocationController {
       this.vectorLayer.changed();
       this.zoomToLocation(this.geolocation.getPosition());
     }
+    this.updateGeolocation();
   }
 
   zoomToLocation(coordinates) {
