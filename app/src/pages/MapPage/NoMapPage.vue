@@ -51,6 +51,7 @@ import FloatZoom from "src/components/floatZoom.vue";
 import {
   FeatureUtils,
 } from "src/utils/openLayers";
+import { getFeature } from "src/api/feature";
 export default defineComponent({
   name: "NoMapPage",
   components: {
@@ -115,6 +116,11 @@ export default defineComponent({
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer instanceof VectorLayer) return
             highLightFeature(feature, layer);
+            const featureId = feature.getId();
+            getFeature({ name: featureId })
+            .then((response) => {
+              console.log(response)  
+            }).catch((e) => console.log(e))
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
             const coordinate = evt.coordinate;
             dataFeature.setLocation(coordinate);

@@ -135,7 +135,18 @@ model MapLayer {
   createdById String?
   updatedBy   User?     @relation("LayerUpdated", fields: [updatedById], references: [id])
   updatedById String?
+  Feature     Feature[]
 
   @@fulltext([name, description])
 }
 
+model Feature {
+  id         String    @id @default(uuid())
+  name       String    @unique
+  properties String?   @db.LongText
+  layer      MapLayer? @relation(fields: [layerId], references: [id])
+  layerId    Int?
+
+  @@fulltext([name])
+
+}
