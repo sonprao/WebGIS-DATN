@@ -1,4 +1,5 @@
 // server.js
+const fileAPI = require('./src/server/file')
 const userAPI = require('./src/server/user')
 const profileAPI = require('./src/server/profile')
 const mapLayerAPI = require('./src/server/mapLayer')
@@ -13,6 +14,7 @@ const cors = require('cors')
 const app = express()
 app.use(cors())
 app.use(express.json())
+
 // user
 app.delete('/api/users', userAPI.delete)
 app.get('/api/users/:id',  userAPI.findUser)

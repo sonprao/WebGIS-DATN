@@ -1,11 +1,12 @@
-import {Fill, Stroke, Style, Circle as CircleStyle} from "ol/style";
+import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import VectorSource from "ol/source/Vector";
-import {Vector as VectorLayer} from "ol/layer";
+import { Vector as VectorLayer } from "ol/layer";
 // geolocation
 import Geolocation from "ol/Geolocation";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
-
+import { transform } from "ol/proj";
+import { transformProjection } from "src/utils/openLayers.js";
 
 class GeoLocationController {
   constructor(option = {}) {
@@ -39,6 +40,25 @@ class GeoLocationController {
     this.accuracyFeature = accuracyFeature;
     this.positionFeature = positionFeature;
     this.vectorLayer = null;
+
+    // Add a change event listener to the map view's resolution
+    this.view.on('change:resolution', this.updateGeolocation.bind(this));
+
+    // Add a change event listener to the map view's center
+    this.view.on('change:center', this.updateGeolocation.bind(this));
+  }
+
+  updateGeolocation() {
+    const viewProjection = this.view.getProjection();
+    const coordinates = this.geolocation.getPosition();
+
+    if (coordinates) {
+      const transformedCoordinates = transform(coordinates, viewProjection, 'EPSG:4326');
+
+      // Perform actions with the updated geolocation coordinates
+      this.geolocation.setPosition(transformedCoordinates);
+      console.log('Geolocation Coordinates:', transformedCoordinates);
+    }
   }
 
   getCurrentLocation() {
@@ -53,7 +73,7 @@ class GeoLocationController {
       geolocation.on("change:position", function () {
         const coordinates = geolocation.getPosition();
         positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-        this.zoomToLocation(coordinates)
+        this.zoomToLocation(coordinates);
       }.bind(this));
       this.vectorLayer = new VectorLayer({
         map: this.map,
@@ -62,8 +82,8 @@ class GeoLocationController {
         }),
       });
     } else if (this.vectorLayer) {
-      this.vectorLayer.set('visible', true, false)
-      this.vectorLayer.changed()
+      this.vectorLayer.set('visible', true, false);
+      this.vectorLayer.changed();
       this.zoomToLocation(this.geolocation.getPosition());
     }
   }
@@ -77,14 +97,14 @@ class GeoLocationController {
 
   removeCurrentLocation() {
     if (this.vectorLayer) {
-      this.vectorLayer.set('visible', false, false)
-      this.vectorLayer.changed()
+      this.vectorLayer.set('visible', false, false);
+      this.vectorLayer.changed();
     }
   }
 
   isShowCurrentLocation() {
-    return this.vectorLayer?.get('visible') ?? false
+    return this.vectorLayer?.get('visible') ?? false;
   }
 }
 
-export default GeoLocationController
+export default GeoLocationController;
