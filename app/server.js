@@ -1,5 +1,5 @@
 // server.js
-const fileAPI = require('./src/server/file')
+const featureAPI = require('./src/server/feature')
 const userAPI = require('./src/server/user')
 const profileAPI = require('./src/server/profile')
 const mapLayerAPI = require('./src/server/mapLayer')
@@ -31,6 +31,8 @@ app.put('/api/profile/:id',  profileAPI.update)
 app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers', mapLayerAPI.find)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
+// feature
+app.get('/api/features/:name',featureAPI.get)
 //location
 // app.post('/api/locations', locationAPI.updateOrCreate)
 app.put('/api/locations/:id', locationAPI.update)
