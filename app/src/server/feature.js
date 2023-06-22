@@ -30,9 +30,7 @@ module.exports = {
     const { name } = req.params;  
     const data = await prisma.feature.findUnique({
         where: {
-            name: {
-                search: name
-            },
+            name,
         }
     });
     res.json(data);
