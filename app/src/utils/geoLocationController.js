@@ -52,7 +52,6 @@ class GeoLocationController {
     const viewProjection = this.view.getProjection(); // View cu chua update
     const newViewProj = this.map.getView().getProjection(); // View da update
     const coordinates = this.geolocation.getPosition();
-    // console.log(coordinates);
     if (coordinates) {
       const transformedCoordinates = transform(coordinates, viewProjection, newViewProj);
 

@@ -2,7 +2,7 @@
   <div>
     <q-select
       ref="locationSearchRef"
-      v-model="search"
+      v-model="searchLocation"
       use-input
       clearable
       hide-dropdown-icon
@@ -93,7 +93,6 @@ import {
   inject,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useI18n } from "vue-i18n";
 import { i18n } from "boot/i18n.js";
 import { Map, View } from "ol";
 import proj4 from "proj4";
@@ -115,7 +114,7 @@ export default defineComponent({
     const $t = i18n.global.t;
     const map = inject("map", {});
     const locationSearchRef = ref(null);
-    const search = ref("");
+    const searchLocation = ref("");
     const hint = ref("");
     const options = ref([]);
     const defaultOptions = ref([]);
@@ -135,8 +134,7 @@ export default defineComponent({
         });
       }
     };
-    const location = ref(null);
-    provide("location", location);
+    const location = inject("location", {});
     const dataLayers = ref([]);
     const layerCheckbox = ref([]);
     const layerCheckAll = ref([]);
@@ -243,7 +241,7 @@ export default defineComponent({
     return {
       map,
       locationSearchRef,
-      search,
+      searchLocation,
       hint,
       options,
       filterFn,
@@ -257,7 +255,7 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 .layerClass {
   border-top-left-radius: 1px;
   border-top-right-radius: 1px;
@@ -282,7 +280,7 @@ export default defineComponent({
 
 ::-webkit-scrollbar-thumb {
   width: 10px;
-  background-color: $primary;
+  background-color: $secondary;
   border-radius: 10px;
   z-index: 12;
   border: 4px solid rgba(0, 0, 0, 0);
@@ -295,7 +293,7 @@ export default defineComponent({
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: $primary;
+  background: $secondary;
   cursor: auto !important;
 }
 </style>

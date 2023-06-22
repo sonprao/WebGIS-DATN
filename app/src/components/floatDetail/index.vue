@@ -1,21 +1,7 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-right" :offset="[10, 10]">
-    <!-- <q-card class="my-card" flat bordered style="width: 300px">
-      <q-card-actions align="right">
-        <q-btn round flat icon="close" @click="closeCard" />
-      </q-card-actions>
-      <q-card-section>
-        <component :is="ComponentToRender"></component>
-      </q-card-section>
-    </q-card> -->
     <q-card class="my-card" flat bordered style="width: 400px">
-      <div
-        style="
-          background-image: url('https://cdn.quasar.dev/img/chicken-salad.jpg');
-          background-size: cover;
-          min-height: 300px;
-        "
-      >
+      <div :style="styleImage">
         <q-btn
           class="absolute shadow-2 closeClass"
           round
@@ -26,14 +12,6 @@
           style="top: 10px; left: 10px;"
           @click="closeCard"
         />
-        <!-- <q-icon
-        class="absolute shadow-2 closeClass"
-        size="20px"
-        name="close"
-        color="white"
-        style="top: 8px; left: 8px"
-        @click="closeCard"
-        /> -->
       </div>
       <q-card-section>
         <q-btn
@@ -124,13 +102,20 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+
+    const imageCapture = ref('https://cdn.quasar.dev/img/chicken-salad.jpg')
+    const styleImage = computed(() => ({
+      backgroundImage: `url(${unref(imageCapture)})`,
+      backgroundSize: 'cover',
+      minHeight: '200px',
+    }))
     const detailTab = ref("tab-properties");
     const tabExpanded = ref(true);
     const detailTabList = computed(() => [
       {
         label: $t('Properties'),
         component: 'tab-properties',
-        content: '<p>hello</p>'
+        content: props.content,
       },
       {
         label: $t('Location'),
@@ -160,6 +145,7 @@ export default defineComponent({
 
     return {
       vm,
+      styleImage,
       detailTab,
       detailTabList,
       tabExpanded,
@@ -185,11 +171,40 @@ body {
 }
 
 .panelClass {
-  padding: 0;
+  max-height: 200px;
+  padding: 10px 20px;
   display: grid;
 }
 
 .closeClass {
   cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  height: 12px;
+  width: 14px;
+  background: transparent;
+  z-index: 12;
+  overflow: visible;
+  cursor: auto !important;
+}
+
+::-webkit-scrollbar-thumb {
+  width: 10px;
+  background-color: $secondary;
+  border-radius: 10px;
+  z-index: 12;
+  border: 4px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  transition: background-color 0.32s ease-in-out;
+  margin: 4px;
+  min-height: 32px;
+  min-width: 32px;
+  cursor: auto !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $secondary;
+  cursor: auto !important;
 }
 </style>
