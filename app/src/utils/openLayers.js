@@ -201,12 +201,7 @@ export const FeatureUtils = {
         color = "WHITE";
     }
     let style = feature.getStyle();
-    feature.setStyle( new Style({
-      stroke : style.getStroke(),
-      fill : new Fill({
-        color : color
-      })
-    }))
+    style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
@@ -265,7 +260,7 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       fill: new Fill({
         color,
       }),
-      text: createTextStyle(feature, resolution, layer),
+      // text: createTextStyle(feature, resolution, layer),
     });
   };
   const vectorLayer = new VectorImageLayer({
