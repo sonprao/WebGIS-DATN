@@ -38,7 +38,6 @@ export default {
   // user management
   'Disable user': 'Vô hiệu hóa người dùng',
   'Columns': 'Cột',
-  'Email': 'Email',
   'Name': 'Tên',
   'Role': 'Vai trò',
   'Activate': 'Đang hoạt động',
@@ -69,4 +68,5 @@ export default {
   'Fclass': 'Fclass',
   'One way': 'Một chiều',
   'Max speed': 'Tốc độ tối đa',
+  "Updating" : "Đang cập nhật"
 }

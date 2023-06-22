@@ -15,7 +15,6 @@ export default {
   'Settings': 'Settings',
   //profile
   Profile: 'Profile',
-  Email: 'Email',
   Password: 'Password',
   "Enter a valid email": "Enter a valid email",
   "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character": "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character",
@@ -69,4 +68,5 @@ export default {
   'Fclass': 'Fclass',
   'One way': 'One way',
   'Max speed': 'Max speed',
+  "Updating" : "Updating"
 }

@@ -124,7 +124,7 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Polygon": {
+      case "Đất Đà Nẵng": {
         switch (feature.get("SoilTypeId")) {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
@@ -201,12 +201,7 @@ export const FeatureUtils = {
         color = "WHITE";
     }
     let style = feature.getStyle();
-    feature.setStyle( new Style({
-      stroke : style.getStroke(),
-      fill : new Fill({
-        color : color
-      })
-    }))
+    style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
@@ -216,6 +211,7 @@ export const FeatureUtils = {
 import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
+import {LineString} from "ol/geom";
 
 export const transformProjection = (option) => {
   const {
@@ -265,7 +261,7 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       fill: new Fill({
         color,
       }),
-      text: createTextStyle(feature, resolution, layer),
+      // text: createTextStyle(feature, resolution, layer),
     });
   };
   const vectorLayer = new VectorImageLayer({
@@ -338,6 +334,6 @@ export const writeGeoJSON = (option) => {
 
 
 export const distanceBetweenPoints = (latlng1, latlng2) => {
-  const line = LineString([latlng1, latlng2]);
+  const line = new LineString([latlng1, latlng2]);
   return Math.round(line.getLength() * 100) / 100;
 }
