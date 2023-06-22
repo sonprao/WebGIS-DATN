@@ -7,6 +7,7 @@ import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
+import {useLocationStore} from "stores/location";
 
 class GeoLocationController {
   constructor(option = {}) {
@@ -21,7 +22,6 @@ class GeoLocationController {
     });
     const accuracyFeature = new Feature();
     const positionFeature = new Feature();
-
     positionFeature.setStyle(
       new Style({
         image: new CircleStyle({
@@ -51,7 +51,6 @@ class GeoLocationController {
   updateGeolocation() {
     const viewProjection = this.view.getProjection(); // View cu chua update
     const newViewProj = this.map.getView().getProjection(); // View da update
-    console.log(viewProjection, newViewProj);
     const coordinates = this.geolocation.getPosition();
     // console.log(coordinates);
     if (coordinates) {
@@ -59,7 +58,6 @@ class GeoLocationController {
 
       // Perform actions with the updated geolocation coordinates
       this.positionFeature.setGeometry(transformedCoordinates ? new Point(transformedCoordinates) : null);
-      // console.log('Geolocation Coordinates:', transformedCoordinates, coordinates);
     }
   }
 
@@ -76,6 +74,8 @@ class GeoLocationController {
         const coordinates = geolocation.getPosition();
         positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
         this.zoomToLocation(this.geolocation.getPosition());
+        const locationStore = useLocationStore();
+        locationStore.setLocation(this.geolocation.getPosition());
       }.bind(this));
       this.vectorLayer = new VectorLayer({
         map: this.map,

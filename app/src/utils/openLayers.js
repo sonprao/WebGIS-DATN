@@ -211,6 +211,7 @@ export const FeatureUtils = {
 import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
+import {LineString} from "ol/geom";
 
 export const transformProjection = (option) => {
   const {
@@ -333,6 +334,6 @@ export const writeGeoJSON = (option) => {
 
 
 export const distanceBetweenPoints = (latlng1, latlng2) => {
-  const line = LineString([latlng1, latlng2]);
+  const line = new LineString([latlng1, latlng2]);
   return Math.round(line.getLength() * 100) / 100;
 }

@@ -146,6 +146,7 @@ import GeoJSON from "ol/format/GeoJSON";
 import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
+import  {useLocationStore} from "stores/location";
 
 export default defineComponent({
   name: "TabAction",
@@ -178,7 +179,7 @@ export default defineComponent({
     // geolocation
     const geoLocation = ref(null);
     // geolocation
-
+    const locationStore = useLocationStore();
     // measureToolTip
     const measureTooltipElement = ref(null);
     const measureTooltip = ref(null);
@@ -250,6 +251,8 @@ export default defineComponent({
       } else {
         $bus.emit("close-popup", true);
         unref(geoLocation).getCurrentLocation();
+        const location = unref(geoLocation).geolocation.getPosition()
+        locationStore.setLocation(location)
         clearControl();
       }
     };

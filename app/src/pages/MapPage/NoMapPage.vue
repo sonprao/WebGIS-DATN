@@ -29,6 +29,7 @@ import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
 import {register} from 'ol/proj/proj4';
+import {useLocationStore} from "stores/location";
 import proj4 from 'proj4';
 proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
 register(proj4);
@@ -50,6 +51,7 @@ import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
 import {
   FeatureUtils,
+  distanceBetweenPoints
 } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 export default defineComponent({
@@ -65,6 +67,7 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
     //
+    const locationStore = useLocationStore()
     const showDetail = ref(true);
     const onShowDetail = (html) => {
       showDetail.value = true;
@@ -118,6 +121,9 @@ export default defineComponent({
         }
       }
       popupEvent.value = unref(map).on("singleclick", function (evt) {
+        let location = locationStore.getStartLocation;
+        location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
+        const distance = distanceBetweenPoints(location, evt.coordinate); //meters
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer instanceof VectorLayer) return
             const isHighLight = highLightFeature(feature, layer);

@@ -2,40 +2,36 @@ import { defineStore } from 'pinia'
 
 export const useLocationStore = defineStore('location', {
   state: () => ({
-    location: {},
+    location: [],
+    startLocation: [],
     isLocated: false,
   }),
   persist: true,
 
   getters: {
     getLocation (state) {
-      return state.location
+      return state.location;
     },
     getIsLocated (state) {
-      return state.isLocated
-    }
+      return state.isLocated;
+    },
+    getStartLocation(state) {
+      return state.startLocation;
+    },
   },
 
   actions: {
     setLocation (location) {
-      this.location = location
+      this.location = location;
+      this.isLocated = false;
+      this.setStartLocation(this.location);
+    },
+    setStartLocation(location = this.location) {
+      this.startLocation = location;
     },
     clearLocation() {
-      this.location = {}
-      this.isLocated = false
-    },
-    async locateUser(userData) {
-      try {
-        const responseData = await locate(userData)
-        this.location = responseData
-        this.isLocated = true
-        return responseData
-      } catch (e){
-        this.location = {}
-        this.isLogin = false
-        return e
-      }
-
+      this.location = []
+      this.isLocated = false;
     },
   }
 })
