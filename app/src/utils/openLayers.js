@@ -124,7 +124,7 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Polygon": {
+      case "Đất Đà Nẵng": {
         switch (feature.get("SoilTypeId")) {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();

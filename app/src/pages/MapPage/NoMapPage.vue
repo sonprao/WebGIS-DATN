@@ -98,6 +98,8 @@ export default defineComponent({
     };
     $bus.on('close-popup', closePopup);
     const actionClosePopup = () => {
+      let lastFeature = unref(popupEvent).lastFeature;
+      lastFeature && lastFeature.setStyle(lastFeature.originStyle);
       unref(overlay).setPosition(undefined);
     };
     const initPopupEvent = () => {
@@ -110,22 +112,29 @@ export default defineComponent({
         if (feature !== lastFeature) {
           feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
+          return true;
+        } else {
+          return false;
         }
       }
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer instanceof VectorLayer) return
-            highLightFeature(feature, layer);
-            const featureId = feature.getId();
-            getFeature({ name: featureId })
-            .then((response) => {
-              console.log(response)  
-            }).catch((e) => console.log(e))
-            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
-            const coordinate = evt.coordinate;
-            dataFeature.setLocation(coordinate);
-            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-            unref(overlay).setPosition(coordinate);
+            const isHighLight = highLightFeature(feature, layer);
+            // const featureId = feature.getId();
+            // getFeature({ name: featureId })
+            // .then((response) => {
+            //   console.log(response)
+            // }).catch((e) => console.log(e))
+            if (isHighLight === true) {
+              const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+              const coordinate = evt.coordinate;
+              dataFeature.setLocation(coordinate);
+              unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+              unref(overlay).setPosition(coordinate);
+            } else {
+              actionClosePopup();
+            }
             return feature;
           }
         );
