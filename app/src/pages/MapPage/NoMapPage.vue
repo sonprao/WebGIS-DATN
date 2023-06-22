@@ -1,30 +1,36 @@
 <template>
-    <div ref="mapRoot" class="mapView">
-      <FloatZoom />
-      <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
-      <FloatDetail v-if="showDetail" v-model="showDetail" />
-    </div>
-    <div ref="popupRef" class="ol-popup">
-      <q-btn
-        ref="popupCloser"
-        class="ol-popup-closer"
-        flat
-        round
-        icon="close"
-        @click="actionClosePopup"
-      ></q-btn>
-      <div ref="popupContent"></div>
-    </div>
+  <div ref="mapRoot" class="mapView">
+    <FloatZoom />
+    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+    <FloatDetail
+      v-if="showDetail"
+      v-model="showDetail"
+      v-bind="{ content: floatDetailContent,
+      distance : floatDetailDistance}"
+    />
+    <FloatSearch />
+  </div>
+  <div ref="popupRef" class="ol-popup">
+    <q-btn
+      ref="popupCloser"
+      class="ol-popup-closer"
+      flat
+      round
+      icon="close"
+      @click="actionClosePopup"
+    ></q-btn>
+    <div ref="popupContent"></div>
+  </div>
 </template>
 
 <script>
 import "ol/ol.css";
-import { Map, View, Overlay } from 'ol';
+import { Map, View, Overlay } from "ol";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
-import {  OSM, ImageWMS} from 'ol/source';
-import {  Tile as TileLayer, Image, Vector as VectorLayer } from 'ol/layer';
+import { OSM, ImageWMS } from "ol/source";
+import { Tile as TileLayer, Image, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
@@ -46,6 +52,7 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
+import FloatSearch from "src/components/floatSearch/index.vue";
 import FloatDetail from "src/components/floatDetail/index.vue";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
@@ -57,6 +64,7 @@ import { getFeature } from "src/api/feature";
 export default defineComponent({
   name: "NoMapPage",
   components: {
+    FloatSearch,
     FloatDetail,
     FloatControl,
     FloatZoom,
@@ -68,12 +76,14 @@ export default defineComponent({
     const $t = i18n.global.t;
     //
     const locationStore = useLocationStore()
-    const showDetail = ref(true);
+    const showDetail = ref(false);
+    const floatDetailContent = ref(null);
+    const floatDetailDistance = ref(null);
     const onShowDetail = (html) => {
       showDetail.value = true;
       console.log(html);
-    }
-    $bus.on('on-show-detail', onShowDetail);
+    };
+    $bus.on("on-show-detail", onShowDetail);
     // popup
     const popupRef = ref(null);
     const popupContent = ref(null);
@@ -99,7 +109,7 @@ export default defineComponent({
         initPopupEvent();
       }
     };
-    $bus.on('close-popup', closePopup);
+    $bus.on("close-popup", closePopup);
     const actionClosePopup = () => {
       let lastFeature = unref(popupEvent).lastFeature;
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
@@ -119,19 +129,29 @@ export default defineComponent({
         } else {
           return false;
         }
-      }
+      };
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
         location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
-        const distance = distanceBetweenPoints(location, evt.coordinate); //meters
+        floatDetailDistance.value = distanceBetweenPoints(location, evt.coordinate); //meters
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer instanceof VectorLayer) return
             const isHighLight = highLightFeature(feature, layer);
-            // const featureId = feature.getId();
-            // getFeature({ name: featureId })
-            // .then((response) => {
-            //   console.log(response)
-            // }).catch((e) => console.log(e))
+            const featureId = feature.getId();
+            getFeature({ name: featureId })
+            .then((response) => {
+              console.log(response)
+              showDetail.value = true;
+              const propertiesToHTML = (obj) => {
+                return Object.keys(obj).reduce((acc, k) => {
+                  acc = acc + `<p>${k}: ${obj[k]}</p>`;
+                  return acc;
+                }, "");
+              };
+              floatDetailContent.value = propertiesToHTML(
+                JSON.parse(response?.properties || null)
+              );
+            }).catch((e) => console.log(e))
             if (isHighLight === true) {
               const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
               const coordinate = evt.coordinate;
@@ -153,7 +173,7 @@ export default defineComponent({
      * @type {Map}
      */
     const map = ref(null);
-    provide('map', map);
+    provide("map", map);
     const view = ref(
       new View({
         zoom: 0,
@@ -166,15 +186,15 @@ export default defineComponent({
       const wmsSource = new ImageWMS({
         url: `${process.env.GEO_SERVER_URL}/ne/wms`,
         params: {
-          'LAYERS': 'ne:world',
-          'FORMAT': 'image/png' // Specify the desired image format
+          LAYERS: "ne:world",
+          FORMAT: "image/png", // Specify the desired image format
         },
-        serverType: 'geoserver'
+        serverType: "geoserver",
       });
 
       // Create a new Image layer
       const imageLayer = new Image({
-        source: wmsSource
+        source: wmsSource,
       });
 
       map.value = new Map({
@@ -193,13 +213,15 @@ export default defineComponent({
       initPopupEvent();
     });
     onUnmounted(() => {
-      $bus.off('close-popup');
-      $bus.off('on-show-detail');
+      $bus.off("close-popup");
+      $bus.off("on-show-detail");
     });
     return {
       map,
       view,
       showDetail,
+      floatDetailContent,
+      floatDetailDistance,
       popupRef,
       popupCloser,
       actionClosePopup,
@@ -228,7 +250,6 @@ body {
     left: auto;
   }
 }
-
 
 .ol-popup {
   position: absolute;
@@ -270,4 +291,3 @@ body {
   right: 8px;
 }
 </style>
-

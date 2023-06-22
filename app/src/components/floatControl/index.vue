@@ -1,7 +1,7 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 300px">
-      <q-tabs v-model="tabModel" class="bg-teal text-white">
+      <q-tabs v-model="tabModel" class="bg-teal text-white" style="min-height: 56px;">
         <q-tab v-for="(tab, index) of tabList" 
           :key="index"
           :label="tab.label"
