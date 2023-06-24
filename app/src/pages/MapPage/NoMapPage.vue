@@ -107,7 +107,7 @@ export default defineComponent({
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
         unref(popupEvent).lastFeature = null;
         // unByKey(unref(popupEvent));
-        // unref(overlay).setPosition(undefined);
+        // unref(overlay).setPosition(undefined); obsolete
       }
     };
     $bus.on("close-popup", closePopup);
@@ -158,8 +158,8 @@ export default defineComponent({
               const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
               const coordinate = evt.coordinate;
               dataFeature.setLocation(coordinate);
-              // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-              // unref(overlay).setPosition(coordinate);
+              // unref(popupContent).innerHTML = dataFeature.getDisplayHtml(); //TODO :obsolete
+              // unref(overlay).setPosition(coordinate); //TODO: obsolete
             } else {
               showDetail.value = false;
               closePopup();
