@@ -84,6 +84,7 @@ export default defineComponent({
       console.log(html);
     };
     $bus.on("on-show-detail", onShowDetail);
+    $bus.on("close-popup", actionClosePopup);
     // popup
     const popupRef = ref(null);
     const popupContent = ref(null);
@@ -102,42 +103,42 @@ export default defineComponent({
     };
 
     const closePopup = (state) => {
-      if (state === true) {
-        let lastFeature = unref(popupEvent).lastFeature;
-        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        unref(popupEvent).lastFeature = null;
-        // unByKey(unref(popupEvent));
-        // unref(overlay).setPosition(undefined); obsolete
+      if (state) {
+        unByKey(unref(popupEvent));
+        // unref(overlay).setPosition(undefined);
+      } else {
+        initPopupEvent();
       }
     };
     $bus.on("close-popup", closePopup);
-    $bus.on("close-float-detail", closePopup);
     const actionClosePopup = () => {
       let lastFeature = unref(popupEvent).lastFeature;
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-      unref(overlay).setPosition(undefined);
+      // unref(overlay).setPosition(undefined);
     };
     const initPopupEvent = () => {
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        unref(popupEvent).lastFeature = null;
         feature.originStyle = feature.getStyle();
         let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
+        unref(popupEvent).lastFeature = null;
         if (feature !== lastFeature) {
           feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
           return true;
         } else {
+          unref(popupEvent).lastFeature = null;
           return false;
         }
       };
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
         location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
-        floatDetailDistance.value = distanceBetweenPoints(location, evt.coordinate);
+        floatDetailDistance.value = distanceBetweenPoints(location, evt.coordinate); //meters
+
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-            if (layer instanceof VectorLayer) return
+            if (layer instanceof VectorLayer) return;
             const isHighLight = highLightFeature(feature, layer);
             if (isHighLight === true) {
               const featureId = feature.getId();
@@ -158,11 +159,10 @@ export default defineComponent({
               const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
               const coordinate = evt.coordinate;
               dataFeature.setLocation(coordinate);
-              // unref(popupContent).innerHTML = dataFeature.getDisplayHtml(); //TODO :obsolete
-              // unref(overlay).setPosition(coordinate); //TODO: obsolete
+              // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+              // unref(overlay).setPosition(coordinate);
             } else {
-              showDetail.value = false;
-              closePopup();
+              actionClosePopup();
             }
             return feature;
           }

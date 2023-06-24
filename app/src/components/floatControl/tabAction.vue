@@ -145,6 +145,7 @@ import { unByKey } from "ol/Observable";
 import GeoJSON from "ol/format/GeoJSON";
 import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
+import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 
 export default defineComponent({
@@ -353,12 +354,12 @@ export default defineComponent({
           unref(helpTooltipElement).classList.add("hidden");
         });
     };
-    const zoomToDraw = (position) => {
+    const zoomToDraw = (position, duration = 1000, padding = [100, 100, 100, 100]) => {
       unref(map)
         .getView()
         .fit(position, {
-          padding: [100, 100, 100, 100],
-          duration: 1000,
+          padding,
+          duration,
         });
     };
     const deleteDraw = (index = -1) => {
@@ -384,9 +385,19 @@ export default defineComponent({
       if (index !== -1) {
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
         if (feature) {
-          const geoJsonData = await writeGeoJSON({feature, map: unref(map)});
-          console.log(geoJsonData)
-          $bus.emit("on-show-detail", geoJsonData);
+          const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
+          zoomToDraw(unref(drawList)[index].position, 100, [100, 100, 200, 300])
+          setTimeout(() => {
+            captureScreenshot().then((response) => {
+              $bus.emit("on-show-detail", {
+                title: 'a',
+                content: geoJsonData,
+                image: response
+              });
+              zoomToDraw(unref(drawList)[index].position, 1000, [100, 100, 100, 100])
+            });
+            $bus.emit("on-show-detail", {content: geoJsonData});
+          }, 150);
         }
       }
     }
@@ -445,6 +456,7 @@ export default defineComponent({
         (val) => {
           if (val !== "tab-action") {
             clearControl();
+            $bus.emit("close-popup", false);
             buttonModel.value = null;
           }
         }

@@ -1,51 +1,18 @@
 <template>
   <div>
-    <q-select
-      ref="locationSearchRef"
-      v-model="searchLocation"
-      use-input
-      clearable
-      hide-dropdown-icon
-      input-debounce="400"
-      label="Select location"
-      option-label="name"
-      option-value="name"
-      :hint="hint"
-      :options="options"
-      @filter="filterFn"
-      @update:model-value="setModel"
-      style="margin: 10px"
-    >
-      <template v-slot:prepend>
-        <q-icon name="search" />
-      </template>
-      <template v-slot:no-option>
-        <q-item>
-          <q-item-section class="text-grey">
-            {{ $t("No results") }}
-          </q-item-section>
-        </q-item>
-      </template>
-    </q-select>
-    <q-separator />
     <q-input v-if="dataLayers.length > 0" :label="$t('Search layer')" />
-    <q-checkbox
-      v-if="dataLayers.length > 0"
-      v-model="layerCheckAll"
-      :val="true"
-      color="primary"
-      label="Select All"
-      @update:model-value="selectAll"
-    />
+    <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
+      @update:model-value="selectAll" />
     <q-list overlay>
-      <q-virtual-scroll
+      <!-- <q-virtual-scroll
         class="layerClass"
         :items="dataLayers"
         separator
         v-slot="{ item, index }"
-      >
-        <!-- <q-scroll-area class="layerClass"> -->
-        <q-item :key="item.id + index">
+      > -->
+      <q-scroll-area class="layerClass"
+        :thumb-style="thumbStyle" :bar-style="barStyle">
+        <q-item v-for="(item, index) of dataLayers" :key="item.id + index">
           <q-item-section avatar>
             <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
           </q-item-section>
@@ -59,22 +26,14 @@
           </q-item-section>
           <q-item-section side>
             <div class="text-grey-8 q-gutter-xs">
-              <q-btn
-                v-if="layerCheckbox.includes(item)"
-                flat
-                dense
-                round
-                size="12px"
-                class="gt-xs"
-                icon="visibility"
-                @click="actionFocusLayer(item.vectorLayer)"
-              />
+              <q-btn v-if="layerCheckbox.includes(item)" flat dense round size="12px" class="gt-xs"
+                icon="center_focus_strong" @click="actionFocusLayer(item.vectorLayer)" />
             </div>
           </q-item-section>
           <q-separator />
         </q-item>
-        <!-- </q-scroll-area> -->
-      </q-virtual-scroll>
+      </q-scroll-area>
+      <!-- </q-virtual-scroll> -->
     </q-list>
   </div>
 </template>
@@ -94,12 +53,14 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { i18n } from "boot/i18n.js";
+import { useMapStore } from "stores/map";
+
 import { Map, View } from "ol";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
 
 import _difference from "lodash/difference";
-import { getAllLocation, getLocation } from "src/api/location";
+import _isEmpty from "lodash/isEmpty";
 import { MAP_LAYERS } from "src/constants/layer.js";
 import {
   actionAddLayerGeoJSON,
@@ -112,29 +73,10 @@ export default defineComponent({
   setup() {
     const vm = getCurrentInstance().proxy;
     const $t = i18n.global.t;
+    const mapStore = useMapStore();
     const map = inject("map", {});
-    const locationSearchRef = ref(null);
-    const searchLocation = ref("");
-    const hint = ref("");
-    const options = ref([]);
     const defaultOptions = ref([]);
-    const filterFn = (val, update, abort) => {
-      if (val.length < 2) {
-        // abort();
-        update(async () => {
-          options.value = unref(defaultOptions);
-        });
-      } else {
-        update(async () => {
-          const query = {
-            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
-          };
-          const response = await getAllLocation(query);
-          options.value = response;
-        });
-      }
-    };
-    const location = inject("location", {});
+    const location = computed(() => mapStore.getLocation);
     const dataLayers = ref([]);
     const layerCheckbox = ref([]);
     const layerCheckAll = ref([]);
@@ -152,36 +94,9 @@ export default defineComponent({
     };
     const setModel = async (val) => {
       if (val) {
-        location.value = await getLocation({ id: val.id });
         onClearSearch();
-        dataLayers.value = unref(location).mapLayers;
-        if (unref(location).view) {
-          const { longitude, latitude, extent, zoom, maxZoom } =
-            unref(location).view;
-          if (unref(location).view.projection) {
-            const { name: projectionName, definition: projectionDef } =
-              unref(location).view.projection;
-            proj4.defs(projectionName, projectionDef);
-            register(proj4);
-            const center = transformProjection({
-              to: projectionName,
-              definition: projectionDef,
-              coordinates: [longitude, latitude],
-            });
-            const newView = new View({
-              projection: projectionName,
-              center,
-              extent: JSON.parse(extent),
-              zoom,
-              maxZoom,
-            });
-            unref(map).setView(newView);
-          }
-        }
-        unref(locationSearchRef).blur();
-        hint.value = `${$t("Location")}: ${val.name}`;
+        dataLayers.value = unref(location)?.mapLayers || [];
       } else {
-        hint.value = null;
       }
     };
     const actionFocusLayer = (vectorLayer) => {
@@ -195,13 +110,9 @@ export default defineComponent({
     };
     onMounted(() => {
       console.log("TabLocation mounted");
-      const query = {
-        page: 1,
-        per_page: 10,
-      };
-      getAllLocation(query).then((response) => {
-        defaultOptions.value = response;
-      });
+      if (!_isEmpty(unref(location))) {
+        setModel(unref(location))
+      }
       watch(
         () => layerCheckbox.value,
         (newVal, oldVal) => {
@@ -234,23 +145,39 @@ export default defineComponent({
           }
         }
       );
+      watch(
+        () => location.value,
+        (newVal, oldVal) => {
+          setModel(newVal)
+        }
+      );
     });
     onUnmounted(() => {
       console.log("unmounted");
     });
     return {
       map,
-      locationSearchRef,
-      searchLocation,
-      hint,
-      options,
-      filterFn,
+      location,
       setModel,
       dataLayers,
       layerCheckbox,
       layerCheckAll,
       selectAll,
       actionFocusLayer,
+      thumbStyle: {
+        right: '4px',
+        borderRadius: '5px',
+        backgroundColor: 'teal',
+        width: '5px',
+        opacity: 0.75
+      },
+      barStyle: {
+        right: '2px',
+        borderRadius: '9px',
+        backgroundColor: 'teal',
+        width: '9px',
+        opacity: 0.2
+      }
     };
   },
 });
@@ -275,7 +202,7 @@ export default defineComponent({
   background: transparent;
   z-index: 12;
   overflow: visible;
-  cursor: auto !important;
+  cursor: pointer !important;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -289,11 +216,11 @@ export default defineComponent({
   margin: 4px;
   min-height: 32px;
   min-width: 32px;
-  cursor: auto !important;
+  cursor: pointer !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: $secondary;
-  cursor: auto !important;
+  cursor: pointer !important;
 }
 </style>

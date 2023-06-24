@@ -1,7 +1,7 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-right" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 400px">
-      <div :style="styleImage">
+      <!-- <div :style="styleImage">
         <q-btn
           class="absolute shadow-2 closeClass"
           round
@@ -9,52 +9,45 @@
           text-color="black"
           icon="close"
           size="sm"
-          style="top: 10px; left: 10px;"
+          style="top: 10px; left: 10px"
           @click="closeCard"
         />
-      </div>
+      </div> -->
+      <q-carousel swipeable animated v-model="slideImage" control-color="secondary" arrows navigation infinite
+        ref="carousel" style="height: 200px;">
+        <q-carousel-slide :name="1" :img-src="image" />
+        <q-carousel-slide :name="2" :img-src="image" />
+        <q-carousel-slide :name="3" :img-src="image" />
+        <template v-slot:control>
+          <q-carousel-control position="top-left" class="text-white rounded-borders">
+            <q-btn class="absolute shadow-2 closeClass" round color="white" text-color="black" icon="close" size="sm"
+              @click="closeCard" />
+          </q-carousel-control>
+        </template>
+      </q-carousel>
       <q-card-section>
-        <q-btn
-          fab
-          color="primary"
-          icon="place"
-          class="absolute"
-          style="top: 0; right: 12px; transform: translateY(-50%)"
-        />
+        <q-btn fab color="primary" icon="place" class="absolute"
+          style="top: 0; right: 12px; transform: translateY(-50%)" />
 
         <div class="row no-wrap items-center">
-          <div class="col text-h6 ellipsis">{{title}}</div>
-          <div
-            class="col-auto text-grey text-caption q-pt-md row no-wrap items-center"
-          >
+          <div class="col text-h6 ellipsis">{{ title }}</div>
+          <div class="col-auto text-grey text-caption q-pt-md row no-wrap items-center">
             <q-icon name="place" />
             {{ distanceToMyLocation }}
           </div>
         </div>
-
       </q-card-section>
 
-      <q-card-section class="q-pt-none">
-        <div class="text-subtitle1">$・Italian, Cafe</div>
-        <div class="text-caption text-grey">
-          Small plates, salads & sandwiches in an intimate setting.
+      <q-card-section v-if="coordinate" class="q-pt-none">
+        <div class="text-subtitle1">
+          <q-icon name="place" /> {{ coordinate }}
         </div>
       </q-card-section>
-
       <q-separator />
-
-      <!-- <q-card-actions>
-        <q-btn flat round icon="event" />
-        <q-btn flat color="primary"> Reserve </q-btn>
-      </q-card-actions> -->
       <q-tabs v-model="detailTab" class="bg-teal text-white">
-        <q-tab v-for="(tab, index) of detailTabList"
-          :key="index"
-          :label="tab.label"
-          :name="tab.component"
-          @click="() => {
-            tabExpanded = true;
-          }
+        <q-tab v-for="(tab, index) of detailTabList" :key="index" :label="tab.label" :name="tab.component" @click="() => {
+          tabExpanded = true;
+        }
           " />
         <q-btn flat dense :icon="tabExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'" style="height: 100%"
           @click="tabExpanded = !tabExpanded" />
@@ -63,13 +56,14 @@
       <q-slide-transition>
         <div v-show="tabExpanded">
           <q-tab-panels v-model="detailTab" animated :keep-alive="true" class="shadow-10 rounded-borders">
-            <q-tab-panel
-              v-for="(tab, index) of detailTabList"
-              :key="index"
-              :name="tab.component"
-              class="panelClass"
-            >
-            <div v-html="tab.content"></div>
+            <q-tab-panel v-for="(tab, index) of detailTabList" :key="index" :name="tab.component" class="panelClass">
+              <q-scroll-area
+              style="height: 200px; max-width: 400px; padding: 0 10px;"
+               :thumb-style="thumbStyle"
+               :bar-style="barStyle"
+               >
+                <div v-html="tab.content"></div>
+              </q-scroll-area>
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -88,52 +82,67 @@ import {
   computed,
   createApp,
   h,
+  inject,
 } from "vue";
+import html2canvas from "html2canvas";
 import { QBtn } from "quasar";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { Map, View, Overlay } from "ol";
 import { $bus } from "boot/bus.js";
-
 export default defineComponent({
   name: "FloatDetail",
   props: {
     value: Boolean,
-    content: String,
-    distance: Number,
+    title: String,
+    content: {
+      type: String,
+    },
+    image: {
+      type: String,
+      default: "https://cdn.quasar.dev/img/chicken-salad.jpg",
+    },
+    distance: {
+      type: Number,
+      default: 0,
+    },
+    coordinate: {
+      type: String,
+      default: null,
+    }
   },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
-
-    const imageCapture = ref('https://cdn.quasar.dev/img/chicken-salad.jpg')
+    const slideImage = ref(1);
     const styleImage = computed(() => ({
-      backgroundImage: `url(${unref(imageCapture)})`,
-      backgroundSize: 'cover',
-      minHeight: '200px',
-    }))
+      backgroundImage: `url(${props.image})`,
+      backgroundSize: "400px 200px",
+      height: "200px",
+    }));
+    const map = inject("map", {});
     const detailTab = ref("tab-properties");
     const tabExpanded = ref(true);
     const detailTabList = computed(() => [
       {
-        label: $t('Properties'),
-        component: 'tab-properties',
-        content: props.content === null ? "" : props.content.replaceAll("null", "Updating"),
+        label: $t("Properties"),
+        component: "tab-properties",
+        content: props.content,
       },
       {
-        label: $t('Location'),
-        component: 'tab-location',
+        label: $t("Location"),
+        component: "tab-location",
       },
-    ])
+    ]);
     const closeCard = () => {
       console.log("hehe");
       $bus.emit("close-float-detail", true);
       emit("update:model-value", false);
     };
     const distanceToMyLocation = computed(() => {
-      return props.distance + "m";
+      return props.distance;
     });
-    const title = "Cafe Basilico"
     const containerRef = ref(null);
     const renderDynamicComponent = ref(null);
     // const ComponentToRender = h(
@@ -149,16 +158,31 @@ export default defineComponent({
 
     return {
       vm,
+      map,
+      slideImage,
       styleImage,
       detailTab,
       detailTabList,
       tabExpanded,
-      title,
       distanceToMyLocation,
       containerRef,
       closeCard,
       ComponentToRender,
       renderDynamicComponent,
+      thumbStyle: {
+        right: '4px',
+        borderRadius: '5px',
+        backgroundColor: 'teal',
+        width: '5px',
+        opacity: 0.75
+      },
+      barStyle: {
+        right: '2px',
+        borderRadius: '9px',
+        backgroundColor: 'teal',
+        width: '9px',
+        opacity: 0.2
+      }
     };
   },
 });
@@ -176,8 +200,8 @@ body {
 
 .panelClass {
   max-height: 200px;
-  padding: 10px 20px;
-  display: grid;
+  // padding: 10px 20px;
+  // display: grid;
 }
 
 .closeClass {

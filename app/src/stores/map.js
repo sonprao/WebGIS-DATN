@@ -1,19 +1,20 @@
 import { defineStore } from 'pinia'
-
-export const useCounterStore = defineStore('counter', {
+import _isFunction from 'lodash/isFunction'
+export const useMapStore = defineStore('map', {
   state: () => ({
-    counter: 0
+    location: {},
   }),
 
   getters: {
-    doubleCount (state) {
-      return state.counter * 2
-    }
+    getLocation (state) {
+      return state.location;
+    },
   },
 
   actions: {
-    increment () {
-      this.counter++
-    }
+    setLocation({ location, resolve }) {
+      this.location = location;
+      if (_isFunction(resolve)) resolve()
+    },
   }
 })
