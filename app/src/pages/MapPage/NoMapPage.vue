@@ -102,14 +102,16 @@ export default defineComponent({
     };
 
     const closePopup = (state) => {
-      if (state) {
-        unByKey(unref(popupEvent));
-        unref(overlay).setPosition(undefined);
-      } else {
-        initPopupEvent();
+      if (state === true) {
+        let lastFeature = unref(popupEvent).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        unref(popupEvent).lastFeature = null;
+        // unByKey(unref(popupEvent));
+        // unref(overlay).setPosition(undefined);
       }
     };
     $bus.on("close-popup", closePopup);
+    $bus.on("close-float-detail", closePopup);
     const actionClosePopup = () => {
       let lastFeature = unref(popupEvent).lastFeature;
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
@@ -119,9 +121,9 @@ export default defineComponent({
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        unref(popupEvent).lastFeature = null;
         feature.originStyle = feature.getStyle();
         let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
-        unref(popupEvent).lastFeature = null;
         if (feature !== lastFeature) {
           feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
@@ -133,33 +135,34 @@ export default defineComponent({
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
         location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
-        floatDetailDistance.value = distanceBetweenPoints(location, evt.coordinate); //meters
+        floatDetailDistance.value = distanceBetweenPoints(location, evt.coordinate);
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             if (layer instanceof VectorLayer) return
             const isHighLight = highLightFeature(feature, layer);
-            const featureId = feature.getId();
-            getFeature({ name: featureId })
-            .then((response) => {
-              console.log(response)
-              showDetail.value = true;
-              const propertiesToHTML = (obj) => {
-                return Object.keys(obj).reduce((acc, k) => {
-                  acc = acc + `<p>${k}: ${obj[k]}</p>`;
-                  return acc;
-                }, "");
-              };
-              floatDetailContent.value = propertiesToHTML(
-                JSON.parse(response?.properties || null)
-              );
-            }).catch((e) => console.log(e))
             if (isHighLight === true) {
+              const featureId = feature.getId();
+              getFeature({ name: featureId })
+                .then((response) => {
+                  console.log(response)
+                  showDetail.value = true;
+                  const propertiesToHTML = (obj) => {
+                    return Object.keys(obj).reduce((acc, k) => {
+                      acc = acc + `<p>${k}: ${obj[k]}</p>`;
+                      return acc;
+                    }, "");
+                  };
+                  floatDetailContent.value = propertiesToHTML(
+                    JSON.parse(response?.properties || null)
+                  );
+                }).catch((e) => console.log(e))
               const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
               const coordinate = evt.coordinate;
               dataFeature.setLocation(coordinate);
-              unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-              unref(overlay).setPosition(coordinate);
+              // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+              // unref(overlay).setPosition(coordinate);
             } else {
-              actionClosePopup();
+              showDetail.value = false;
+              closePopup();
             }
             return feature;
           }

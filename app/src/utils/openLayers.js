@@ -147,9 +147,9 @@ export const FeatureUtils = {
         featureData = new BaseDataFeature();
         break;
     }
-    console.log(layer, layer.get("name"));
+    // console.log(layer, layer.get("name"));
     featureData.setData(feature);
-    console.log(featureData, feature);
+    // console.log(featureData, feature);
     return featureData;
   },
   /**

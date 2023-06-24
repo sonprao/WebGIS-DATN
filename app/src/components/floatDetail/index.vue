@@ -92,6 +92,8 @@ import {
 import { QBtn } from "quasar";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
+
 export default defineComponent({
   name: "FloatDetail",
   props: {
@@ -116,7 +118,7 @@ export default defineComponent({
       {
         label: $t('Properties'),
         component: 'tab-properties',
-        content: props.content.replaceAll("null", "Updating"),
+        content: props.content === null ? "" : props.content.replaceAll("null", "Updating"),
       },
       {
         label: $t('Location'),
@@ -125,6 +127,7 @@ export default defineComponent({
     ])
     const closeCard = () => {
       console.log("hehe");
+      $bus.emit("close-float-detail", true);
       emit("update:model-value", false);
     };
     const distanceToMyLocation = computed(() => {
