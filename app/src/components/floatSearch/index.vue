@@ -45,8 +45,16 @@ import {
   provide,
   inject,
 } from "vue";
+// import { $bus } from "boot/bus.js";
 import { i18n } from "boot/i18n.js";
 import _difference from "lodash/difference";
+
+import { Map, View } from "ol";
+import proj4 from "proj4";
+import { register } from "ol/proj/proj4";
+import {  transformProjection } from "src/utils/openLayers.js";
+
+import { useMapStore } from "stores/map";
 import { getAllLocation, getLocation } from "src/api/location";
 export default defineComponent({
   name: "FloatSearch",
@@ -56,9 +64,10 @@ export default defineComponent({
   },
    setup() {
      const $t = i18n.global.t;
-    const map = inject("map", {});
+     const map = inject("map", {});
+     const mapStore = useMapStore();
     const locationSearchRef = ref(null);
-    const searchLocation = ref("ab");
+    const searchLocation = ref("");
     const options = ref([]);
     const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
@@ -78,16 +87,44 @@ export default defineComponent({
       }
     };
     const location = ref(null);
-    provide("location", location);
     const onClearSearch = () => {
     };
      const setModel = async (val) => {
       if (val) {
         location.value = await getLocation({ id: val.id });
+        mapStore.setLocation({
+          location: unref(location),
+          resolve: setView,
+        })
       }
       unref(locationSearchRef).blur();
-    };
-    onMounted(() => {
+     };
+     const setView = () => {
+      if (unref(location).view) {
+          const { longitude, latitude, extent, zoom, maxZoom } =
+            unref(location).view;
+          if (unref(location).view.projection) {
+            const { name: projectionName, definition: projectionDef } =
+              unref(location).view.projection;
+            proj4.defs(projectionName, projectionDef);
+            register(proj4);
+            const center = transformProjection({
+              to: projectionName,
+              definition: projectionDef,
+              coordinates: [longitude, latitude],
+            });
+            const newView = new View({
+              projection: projectionName,
+              center,
+              extent: JSON.parse(extent),
+              zoom,
+              maxZoom,
+            });
+            unref(map).setView(newView);
+          }
+        }
+    }
+     onMounted(() => {
       console.log("TabLocation mounted");
       const query = {
         page: 1,

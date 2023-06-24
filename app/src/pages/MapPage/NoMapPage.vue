@@ -1,23 +1,12 @@
 <template>
   <div ref="mapRoot" class="mapView">
-    <FloatZoom />
-    <FloatControl v-bind="{ map: map, view: view }" @closePopup="closePopup" />
-    <FloatDetail
-      v-if="!showDetail"
-      v-model="showDetail"
-      v-bind="{ content: floatDetailContent }"
-    />
-    <FloatSearch />
+    <FloatZoom data-html2canvas-ignore />
+    <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+    <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps" />
+    <FloatSearch data-html2canvas-ignore />
   </div>
   <div ref="popupRef" class="ol-popup">
-    <q-btn
-      ref="popupCloser"
-      class="ol-popup-closer"
-      flat
-      round
-      icon="close"
-      @click="actionClosePopup"
-    ></q-btn>
+    <q-btn ref="popupCloser" class="ol-popup-closer" flat round icon="close" @click="actionClosePopup"></q-btn>
     <div ref="popupContent"></div>
   </div>
 </template>
@@ -33,8 +22,8 @@ import { Tile as TileLayer, Image, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
-import {register} from 'ol/proj/proj4';
-import {useLocationStore} from "stores/location";
+import { register } from 'ol/proj/proj4';
+import { useLocationStore } from "stores/location";
 import proj4 from 'proj4';
 proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
 register(proj4);
@@ -48,6 +37,7 @@ import {
   getCurrentInstance,
   provide,
 } from "vue";
+import _debounce from 'lodash/debounce';
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
@@ -76,10 +66,32 @@ export default defineComponent({
     //
     const locationStore = useLocationStore()
     const showDetail = ref(false);
-    const floatDetailContent = ref(null);
-    const onShowDetail = (html) => {
+    const floatDetailProps = ref({
+      title: null,
+      image: 'https://cdn.quasar.dev/img/chicken-salad.jpg',
+      content: null,
+    })
+    const onShowDetail = (option) => {
+      const { content, image, title, type = 'string' } = option
       showDetail.value = true;
-      console.log(html);
+      if (image) {
+        floatDetailProps.value.image = image
+      }
+      if (content) {
+        const propertiesToHTML = (obj) => {
+          return Object.keys(obj).reduce((acc, k) => {
+            if (obj[k] === 'string')
+              acc = acc + `<p>${k}: ${obj[k]}</p>`;
+            else
+              acc = acc + `<p>${k}: ${JSON.stringify(obj[k])}</p>`;
+            return acc;
+          }, "");
+        };
+        if (type === 'string') {
+          floatDetailProps.value.content = typeof content === 'string' ? propertiesToHTML(JSON.parse(content)) : propertiesToHTML(content);
+        } else
+          floatDetailProps.value.content = typeof content === 'string' ? JSON.parse(content) : content;
+      }
     };
     $bus.on("on-show-detail", onShowDetail);
     // popup
@@ -113,6 +125,14 @@ export default defineComponent({
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
       unref(overlay).setPosition(undefined);
     };
+    const getFeatureAPI = _debounce((featureId) => {
+      getFeature({ name: featureId })
+        .then((response) => {
+          onShowDetail({
+            content: JSON.parse(response?.properties || false)
+          })
+        }).catch((e) => console.log(e))
+    }, 200)
     const initPopupEvent = () => {
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
@@ -133,34 +153,32 @@ export default defineComponent({
         location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
         const distance = distanceBetweenPoints(location, evt.coordinate); //meters
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-            if (layer instanceof VectorLayer) return
-            const isHighLight = highLightFeature(feature, layer);
-            const featureId = feature.getId();
-            getFeature({ name: featureId })
-            .then((response) => {
-              console.log(response)
-              showDetail.value = true;
-              const propertiesToHTML = (obj) => {
-                return Object.keys(obj).reduce((acc, k) => {
-                  acc = acc + `<p>${k}: ${obj[k]}</p>`;
-                  return acc;
-                }, "");
-              };
-              floatDetailContent.value = propertiesToHTML(
-                JSON.parse(response?.properties || null)
-              );
-            }).catch((e) => console.log(e))
-            if (isHighLight === true) {
-              const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
-              const coordinate = evt.coordinate;
-              dataFeature.setLocation(coordinate);
-              unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-              unref(overlay).setPosition(coordinate);
-            } else {
-              actionClosePopup();
-            }
-            return feature;
+          if (layer instanceof VectorLayer) return
+          const isHighLight = highLightFeature(feature, layer);
+          const featureId = feature.getId();
+          getFeatureAPI(featureId);
+          if (isHighLight === true) {
+            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+            const coordinate = evt.coordinate;
+            dataFeature.setLocation(coordinate);
+            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+            unref(overlay).setPosition(coordinate);
+            // set float detail
+            floatDetailProps.value.title = dataFeature.name;
+            floatDetailProps.value.coordinate =
+              toStringHDMS(
+                transform(
+                  coordinate,
+                  unref(map).getView().getProjection().getCode(),
+                  'EPSG:4326'
+                )
+              ).replace('N ', 'N\n');
+            // set float detail
+          } else {
+            actionClosePopup();
           }
+          return feature;
+        }
         );
       });
     };
@@ -218,7 +236,7 @@ export default defineComponent({
       map,
       view,
       showDetail,
-      floatDetailContent,
+      floatDetailProps,
       popupRef,
       popupCloser,
       actionClosePopup,
@@ -239,13 +257,15 @@ body {
   height: 93vh;
   width: 100%;
   min-height: inherit;
+
   :global(.ol-scale-bar.ol-unselectable) {
     margin-left: 50px !important;
   }
-  :global(.ol-scale-line) {
-    right: 8px !important;
-    left: auto;
-  }
+
+  // :global(.ol-scale-line) {
+  //   right: 8px !important;
+  //   left: auto;
+  // }
 }
 
 .ol-popup {
@@ -259,6 +279,7 @@ body {
   left: -50px;
   min-width: 280px;
 }
+
 .ol-popup:after,
 .ol-popup:before {
   top: 100%;
@@ -269,18 +290,21 @@ body {
   position: absolute;
   pointer-events: none;
 }
+
 .ol-popup:after {
   border-top-color: white;
   border-width: 10px;
   left: 48px;
   margin-left: -10px;
 }
+
 .ol-popup:before {
   border-top-color: #cccccc;
   border-width: 11px;
   left: 48px;
   margin-left: -11px;
 }
+
 .ol-popup-closer {
   text-decoration: none;
   position: absolute;

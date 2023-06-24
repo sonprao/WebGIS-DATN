@@ -2,8 +2,8 @@
   <q-page-sticky
     ref="stickyRef"
     class="sticky"
-    position="bottom-right"
-    :offset="[10, 40]"
+    position="top-left"
+    :offset="[760, 10]"
   >
     <q-btn-group outline color="white" style="flex-direction: column; gap: 2px">
       <q-btn
@@ -11,10 +11,11 @@
         text-color="white"
         round
         icon="add"
+        size="sm"
         class="circle shadow-3"
         @click="zoom('in')"
       >
-        <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom in") }}</q-tooltip>
+        <q-tooltip  anchor="center right" self="center start">{{ $t("Zoom in") }}</q-tooltip>
       </q-btn>
       <q-space />
       <q-btn
@@ -22,10 +23,11 @@
         text-color="white"
         round
         icon="remove"
+        size="sm"
         class="circle shadow-3"
         @click="zoom('out')"
       >
-        <q-tooltip  anchor="center left" self="center end">{{ $t("Zoom out") }}</q-tooltip>
+        <q-tooltip  anchor="center right" self="center start">{{ $t("Zoom out") }}</q-tooltip>
       </q-btn>
     </q-btn-group>
   </q-page-sticky>
