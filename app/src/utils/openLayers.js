@@ -100,6 +100,23 @@ export const zoomMapToLayer = function (map, vectorLayer) {
   });
 };
 
+/**
+ *
+ * @param map
+ * @param feature {Feature}
+ */
+export const zoomMapToFeature = function (map, feature) {
+  const extent = feature.getGeometry().getExtent();
+  unref(map)
+    .getView()
+    .fit(extent, {
+      padding: [250, 250, 250, 250],
+      duration: 1000,
+    });
+};
+
+
+
 export const FeatureUtils = {
   /**
    *
