@@ -47,7 +47,7 @@ import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
 import {
   FeatureUtils,
-  distanceBetweenPoints
+  distanceBetweenPoints,
 } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 export default defineComponent({
@@ -112,14 +112,16 @@ export default defineComponent({
     };
 
     const closePopup = (state) => {
-      if (state) {
-        unByKey(unref(popupEvent));
-        unref(overlay).setPosition(undefined);
-      } else {
-        initPopupEvent();
+      if (state === true) {
+        let lastFeature = unref(popupEvent).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        unref(popupEvent).lastFeature = null;
+        // unByKey(unref(popupEvent));
+        // unref(overlay).setPosition(undefined); obsolete
       }
     };
     $bus.on("close-popup", closePopup);
+    $bus.on("close-float-detail", closePopup);
     const actionClosePopup = () => {
       let lastFeature = unref(popupEvent).lastFeature;
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
@@ -137,9 +139,9 @@ export default defineComponent({
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        unref(popupEvent).lastFeature = null;
         feature.originStyle = feature.getStyle();
         let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
-        unref(popupEvent).lastFeature = null;
         if (feature !== lastFeature) {
           feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
@@ -151,19 +153,23 @@ export default defineComponent({
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
         location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
-        const distance = distanceBetweenPoints(location, evt.coordinate); //meters
+        floatDetailProps.value.distance = distanceBetweenPoints(location, evt.coordinate);
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
           if (layer instanceof VectorLayer) return
           const isHighLight = highLightFeature(feature, layer);
-          const featureId = feature.getId();
-          getFeatureAPI(featureId);
           if (isHighLight === true) {
+            const featureId = feature.getId();
+            unref(map).getView().fit(feature.getGeometry().getExtent(), {
+              padding: [250, 250, 250, 250],
+              duration: 1000,
+            });
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
             const coordinate = evt.coordinate;
             dataFeature.setLocation(coordinate);
-            unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-            unref(overlay).setPosition(coordinate);
+            // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
+            // unref(overlay).setPosition(coordinate); obsolete
             // set float detail
+            getFeatureAPI(featureId);
             floatDetailProps.value.title = dataFeature.name;
             floatDetailProps.value.coordinate =
               toStringHDMS(
@@ -175,7 +181,8 @@ export default defineComponent({
               ).replace('N ', 'N\n');
             // set float detail
           } else {
-            actionClosePopup();
+            showDetail.value = false;
+            closePopup(true);
           }
           return feature;
         }
@@ -230,6 +237,7 @@ export default defineComponent({
     });
     onUnmounted(() => {
       $bus.off("close-popup");
+      $bus.off("close-float-detail");
       $bus.off("on-show-detail");
     });
     return {
