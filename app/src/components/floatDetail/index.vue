@@ -89,7 +89,7 @@ import { QBtn } from "quasar";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { Map, View, Overlay } from "ol";
-
+import { $bus } from "boot/bus.js";
 export default defineComponent({
   name: "FloatDetail",
   props: {
@@ -101,6 +101,10 @@ export default defineComponent({
     image: {
       type: String,
       default: "https://cdn.quasar.dev/img/chicken-salad.jpg",
+    },
+    distance: {
+      type: Number,
+      default: 0,
     },
     coordinate: {
       type: String,
@@ -133,10 +137,11 @@ export default defineComponent({
     ]);
     const closeCard = () => {
       console.log("hehe");
+      $bus.emit("close-float-detail", true);
       emit("update:model-value", false);
     };
     const distanceToMyLocation = computed(() => {
-      return "250 m";
+      return props.distance;
     });
     const containerRef = ref(null);
     const renderDynamicComponent = ref(null);
