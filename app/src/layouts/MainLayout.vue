@@ -14,7 +14,7 @@
         <q-toolbar-title> GIS App </q-toolbar-title>
         <!-- login component -->
         <q-avatar>
-          <img :src="profile.picture">
+          <img :src="profile?.picture">
         </q-avatar>
       </q-toolbar>
     </q-header>

@@ -2,7 +2,8 @@
   <div ref="mapRoot" class="mapView">
     <FloatZoom data-html2canvas-ignore />
     <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
-    <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps" />
+    <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps"
+      @update:model-content="floatDetailProps.content = $event" />
     <FloatSearch data-html2canvas-ignore />
   </div>
   <div ref="popupRef" class="ol-popup">
@@ -50,6 +51,8 @@ import {
   distanceBetweenPoints,
 } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
+import { captureScreenshot } from "src/utils/html2Canvas";
+
 export default defineComponent({
   name: "NoMapPage",
   components: {
@@ -69,10 +72,12 @@ export default defineComponent({
     const floatDetailProps = ref({
       title: null,
       image: 'https://cdn.quasar.dev/img/chicken-salad.jpg',
-      content: null,
+      content: {},
+      type: 'string',
+      id: null,
     })
     const onShowDetail = (option) => {
-      const { content, image, title, type = 'string' } = option
+      const { content, image, title, type = 'object' } = option
       showDetail.value = true;
       if (image) {
         floatDetailProps.value.image = image
@@ -130,6 +135,7 @@ export default defineComponent({
     const getFeatureAPI = _debounce((featureId) => {
       getFeature({ name: featureId })
         .then((response) => {
+          floatDetailProps.value.id = response.id
           onShowDetail({
             content: JSON.parse(response?.properties || false)
           })
@@ -141,10 +147,19 @@ export default defineComponent({
         lastFeature && lastFeature.setStyle(lastFeature.originStyle);
         unref(popupEvent).lastFeature = null;
         feature.originStyle = feature.getStyle();
-        let selectedStyle = FeatureUtils.getSelectedStyle(feature.getStyle());
+        if (!feature.originStyle) return
+        let selectedStyle = FeatureUtils.getSelectedStyle(feature.originStyle);
         if (feature !== lastFeature) {
-          feature.setStyle(selectedStyle);
+          const a = feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
+          feature.on('change', () => {
+            console.log('cchange')
+          })
+          setTimeout(() => {
+            captureScreenshot().then((response) => {
+              floatDetailProps.value.image = response
+            });
+          }, 1000);
           return true;
         } else {
           return false;
@@ -170,6 +185,7 @@ export default defineComponent({
             // unref(overlay).setPosition(coordinate); obsolete
             // set float detail
             getFeatureAPI(featureId);
+            // screenshot
             floatDetailProps.value.title = dataFeature.name;
             floatDetailProps.value.coordinate =
               toStringHDMS(

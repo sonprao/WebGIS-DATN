@@ -13,7 +13,7 @@ module.exports = {
     res.json(featuresData);
   },
   update: async (req, res) => {
-    const { id } = req.query;
+    const id = req.params.id;
     const { feature } = req.body;
     const data = await prisma.feature.update({
       where: {

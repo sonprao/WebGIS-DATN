@@ -1,20 +1,8 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-right" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 400px">
-      <!-- <div :style="styleImage">
-        <q-btn
-          class="absolute shadow-2 closeClass"
-          round
-          color="white"
-          text-color="black"
-          icon="close"
-          size="sm"
-          style="top: 10px; left: 10px"
-          @click="closeCard"
-        />
-      </div> -->
       <q-carousel swipeable animated v-model="slideImage" control-color="secondary" arrows navigation infinite
-        ref="carousel" style="height: 200px;">
+        ref="carousel" style="height: 200px">
         <q-carousel-slide :name="1" :img-src="image" />
         <q-carousel-slide :name="2" :img-src="image" />
         <q-carousel-slide :name="3" :img-src="image" />
@@ -56,14 +44,8 @@
       <q-slide-transition>
         <div v-show="tabExpanded">
           <q-tab-panels v-model="detailTab" animated :keep-alive="true" class="shadow-10 rounded-borders">
-            <q-tab-panel v-for="(tab, index) of detailTabList" :key="index" :name="tab.component" class="panelClass">
-              <q-scroll-area
-              style="height: 200px; max-width: 400px; padding: 0 10px;"
-               :thumb-style="thumbStyle"
-               :bar-style="barStyle"
-               >
-                <div v-html="tab.content"></div>
-              </q-scroll-area>
+            <q-tab-panel name="tab-fields" class="panelClass">
+                <detail-table :content="content" @update:model-content="updateContent($event)" ></detail-table>
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -90,13 +72,25 @@ import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { Map, View, Overlay } from "ol";
 import { $bus } from "boot/bus.js";
+import _isEqual from 'lodash/isEqual'
+import { updateFeature } from "src/api/feature";
+
+import DetailTable from 'src/components/floatDetail/detailTable.vue'
+
 export default defineComponent({
   name: "FloatDetail",
+  components: {
+    'detail-table': DetailTable,
+  },
   props: {
+    id: String,
     value: Boolean,
     title: String,
     content: {
-      type: String,
+      type: Object,
+      default: () => ({
+        name: 'a',
+      }),
     },
     image: {
       type: String,
@@ -109,7 +103,7 @@ export default defineComponent({
     coordinate: {
       type: String,
       default: null,
-    }
+    },
   },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
@@ -122,12 +116,12 @@ export default defineComponent({
       height: "200px",
     }));
     const map = inject("map", {});
-    const detailTab = ref("tab-properties");
+    const detailTab = ref("tab-fields");
     const tabExpanded = ref(true);
     const detailTabList = computed(() => [
       {
-        label: $t("Properties"),
-        component: "tab-properties",
+        label: $t("Fields"),
+        component: "tab-fields",
         content: props.content,
       },
       {
@@ -136,25 +130,28 @@ export default defineComponent({
       },
     ]);
     const closeCard = () => {
-      console.log("hehe");
       $bus.emit("close-float-detail", true);
       emit("update:model-value", false);
     };
     const distanceToMyLocation = computed(() => {
       return props.distance;
     });
-    const containerRef = ref(null);
-    const renderDynamicComponent = ref(null);
-    // const ComponentToRender = h(
-    //     'div',
-    //     { id: 'foo', class: 'bar' },
-    //     ['text content']
-    // )
-    const ComponentToRender = h(
-      QBtn,
-      // { id: 'foo', class: 'bar' },
-      ["text content"]
-    );
+    const updateContent = async (content) => {
+      if (!_isEqual(content, props.content)) {
+        let _tempContent = content
+        if (typeof _tempContent !== 'string') {
+          _tempContent = JSON.stringify(content)
+        }
+        const response = await updateFeature({
+          id: props.id,
+          feature: {
+            properties: _tempContent,
+          }
+        })
+        console.log(response)
+        emit("update:model-content", content)
+      }
+    }
 
     return {
       vm,
@@ -165,24 +162,8 @@ export default defineComponent({
       detailTabList,
       tabExpanded,
       distanceToMyLocation,
-      containerRef,
       closeCard,
-      ComponentToRender,
-      renderDynamicComponent,
-      thumbStyle: {
-        right: '4px',
-        borderRadius: '5px',
-        backgroundColor: 'teal',
-        width: '5px',
-        opacity: 0.75
-      },
-      barStyle: {
-        right: '2px',
-        borderRadius: '9px',
-        backgroundColor: 'teal',
-        width: '9px',
-        opacity: 0.2
-      }
+      updateContent,
     };
   },
 });
@@ -199,9 +180,8 @@ body {
 }
 
 .panelClass {
-  max-height: 200px;
-  // padding: 10px 20px;
-  // display: grid;
+  max-height: 230px;
+  max-width: 400px;
 }
 
 .closeClass {
