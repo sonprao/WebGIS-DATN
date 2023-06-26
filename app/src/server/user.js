@@ -23,6 +23,25 @@ module.exports = {
     });
     res.json(user);
   },
+  /**
+   * @swagger
+   * /api/login:
+   *   post:
+   *     tags:
+   *       - Users
+   *     summary: User login
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/LoginCredentials'
+   *     responses:
+   *       200:
+   *         description: User logged in successfully
+   *       401:
+   *         description: Unauthorized
+   */
   login: async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -46,6 +65,25 @@ module.exports = {
       res.json({ error: "There is some errors!" });
     }
   },
+  /**
+   * @swagger
+   * /api/login-google:
+   *   post:
+   *     tags:
+   *       - Users
+   *     summary: User login with Google
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/GoogleLoginCredentials'
+   *     responses:
+   *       200:
+   *         description: User logged in with Google successfully
+   *       401:
+   *         description: Unauthorized
+   */
   loginGoogle: async (req, res) => {
     const { email, password, role, profile } = req.body;
     const user = await prisma.user.upsert({
@@ -86,7 +124,40 @@ module.exports = {
     delete user["password"];
     res.json(user);
   },
-
+  /**
+   * @swagger
+   * /api/users:
+   *   post:
+   *     tags:
+   *       - Users
+   *     summary: Create a user
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/User'
+   *     responses:
+   *       200:
+   *         description: User created successfully
+   *       400:
+   *         description: Invalid request
+   *   put:
+   *     tags:
+   *       - Users
+   *     summary: Update a user
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/User'
+   *     responses:
+   *       200:
+   *         description: User updated successfully
+   *       400:
+   *         description: Invalid request
+   */
   updateOrCreateUser: async (req, res) => {
     const { email, password, role, profile } = req.body;
     const upsertUser = await prisma.user.upsert({
@@ -129,6 +200,25 @@ module.exports = {
     });
     res.json(upsertUser);
   },
+  /**
+   * @swagger
+   * /api/users/{id}:
+   *   get:
+   *     tags:
+   *        - Users
+   *     summary: Get a user by ID
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: OK
+   *       404:
+   *         description: User not found
+   */
   findUser: async (req, res) => {
     const id = req.params.id;
     const user = await prisma.user.findUnique({
@@ -139,6 +229,17 @@ module.exports = {
     res.json(user);
   },
 
+  /**
+   * @swagger
+   * /api/users:
+   *   get:
+   *     tags:
+   *       - Users
+   *     summary: Get all users
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   */
   getAll: async (req, res) => {
     const users = await prisma.user.findMany({
       include: {
@@ -147,7 +248,26 @@ module.exports = {
     });
     res.json(users);
   },
-
+  /**
+   * @swagger
+   * /api/users/{id}:
+   *   put:
+   *     tags:
+   *       - Users
+   *     summary: Update a user by ID
+   *     parameters:
+   *       - name: id
+   *         in: path
+   *         description: User ID
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: User activated successfully
+   *       404:
+   *         description: User not found
+   */
   activateUser: async (req, res) => {
     const id = req.params.id;
     const { activate } = req.body;
@@ -159,7 +279,19 @@ module.exports = {
     });
     res.json(user);
   },
-
+  /**
+   * @swagger
+   * /api/users:
+   *   delete:
+   *     tags:
+   *       - Users
+   *     summary: Delete a user
+   *     responses:
+   *       200:
+   *         description: User deleted successfully
+   *       404:
+   *         description: User not found
+   */
   delete: async (req, res) => {
     const { id } = req.query;
     const deleteUser = await prisma.user.delete({
