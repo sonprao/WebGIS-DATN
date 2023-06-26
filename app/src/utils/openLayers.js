@@ -163,7 +163,7 @@ export const FeatureUtils = {
         color: "BLUE",
         width: 3,
       }),
-      fill: style.getFill(),
+      fill: style?.getFill?.(),
     })
   },
 
