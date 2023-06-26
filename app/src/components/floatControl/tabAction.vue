@@ -247,6 +247,7 @@ export default defineComponent({
       }
       if (val !== "place") {
         $bus.emit("close-popup", true);
+        clearControl();
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
@@ -264,17 +265,6 @@ export default defineComponent({
       unref(map).removeInteraction(unref(snap));
       draw.value = null;
       snap.value = null;
-      vector.value = new VectorLayer({
-        source: unref(source),
-        style: {
-          "fill-color": "rgba(255, 255, 255, 0.2)",
-          "stroke-color": "#ffcc33",
-          "stroke-width": 2,
-          "circle-radius": 7,
-          "circle-fill-color": "#ffcc33",
-        },
-        zIndex: 10,
-      });
       if (unref(measureTooltipElement)) {
         unref(measureTooltipElement)?.parentNode?.removeChild?.(
           unref(measureTooltipElement)
@@ -283,7 +273,8 @@ export default defineComponent({
     };
     const addInteraction = (type) => {
       if (unref(draw)) {
-        clearControl();
+        unref(map).addInteraction(unref(draw));
+        return
       }
       if (!unref(map).getLayers().getArray().includes(unref(vector))) {
         unref(map).addLayer(unref(vector));
@@ -424,6 +415,7 @@ export default defineComponent({
       }
       measureTooltipElement.value = document.createElement("div");
       measureTooltipElement.value.className = "ol-tooltip ol-tooltip-measure";
+      measureTooltipElement.value.setAttribute("data-html2canvas-ignore", "true");
       measureTooltip.value = new Overlay({
         element: unref(measureTooltipElement),
         offset: [0, -15],
@@ -441,6 +433,7 @@ export default defineComponent({
       }
       helpTooltipElement.value = document.createElement("div");
       helpTooltipElement.value.className = "ol-tooltip hidden";
+      helpTooltipElement.value.setAttribute("data-html2canvas-ignore", "true");
       helpTooltip.value = new Overlay({
         element: unref(helpTooltipElement),
         offset: [15, 0],

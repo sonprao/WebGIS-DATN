@@ -68,5 +68,9 @@ export default {
   'Fclass': 'Fclass',
   'One way': 'One way',
   'Max speed': 'Max speed',
-  "Updating" : "Updating"
+  "Updating": "Updating", 
+  "Search layer": "Search layer",
+  "Fields": "Fields",
+  "Add field": "Add field",
+  "Edit": "Sửa",
 }

@@ -5,3 +5,8 @@ export const getFeature = async (params) => {
   return response.data
 }
 
+export const updateFeature = async (params) => {
+  const response = await api.put(`features/${params.id}`, params)
+  return response.data
+}
+

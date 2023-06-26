@@ -58,10 +58,6 @@ import { useMapStore } from "stores/map";
 import { getAllLocation, getLocation } from "src/api/location";
 export default defineComponent({
   name: "FloatSearch",
-  props: {
-    value: Boolean,
-    content: String,
-  },
    setup() {
      const $t = i18n.global.t;
      const map = inject("map", {});

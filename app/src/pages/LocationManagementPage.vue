@@ -229,7 +229,7 @@ export default defineComponent({
       {
         name: "description",
         align: "center",
-        style: 'min-width: 200px; width: 200px',
+        style: 'min-width: 100px; width: 100px',
         label: $t("Description"),
         field: "description",
         sortable: true,

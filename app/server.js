@@ -33,6 +33,7 @@ app.get('/api/mapLayers', mapLayerAPI.find)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
 // feature
 app.get('/api/features/:name',featureAPI.get)
+app.put('/api/features/:id',featureAPI.update)
 //location
 // app.post('/api/locations', locationAPI.updateOrCreate)
 app.put('/api/locations/:id', locationAPI.update)

@@ -68,5 +68,9 @@ export default {
   'Fclass': 'Fclass',
   'One way': 'Một chiều',
   'Max speed': 'Tốc độ tối đa',
-  "Updating" : "Đang cập nhật"
+  "Updating": "Đang cập nhật",
+  "Search layer": "Tìm kiếm lớp bản đồ",
+  "Fields": "Thuộc tính",
+  "Add field": "Thêm thuộc tính",
+  "Edit": "Sửa",
 }

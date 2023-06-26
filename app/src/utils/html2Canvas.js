@@ -10,7 +10,7 @@ export const captureScreenshot = async () => {
     // resize
     const resizedCanvas = document.createElement("canvas");
     const resizedContext = resizedCanvas.getContext("2d");
-    const scale = 0.8; // Resize scale (0.5 = 50% of the original size)
+    const scale = 1; // Resize scale (0.5 = 50% of the original size)
     resizedCanvas.width = canvas.width * scale;
     resizedCanvas.height = canvas.height * scale;
     resizedContext.drawImage(
