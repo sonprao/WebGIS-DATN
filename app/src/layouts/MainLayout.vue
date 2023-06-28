@@ -24,9 +24,6 @@
       elevated
       side="left"
       behavior="desktop"
-      :mini="miniState"
-      @mouseover="miniState =false"
-      @mouseout="miniState =true"
       >
       <q-list>
         <EssentialLink

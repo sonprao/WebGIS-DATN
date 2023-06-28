@@ -143,10 +143,13 @@ import { LineString, Polygon } from "ol/geom";
 import { Draw } from "ol/interaction";
 import { unByKey } from "ol/Observable";
 import GeoJSON from "ol/format/GeoJSON";
+import { toStringHDMS } from "ol/coordinate";
+import { transform } from "ol/proj";
 import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
+import {  transformProjection } from "src/utils/openLayers.js";
 
 export default defineComponent({
   name: "TabAction",
@@ -379,11 +382,17 @@ export default defineComponent({
           const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
           zoomToDraw(unref(drawList)[index].position, 100, [100, 100, 200, 300])
           setTimeout(() => {
+            const coordinate = toStringHDMS(transform(
+                  unref(drawList)[index].position,
+                  unref(map).getView().getProjection().getCode(),
+                  'EPSG:4326'
+            ))
             captureScreenshot().then((response) => {
               $bus.emit("on-show-detail", {
                 title: 'a',
                 content: geoJsonData,
-                image: response
+                image: response,
+                coordinate: coordinate,
               });
               zoomToDraw(unref(drawList)[index].position, 1000, [100, 100, 100, 100])
             });

@@ -75,27 +75,22 @@ export default defineComponent({
       content: {},
       type: 'string',
       id: null,
+      coordinate: null,
     })
     const onShowDetail = (option) => {
-      const { content, image, title, type = 'object' } = option
+      const { content, image, title, type = 'layer', coordinate } = option
       showDetail.value = true;
       if (image) {
         floatDetailProps.value.image = image
       }
       if (content) {
-        const propertiesToHTML = (obj) => {
-          return Object.keys(obj).reduce((acc, k) => {
-            if (obj[k] === 'string')
-              acc = acc + `<p>${k}: ${obj[k]}</p>`;
-            else
-              acc = acc + `<p>${k}: ${JSON.stringify(obj[k])}</p>`;
-            return acc;
-          }, "");
-        };
-        if (type === 'string') {
-          floatDetailProps.value.content = typeof content === 'string' ? propertiesToHTML(JSON.parse(content)) : propertiesToHTML(content);
-        } else
-          floatDetailProps.value.content = typeof content === 'string' ? JSON.parse(content) : content;
+        floatDetailProps.value.content = typeof content === 'string' ? JSON.parse(content) : content;
+      }
+      if (coordinate) {
+        floatDetailProps.value.coordinate = coordinate
+      }
+      if (type !== 'layer') {
+        floatDetailProps.value.type = type
       }
     };
     $bus.on("on-show-detail", onShowDetail);
@@ -179,6 +174,7 @@ export default defineComponent({
               duration: 1000,
             });
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
+            console.log(dataFeature)
             const coordinate = evt.coordinate;
             dataFeature.setLocation(coordinate);
             // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();

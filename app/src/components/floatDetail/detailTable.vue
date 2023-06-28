@@ -1,12 +1,18 @@
 <template>
   <div v-if="role === 'ADMIN'" class="adminClass">
+    <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="save" @click="dialog = true">
+      <q-tooltip anchor="top middle" self="center middle">{{ $t("Save to database") }}</q-tooltip>
+      <q-dialog v-model="dialog">
+        <detail-popup-save />
+      </q-dialog>
+    </q-btn>
     <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="done" @click="saveEdit">
       <q-tooltip anchor="top middle" self="center middle">{{ $t("Save") }}</q-tooltip>
     </q-btn>
     <q-btn v-else class="gt-xs" size="12px" flat dense round icon="edit" @click="isEditting = !isEditting">
       <q-tooltip anchor="top middle" self="center middle">{{ $t("Edit") }}</q-tooltip>
     </q-btn>
-    <q-btn class="gt-xs" size="12px" flat dense round icon="add">
+    <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="add" @click="addField">
       <q-tooltip anchor="top left" self="center middle">{{ $t("Add field") }}</q-tooltip>
     </q-btn>
   </div>
@@ -27,27 +33,6 @@
               {{ props.row.value }}
             </span>
           </q-td>
-          <!-- <q-td key="action" :props="props">
-            <q-btn v-if="!props.expand" class="gt-xs" size="12px" flat dense round icon="more_vert" @click.stop="">
-              <q-menu>
-                <q-list dense>
-                  <q-item clickable v-close-popup @click="props.expand = !props.expand">
-                    <q-item-section>{{ $t("Edit") }}</q-item-section>
-                    <q-item-section avatar>
-                      <q-icon name="edit" />
-                    </q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click.stop="deleteDraw(index)">
-                    <q-item-section>{{ $t("Delete") }}</q-item-section>
-                    <q-item-section avatar>
-                      <q-icon name="delete" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-            <q-btn v-else class="gt-xs" size="12px" flat dense round icon="done" @click="saveEdit(props)" />
-          </q-td> -->
         </q-tr>
       </template>
     </q-table>
@@ -71,36 +56,40 @@ import _isEqual from 'lodash/isEqual'
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { useUserStore } from 'src/stores/user';
+import { useMapStore } from "stores/map";
+import detailPopupSave from 'src/components/floatDetail/detailPopupSave.vue'
 
 export default defineComponent({
   name: "detailTable",
   props: {
     content: Object,
   },
+  components: {
+    'detail-popup-save': detailPopupSave,
+  },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
     const userStore = useUserStore();
+    const mapStore = useMapStore();
+    const location = computed(() => mapStore.getLocation);
     const { role } = userStore.getUser
 
     const isEditting = ref(false);
     const rows = ref(
       Object.entries(props.content).map((i) => {
-        let type = 'string'
         let value = ''
         if (i[1]) {
           if (typeof i[1] === 'string') {
             value = i[1]
           } else {
             value = JSON.stringify(i[1])
-            type = 'object'
           }
         }
         return {
           name: i[0],
           value,
-          type,
         }
       })
     );
@@ -129,11 +118,23 @@ export default defineComponent({
     const saveEdit = () => {
       isEditting.value = false
       const content = unref(rows).reduce((acc, item) => {
-        acc[item.name] = item.type === 'string' ? item.value : JSON.parse(item.value)
+        try {
+          acc[item.name] = JSON.parse(item.value)
+        } catch {
+          acc[item.name] = item.value
+        }
         return acc;
       }, {});
       emit("update:model-content", content);
     };
+
+    const addField = () => {
+      rows.value.splice(0, 0, {
+        name: '',
+        value: '',
+      })
+    }
+
     const hehe = (props) => {
       console.log(props);
     };
@@ -170,7 +171,10 @@ export default defineComponent({
       rows,
       columns,
       saveEdit,
+      addField,
       hehe,
+      location,
+      dialog: ref(false),
       thumbStyle: {
         right: "4px",
         borderRadius: "5px",

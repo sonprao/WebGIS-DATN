@@ -80,4 +80,36 @@ module.exports = {
     });
     res.json(data);
   },
+
+  getByLayer: async (req, res) => {
+    const { layerId } = req.params;
+    const { page = 1, per_page = 50 } = req.query;
+    // const data = await prisma.$transaction([
+    //   prisma.feature.count({
+    //     where: {
+    //       layerId: parseInt(layerId),
+    //     },
+    //   }),
+    //   prisma.feature.findMany({
+    //     skip: (parseInt(page) - 1) * parseInt(per_page),
+    //     take: parseInt(per_page),
+    //     where: {
+    //       layerId: parseInt(layerId),
+    //     },
+    //     orderBy: {
+    //       name: 'asc',
+    //     },
+    //   }),
+    // ]);
+    // SELECT * FROM feature WHERE feature.layerId = ${layerId}
+    //   ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC
+    //   LIMIT ${per_page} OFFSET ${(page - 1) * per_page};
+    const data = await prisma.$queryRaw`SELECT * FROM feature  WHERE feature.layerId = ${parseInt(layerId)}  ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC LIMIT ${per_page} OFFSET ${(page - 1) * per_page};`
+    const count = await prisma.feature.count({
+        where: {
+          layerId: parseInt(layerId),
+        },
+      })
+    res.json({ data, per_page: parseInt(per_page), page: parseInt(page), count });
+  },
 };

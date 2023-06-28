@@ -4,33 +4,23 @@ const { update, map } = require("lodash");
 const prisma = new PrismaClient();
 
 module.exports = {
-  updateOrCreate: async (req, res) => {
-    const { id } = req.params;
-    const {
-      name = "",
-      description = "",
-      workspace = "",
-      longitude = 0,
-      latitude = 0,
-      mapLayers = [],
-    } = req.body;
-    const location = await prisma.location.upsert({
-      where: {
-        id: id,
-      },
-      update: {
-        name: name,
-        description: description,
-        mapLayers: mapLayers,
-      },
-      create: {
-        id,
-        name: name,
-        description: description,
-        mapLayers: mapLayers,
+  create: async (req, res) => {
+   const updateLocation = await prisma.location.create({
+      data: {
+        name: req.body.name || '',
+        description: req.body.description || '',
+        workspace: req.body.workspace || '',
+        view: {
+          create: {
+            extent: req.body.view?.extent || '',
+            longitude: parseFloat(req.body.view?.longitude) || 0,
+            latitude: parseFloat(req.body.view?.latitude) || 0,
+            projectionId: req.body.view.projection.id || undefined,
+          },
+        },
       },
     });
-    res.json(location);
+    res.json(updateLocation);
   },
   /**
    * @swagger
@@ -193,6 +183,7 @@ module.exports = {
             extent: req.body.view?.extent || undefined,
             longitude: parseFloat(req.body.view?.longitude) || 0,
             latitude: parseFloat(req.body.view?.latitude) || 0,
+            projectionId: req.body.view.projection.id || undefined,
           },
         },
       },
@@ -221,10 +212,10 @@ module.exports = {
    *         description: Location not found
    */
   delete: async (req, res) => {
-    const { id } = req.query;
+    const { id } = req.params;
     const deleteLocation = await prisma.location.delete({
       where: {
-        id: id,
+        id: parseInt(id),
       },
     });
     res.json(deleteLocation);

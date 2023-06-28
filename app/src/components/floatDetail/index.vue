@@ -124,10 +124,10 @@ export default defineComponent({
         component: "tab-fields",
         content: props.content,
       },
-      {
-        label: $t("Location"),
-        component: "tab-location",
-      },
+      // {
+      //   label: $t("Location"),
+      //   component: "tab-location",
+      // },
     ]);
     const closeCard = () => {
       $bus.emit("close-float-detail", true);
@@ -142,13 +142,18 @@ export default defineComponent({
         if (typeof _tempContent !== 'string') {
           _tempContent = JSON.stringify(content)
         }
-        const response = await updateFeature({
-          id: props.id,
-          feature: {
-            properties: _tempContent,
+        if (props.id) {
+          try {
+            const response = await updateFeature({
+              id: props.id,
+              feature: {
+                properties: _tempContent,
+              }
+            })
+          } catch (e) {
+            console.log(e)
           }
-        })
-        console.log(response)
+        }
         emit("update:model-content", content)
       }
     }

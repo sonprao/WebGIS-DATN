@@ -22,6 +22,11 @@ enum Gender {
   OTHER
 }
 
+enum LayerType {
+  VECTOR_IMAGE_LAYER
+  VECTOR_LAYER
+}
+
 model User {
   id       String   @id @default(uuid())
   email    String   @unique
@@ -33,6 +38,9 @@ model User {
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+
+  createdFeatures Feature[] @relation("FeatureCreated")
+  updatedFeatures Feature[] @relation("FeatureUpdated")
 
   createdLayers MapLayer[] @relation("LayerCreated")
   updatedLayers MapLayer[] @relation("LayerUpdated")
@@ -102,7 +110,7 @@ model MapView {
   longitude    Float       @default(0) @db.Float
   latitude     Float       @default(0) @db.Float
   extent       String      @db.LongText
-  location     Location    @relation(fields: [locationId], references: [id])
+  location     Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
   locationId   Int         @unique
 }
 
@@ -121,12 +129,13 @@ model Projection {
 }
 
 model MapLayer {
-  id          Int     @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   description String?
-  url         String  @db.LongText
+  url         String    @db.LongText
+  type        LayerType @default(VECTOR_IMAGE_LAYER)
 
-  location   Location? @relation(fields: [locationId], references: [id])
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: NoAction)
   locationId Int?
 
   createdAt   DateTime? @default(now())
@@ -144,9 +153,15 @@ model Feature {
   id         String    @id @default(uuid())
   name       String    @unique
   properties String?   @db.LongText
-  layer      MapLayer? @relation(fields: [layerId], references: [id])
+  layer      MapLayer? @relation(fields: [layerId], references: [id], onDelete: Cascade)
   layerId    Int?
 
-  @@fulltext([name])
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @default(now()) @updatedAt
+  createdBy   User?     @relation("FeatureCreated", fields: [createdById], references: [id])
+  createdById String?
+  updatedBy   User?     @relation("FeatureUpdated", fields: [updatedById], references: [id])
+  updatedById String?
 
+  @@fulltext([name])
 }
