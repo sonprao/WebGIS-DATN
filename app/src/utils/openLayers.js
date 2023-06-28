@@ -221,9 +221,11 @@ export const transformProjection = (option) => {
     coordinates = [0, 0],
   } = option;
   if (from !== "EPSG:4326") {
-    proj4.defs(from, definition);
+    if (definition) proj4.defs(from, definition);
+    else proj4.defs(from);
   } else if (to !== "EPSG:4326") {
-    proj4.defs(to, definition);
+    if (definition) proj4.defs(to, definition);
+    else proj4.defs(to);
   }
   register(proj4);
 

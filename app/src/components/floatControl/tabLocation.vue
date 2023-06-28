@@ -1,15 +1,9 @@
 <template>
   <div>
-    <q-input v-if="dataLayers.length > 0" :label="$t('Search layer')" />
+    <q-input v-if="defaultOptions.length > 0" class="searchClass" :label="$t('Search layer')" v-model="searchLayer" @update:model-value="onSearch"/>
     <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
       @update:model-value="selectAll" />
     <q-list overlay>
-      <!-- <q-virtual-scroll
-        class="layerClass"
-        :items="dataLayers"
-        separator
-        v-slot="{ item, index }"
-      > -->
       <q-scroll-area class="layerClass"
         :thumb-style="thumbStyle" :bar-style="barStyle">
         <q-item v-for="(item, index) of dataLayers" :key="item.id + index">
@@ -75,6 +69,12 @@ export default defineComponent({
     const $t = i18n.global.t;
     const mapStore = useMapStore();
     const map = inject("map", {});
+    const searchLayer = ref('');
+    const onSearch = (val) => {
+      const _val = val.toLowerCase()
+      dataLayers.value = unref(defaultOptions).filter(
+        (opt) => opt.name.toLowerCase().includes(_val))
+    }
     const defaultOptions = ref([]);
     const location = computed(() => mapStore.getLocation);
     const dataLayers = ref([]);
@@ -96,6 +96,7 @@ export default defineComponent({
       if (val) {
         onClearSearch();
         dataLayers.value = unref(location)?.mapLayers || [];
+        defaultOptions.value = unref(dataLayers)
       } else {
       }
     };
@@ -158,7 +159,10 @@ export default defineComponent({
     return {
       map,
       location,
+      searchLayer,
+      onSearch,
       setModel,
+      defaultOptions,
       dataLayers,
       layerCheckbox,
       layerCheckAll,
@@ -183,6 +187,9 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
+.searchClass {
+}
+
 .layerClass {
   border-top-left-radius: 1px;
   border-top-right-radius: 1px;

@@ -1,4 +1,5 @@
 // server.js
+const projectionAPI = require('./src/server/projection')
 const featureAPI = require('./src/server/feature')
 const userAPI = require('./src/server/user')
 const profileAPI = require('./src/server/profile')
@@ -54,14 +55,19 @@ app.get('/api/mapLayers', mapLayerAPI.find)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
 // feature
 app.get('/api/features/:name',featureAPI.get)
-app.put('/api/features/:id',featureAPI.update)
+app.put('/api/features/:id', featureAPI.update)
+app.get('/api/mapLayers/:layerId/features', featureAPI.getByLayer)
 //location
-// app.post('/api/locations', locationAPI.updateOrCreate)
+app.post('/api/locations', locationAPI.create)
 app.put('/api/locations/:id', locationAPI.update)
 app.get('/api/locations/:id', locationAPI.get)
 app.get('/api/locations', locationAPI.getAll)
-app.delete('/api/locations', locationAPI.delete)
-
+app.delete('/api/locations/:id', locationAPI.delete)
+// projection
+app.get('/api/projections', projectionAPI.getAll)
+app.get('/api/projections/:name',projectionAPI.get)
+app.post('/api/projections', projectionAPI.create)
+app.put('/api/projections/:name', projectionAPI.update)
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server started on port ${process.env.PORT || 3000}`)
 })

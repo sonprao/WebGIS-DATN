@@ -1,18 +1,73 @@
 import { api } from 'boot/axios';
+import { i18n } from "boot/i18n.js";
+import {
+  Notify,
+  Dialog,
+} from "quasar"
+const $t = i18n.global.t;
 
-export const post = async (params) => {
-  const response = await api.post(`locations/${params.id}`, params)
-  return response
+export const addLocaction = async (params) => {
+  try {
+    const response = await api.post(`locations`, params)
+    Notify.create({
+      message:  $t('Success'),
+      color: 'primary',
+      icon: 'check_circle'
+    })
+    return response
+  } catch (e) {
+     Notify.create({
+      message:  e?.message || $t('Error!'),
+      color: 'red',
+      icon: 'error_outline'
+    })
+    return null
+  }
 }
 
 export const updateLocation = async (params) => {
-  const response = await api.put(`locations/${params.id}`, params)
-  return response.data
+  try {
+    const response = await api.put(`locations/${params.id}`, params)
+    Notify.create({
+      message:  $t('Success'),
+      color: 'primary',
+      icon: 'check_circle'
+    })
+    return response.data
+  } catch (e) {
+     Notify.create({
+      message:  e?.message || $t('Error!'),
+      color: 'red',
+      icon: 'error_outline'
+     })
+    return null
+  }
 }
 
 export const getLocation = async (params) => {
   const response = await api.get(`locations/${params.id}`, params)
   return response.data
+}
+
+export const deleteLocation = (params, resolve) => {
+  return Dialog.create({
+    icon: 'delete',
+    title: $t('Warning'),
+    message: `${$t('Delete location')}  ${params.name}?`,
+    ok: {
+      push: true
+    },
+    cancel: {
+      push: true,
+      color: 'negative'
+    },
+    persistent: true
+  }).onOk(async () => {
+    const response = await api.delete(`locations/${params.id}`)
+    resolve(response.data)
+  }).onCancel(() => {
+  }).onDismiss(() => {
+  })
 }
 
 export const getAllLocation = async (query) => {
