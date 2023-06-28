@@ -18,7 +18,26 @@ export const getAllProjection = async (params) => {
 
 export const updateProjection = async (params) => {
   try {
-    const response = await api.put(`projections/${params.id}`, params)
+    const response = await api.put(`projections/${params.name}`, params)
+    Notify.create({
+      message:  $t('Success'),
+      color: 'primary',
+      icon: 'check_circle'
+    })
+    return response.data
+  } catch (e) {
+    Notify.create({
+      message:  e?.message || $t('Error!'),
+      color: 'red',
+      icon: 'error_outline'
+    })
+    return null
+  }
+}
+
+export const createProjection = async (params) => {
+  try {
+    const response = await api.post(`projections`, params)
     Notify.create({
       message:  $t('Success'),
       color: 'primary',

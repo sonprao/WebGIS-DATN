@@ -33,6 +33,13 @@ const routes = [
         },
       },
       {
+        path: 'projection-management',
+        component: () => import('pages/ProjectionManagementPage.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'location-management',
         component: () => import('pages/locationManagementPage.vue'),
         meta: {

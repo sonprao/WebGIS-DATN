@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const { update, map } = require("lodash");
 
 const prisma = new PrismaClient();
 
