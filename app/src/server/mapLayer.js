@@ -23,6 +23,38 @@ module.exports = {
    *       400:
    *         description: Invalid request
    */
+  create: async (req, res) => {
+    const { name, description, url, type, locationId } = req.body;
+    const upsertMapLayer = await prisma.mapLayer.create({
+      data: {
+        name: name || '',
+        description: description || '',
+        url: url || '',
+        type: type || LayerType.VECTOR_LAYER, 
+        locationId: locationId ? parseInt(locationId) : null,
+      },
+    });
+    res.json(upsertMapLayer);
+  },
+  /**
+   * @swagger
+   * /api/mapLayers:
+   *   post:
+   *     tags:
+   *       - MapLayers
+   *     summary: Create a map layer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/MapLayer'
+   *     responses:
+   *       200:
+   *         description: Map layer created successfully
+   *       400:
+   *         description: Invalid request
+   */
   updateOrCreate: async (req, res) => {
     const { id, title, description, url, location, locationId } = req.body;
     const upsertMapLayer = await prisma.mapLayer.upsert({
