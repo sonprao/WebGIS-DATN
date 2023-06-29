@@ -13,23 +13,10 @@
   >
     <q-input v-model="scope.value.name" dense autofocus :label="$t('Name')" />
     <q-input
-      v-model="scope.value.description"
+      v-model="scope.value.properties"
       dense
       autofocus
       :label="$t('Description')"
-    />
-    <q-input
-      v-model="scope.value.url"
-      dense
-      autofocus
-      label="Url"
-    />
-    <q-select
-      v-model="scope.value.type"
-      dense
-      autofocus
-      :options="types"
-      :label="$t('Type')"
     />
   </q-popup-edit>
 </template>
@@ -45,15 +32,13 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { LAYER_TYPE } from "src/constants/enum";
-import { getLayerByLocation, updateLayer, createLayer } from "src/api/mapLayer";
-
+import { createFeature, updateFeature } from 'src/api/feature'
 export default defineComponent({
   name: "PopupLocation",
   props: {
     row: Object,
-    layerRows: Array,
-    location: Object,
+    featureRows: Array,
+    layer: Object,
   },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
@@ -61,33 +46,29 @@ export default defineComponent({
     const $t = i18n.global.t;
     const computedRow = ref(props.row);
     const title = computed(() => {
-      return props.row.id ? `${$t('Update layer')}: ${unref(computedRow).name}`: `${$t('Add layer')}:`
+      return props.row.id ? `${$t('Update feature')}: ${unref(computedRow).name}`: `${$t('Add feature')}:`
     })
-    if (!unref(computedRow).id) {
-      computedRow.value.type = LAYER_TYPE[1]
-    }
     const saveEdit = async (value, _props) => {
       const updateParams = {
         id: value.id,
-        locationId: props.location?.id,
+        layerId: props.layer?.id,
       };
       if (value.name !== _props.name) updateParams.name = value.name;
-      if (value.description !== _props.description)
-        updateParams.description = value.description;
-      if (value.url !== _props.url)
-        updateParams.url = value.url;
-      if (value.type !== _props.type)
-        updateParams.type = value.type;
+      if (value.properties !== _props.properties)
+        updateParams.properties = value.properties;
       if (updateParams.id) {
-        const response = await updateLayer(updateParams);
-        const currentRow = props.layerRows.find(
+        const response = await updateFeature(updateParams);
+        const currentRow = props.featureRows.find(
           (row) => row.id === response.id
         );
         Object.assign(currentRow, { ...response });
         return;
       } else {
         delete updateParams.id
-        const response = await createLayer(updateParams)
+        const response = await createFeature({
+          features: [updateParams],
+          layerId: props.layer?.id,
+        })
       }
     };
     const updateModel = (val) => {
@@ -99,7 +80,6 @@ export default defineComponent({
       computedRow,
       saveEdit,
       updateModel,
-      types: LAYER_TYPE,
     };
   },
 });

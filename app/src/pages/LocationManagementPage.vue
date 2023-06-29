@@ -133,11 +133,11 @@
                   <q-tooltip anchor="center right" self="center start">{{
                     $t("Add layer")
                   }}</q-tooltip>
-                    <popupLayer
-                      v-model:row="newLayer"
-                      :layer-rows="propsLocation?.row?.mapLayers"
-                      :location="propsLocation.row"
-                    />
+                  <popupLayer
+                    v-model:row="newLayer"
+                    :layer-rows="propsLocation?.row?.mapLayers"
+                    :location="propsLocation.row"
+                  />
                 </q-btn>
                 <q-space />
                 <q-input debounce="300" class="bg-white" color="black">
@@ -157,7 +157,13 @@
                     {{ propsLayer.row[_key] }}
                   </q-td>
                   <q-td key="type" :props="propsLayer">
-                    <q-badge class="bg-white text-green">
+                    <q-badge
+                      v-if="propsLayer.row.type === LAYER_TYPE[0]"
+                      class="bg-white text-green"
+                    >
+                      {{ propsLayer.row.type }}
+                    </q-badge>
+                    <q-badge v-else class="bg-white text-orange">
                       {{ propsLayer.row.type }}
                     </q-badge>
                   </q-td>
@@ -188,10 +194,15 @@
                       dense
                       @click="
                         () => {
-                          propsLayer.expand = !propsLayer.expand;
-                          if (propsLayer.expand) {
+                          if (
+                            !propsLayer.expand &&
+                            !propsLayer.row.features?.length
+                          ) {
                             getFeatureRows({ layerId: propsLayer.row.id }).then(
-                              (res) => (propsLayer.row.features = res)
+                              (res) => {
+                                propsLayer.row.features = res;
+                                propsLayer.expand = !propsLayer.expand;
+                              }
                             );
                           }
                         }
@@ -254,6 +265,11 @@
                             self="center start"
                             >{{ $t("Add feature") }}</q-tooltip
                           >
+                          <popupFeature
+                            v-model:row="newFeature"
+                            :feature-rows="propsLayer.row.features"
+                            :layer="propsLayer.row"
+                          />
                         </q-btn>
                         <q-space />
                         <q-input debounce="300" class="bg-white" color="black">
@@ -262,25 +278,29 @@
                           </template>
                         </q-input>
                       </template>
-                      <template v-slot:body="props">
-                        <q-tr :props="props">
+                      <template v-slot:body="propsFeature">
+                        <q-tr :props="propsFeature">
                           <q-td
                             v-for="_key of ['id', 'name']"
                             :key="_key"
-                            :props="props"
+                            :props="propsFeature"
                           >
-                            {{ props.row[_key] }}
+                            {{ propsFeature.row[_key] }}
                           </q-td>
-                          <q-td key="properties" :props="props">
-                            {{ props.row.properties }}
+                          <q-td key="properties" :props="propsFeature">
+                            {{ propsFeature.row.properties }}
                           </q-td>
-                          <q-td key="action" :props="props">
+                          <q-td key="action" :props="propsFeature">
                             <q-btn
                               v-bind="actionButtonProps"
                               icon="edit"
                               style="margin-right: 10px"
                             >
                               <!-- popup feature edit -->
+                              <popupFeature
+                                v-model:row="propsFeature.row"
+                                :feature-rows="propsLayer.row.features"
+                              />
                             </q-btn>
                             <q-btn
                               v-bind="{ ...actionButtonProps, color: 'red' }"
@@ -367,6 +387,7 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { LAYER_TYPE } from "src/constants/enum";
 import {
   deleteLocation,
   getAllLocation,
@@ -378,11 +399,13 @@ import { getFeaturesByLayer } from "src/api/feature";
 import { getAllProjection } from "src/api/projection";
 import PopupLocation from "src/components/locationManagementPage/popupLocation.vue";
 import PopupLayer from "src/components/locationManagementPage/popupLayer.vue";
+import PopupFeature from "src/components/locationManagementPage/popupFeature.vue";
 export default defineComponent({
   name: "LocationManagementPage",
   components: {
     PopupLocation,
     PopupLayer,
+    PopupFeature,
   },
   setup() {
     const vm = getCurrentInstance().proxy;
@@ -647,6 +670,10 @@ export default defineComponent({
       url: null,
       locationId: null,
     });
+    const newFeature = ref({
+      name: null,
+      properties: null,
+    });
     const locationRows = ref([]);
     const projections = ref([]);
     onMounted(async () => {
@@ -678,12 +705,14 @@ export default defineComponent({
       geoServerUrl,
       newLocation,
       newLayer,
+      newFeature,
       onDeleteLocation,
       onDeleteLayer,
       onDeleteFeature,
       currentPopupRef,
       showPopup,
       projections,
+      LAYER_TYPE: LAYER_TYPE,
     };
   },
 });

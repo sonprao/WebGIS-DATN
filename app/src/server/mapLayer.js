@@ -7,7 +7,39 @@ module.exports = {
   /**
    * @swagger
    * /api/mapLayers:
-   *   post:
+   *   put:
+   *     tags:
+   *       - MapLayers
+   *     summary: Create a map layer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/MapLayer'
+   *     responses:
+   *       200:
+   *         description: Map layer created successfully
+   *       400:
+   *         description: Invalid request
+   */
+  create: async (req, res) => {
+    const { name, description, url, type, locationId } = req.body;
+    const upsertMapLayer = await prisma.mapLayer.create({
+      data: {
+        name: name || '',
+        description: description || '',
+        url: url || '',
+        type: type || LayerType.VECTOR_LAYER, 
+        locationId: locationId ? parseInt(locationId) : null,
+      },
+    });
+    res.json(upsertMapLayer);
+  },
+  /**
+   * @swagger
+   * /api/mapLayers/{id}:
+   *   put:
    *     tags:
    *       - MapLayers
    *     summary: Create a map layer
@@ -36,13 +68,6 @@ module.exports = {
         url: url || undefined,
         type: type || undefined, 
         locationId: locationId ? parseInt(locationId) : undefined,
-      },
-      create: {
-        name: name || '',
-        description: description || '',
-        url: url || '',
-        type: type || LayerType.VECTOR_LAYER, 
-        locationId: locationId ? parseInt(locationId) : null,
       },
     });
     res.json(upsertMapLayer);

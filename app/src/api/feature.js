@@ -41,3 +41,22 @@ export const updateFeature = async (params) => {
   }
 }
 
+export const createFeature = async (params) => {
+  try {
+    const response = await api.post('features', params)
+    Notify.create({
+      message:  $t('Success'),
+      color: 'primary',
+      icon: 'check_circle'
+    })
+    return response.data
+  } catch (e) {
+    Notify.create({
+      message:  e?.message || $t('Error!'),
+      color: 'red',
+      icon: 'error_outline'
+    })
+    return null
+  }
+}
+

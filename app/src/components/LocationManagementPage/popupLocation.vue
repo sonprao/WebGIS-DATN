@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <q-popup-edit
-    class="popupEdit"
+    class="popupEdit shadow-10"
     square
     buttons
     persistent
