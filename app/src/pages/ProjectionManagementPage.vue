@@ -25,28 +25,34 @@
               {{ props.row.id }}
             </q-badge>
           </q-td>
-          <q-td key="email" :props="props">
-            <q-badge color="primary">
-              {{ props.row.email }}
-            </q-badge>
-          </q-td>
           <q-td key="name" :props="props">
-            {{ props.row.name }}
-          </q-td>
-          <q-td key="role" :props="props">
-            <q-badge v-if="props.row.role==='USER'" color="primary">
-              {{ props.row.role }}
-            </q-badge>
-            <q-badge v-else color="red">
-              {{ props.row.role }}
+            <q-badge color="primary">
+              {{ props.row.name }}
             </q-badge>
           </q-td>
-          <q-td key="activate" :props="props">
-            <q-toggle :disable="props.row.role==='ADMIN'"  v-model="props.row.activate"
-            @update:model-value="toggle(props.row)">
-              <q-tooltip>{{ $t("Activate user") }}</q-tooltip>
-            </q-toggle>
+          <q-td key="definition" :props="props" style="white-space: pre-wrap">
+            {{ props.row.definition }}
           </q-td>
+<!--          <q-td key="action" :props="propsLocation">-->
+<!--            <q-btn-->
+<!--              v-bind="actionButtonProps"-->
+<!--              icon="edit"-->
+<!--              style="margin-right: 10px"-->
+<!--            >-->
+<!--              &lt;!&ndash; popup location edit &ndash;&gt;-->
+<!--              <PopupLocation-->
+<!--                v-model:row="propsLocation.row"-->
+<!--                :location-rows="locationRows"-->
+<!--                :projections="projections"-->
+<!--              />-->
+<!--            </q-btn>-->
+<!--            <q-btn-->
+<!--              v-bind="{ ...actionButtonProps, color: 'red' }"-->
+<!--              icon="delete"-->
+<!--              @click="onDeleteLocation(propsLocation.row)"-->
+<!--            >-->
+<!--            </q-btn>-->
+<!--          </q-td>-->
         </q-tr>
       </template>
     </q-table>
@@ -64,15 +70,15 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { getAll, activateUser } from 'src/api/user'
+import { getAllProjection, getProjection } from 'src/api/projection'
 export default defineComponent({
-  name: "UserManagementPage",
+  name: "ProjectionManagementPage",
   setup() {
     const $t = i18n.global.t;
     const $q = useQuasar();
     const filter = ref('')
     const value = ref(true)
-    const visibleColumns = ref([ 'email', 'name','role', 'activate'])
+    const visibleColumns = ref([ 'name', 'definition', "action"])
     const columns = computed(() => [
       {
         name: 'id',
@@ -83,8 +89,8 @@ export default defineComponent({
         format: val => `${val}`,
       },
       { name: 'name', align: 'center', label: $t('Name'), field: 'name', sortable: true },
-      { name: 'def', align: 'center', label: $t('Def'), field: 'definition' },
-      { name: 'action', align: 'center', label: $t('Action') },
+      { name: 'definition', align: 'center', label: $t('Def'), field: 'definition' },
+      { name: 'action', align: 'center', label: $t('Action')},
     ])
     const toggle = async (row) => {
        $q.dialog({
@@ -108,13 +114,13 @@ export default defineComponent({
       }).onDismiss(() => {
       })
     }
-    const getAllUser = async() => {
-      const response = await getAll()
+    const getAll = async() => {
+      const response = await getAllProjection()
         return response
     }
     const rows = ref([])
     onMounted(async () => {
-      rows.value = await getAllUser()
+      rows.value = await getAll()
     })
 
     return {
