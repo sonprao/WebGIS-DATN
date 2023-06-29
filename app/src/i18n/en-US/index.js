@@ -87,4 +87,6 @@ export default {
   "Feature name": "Feature name",
   "Properties": "Properties",
   "Projection": "Projection",
+  "Layer type": "Layer type",
+  "Type": "Type",
 }

@@ -87,4 +87,6 @@ export default {
   "Feature name": "Tên đặc trưng (feature)",
   "Properties": "Thuộc tính",
   "Projection": "Trục chiếu",
+  "Layer type": "Layer type",
+  "Type": "Type",
 }

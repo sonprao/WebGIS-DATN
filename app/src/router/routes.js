@@ -34,7 +34,7 @@ const routes = [
       },
       {
         path: 'location-management',
-        component: () => import('pages/locationManagementPage/index.vue'),
+        component: () => import('pages/locationManagementPage.vue'),
         meta: {
           authRequired: true,
         },

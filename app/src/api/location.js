@@ -52,6 +52,7 @@ export const getLocation = async (params) => {
 export const deleteLocation = (params, resolve) => {
   return Dialog.create({
     icon: 'delete',
+    class: 'deleteWarningClass',
     title: $t('Warning'),
     message: `${$t('Delete location')}  ${params.name}?`,
     ok: {

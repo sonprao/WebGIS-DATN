@@ -78,7 +78,7 @@ export default defineComponent({
             search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
           };
           const response = await getAllLocation(query);
-          options.value = response;
+          options.value = response.data;
         });
       }
     };
@@ -127,7 +127,7 @@ export default defineComponent({
         per_page: 10,
       };
       getAllLocation(query).then((response) => {
-        defaultOptions.value = response;
+        defaultOptions.value = response.data;
       });
     });
     onUnmounted(() => {
