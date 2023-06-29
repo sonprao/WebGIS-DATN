@@ -5,14 +5,14 @@ const prisma = new PrismaClient();
 
 module.exports = {
   create: async (req, res) => {
-   const updateLocation = await prisma.location.create({
+    const updateLocation = await prisma.location.create({
       data: {
-        name: req.body.name || '',
-        description: req.body.description || '',
-        workspace: req.body.workspace || '',
+        name: req.body.name || "",
+        description: req.body.description || "",
+        workspace: req.body.workspace || "",
         view: {
           create: {
-            extent: req.body.view?.extent || '',
+            extent: req.body.view?.extent || "",
             longitude: parseFloat(req.body.view?.longitude) || 0,
             latitude: parseFloat(req.body.view?.latitude) || 0,
             projectionId: req.body.view.projection.id || undefined,
@@ -87,62 +87,30 @@ module.exports = {
    *         description: Location not found
    */
   getAll: async (req, res) => {
-    const { page = null, per_page = null, search = null } = req.query;
-    let locations = null;
-    if (page && per_page) {
-      if (search) {
-        locations = await prisma.location.findMany({
-          skip: (parseInt(page) - 1) * parseInt(per_page),
-          take: parseInt(per_page),
-          where: {
-            name: {
-              search: search,
-            },
-            description: {
-              search: search,
-            },
-          },
-          // include: {
-          //     mapLayers: true,
-          // },
-        });
-      } else {
-        locations = await prisma.location.findMany({
-          skip: (parseInt(page) - 1) * parseInt(per_page),
-          take: parseInt(per_page),
-          include: {
-            mapLayers: true,
-            view: {
-              include: {
-                projection: true,
+    const { page = 1, per_page = 10, search = '' } = req.query;
+    const [count, data] = await prisma.$transaction([
+          prisma.location.count(),
+          prisma.location.findMany({
+            skip: (parseInt(page) - 1) * parseInt(per_page),
+            take: parseInt(per_page),
+            where: {
+              name: {
+                search: search || undefined,
               },
             },
-          },
-        });
-      }
-    } else {
-      if (search) {
-        locations = await prisma.location.findMany({
-          where: {
-            name: {
-              search: search,
-            },
-          },
-        });
-      } else {
-        locations = await prisma.location.findMany({
-          include: {
-            mapLayers: true, // Return all fields
-            view: {
-              include: {
-                projection: true,
+            include: {
+              view: {
+                include: {
+                  projection: true,
+                },
               },
             },
-          },
-        });
-      }
-    }
-    res.json(locations);
+            orderBy: {
+              createdAt: "asc",
+            },
+          }),
+        ]);
+    res.json({count, data, per_page: parseInt(per_page), page: parseInt(page)});
   },
   /**
    * @swagger

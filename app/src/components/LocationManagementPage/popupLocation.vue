@@ -1,13 +1,15 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <q-popup-edit
-    class="popupEdit"
-    persistent
-    v-model="computedRow"
-    :title="`${$t('Update layer')}: ${computedRow.name}`"
+    class="popupEdit shadow-10"
+    square
     buttons
+    persistent
+    :title="title"
     :label-set="$t('Save')"
     :label-cancel="$t('Cancel')"
+    v-model="computedRow"
+    @update:model="updateModel"
     @save="saveEdit"
     v-slot="scope"
   >
@@ -19,10 +21,32 @@
       :label="$t('Description')"
     />
     <q-input
-      v-model="scope.value.url"
+      v-model="scope.value.view.longitude"
+      type="number"
       dense
       autofocus
-      label="Url"
+      :label="$t('Longitude')"
+    />
+    <q-input
+      v-model="scope.value.view.latitude"
+      type="number"
+      dense
+      autofocus
+      :label="$t('Latitude')"
+    />
+    <q-input
+      v-model="scope.value.workspace"
+      dense
+      autofocus
+      :label="$t('Workspace')"
+    />
+    <q-select
+      v-model="scope.value.view.projection"
+      dense
+      autofocus
+      option-label="name"
+      :options="projections"
+      :label="$t('Projection')"
     />
   </q-popup-edit>
 </template>
@@ -39,18 +63,22 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { transformProjection } from "src/utils/openLayers.js";
-import { updateLocation } from "src/api/location";
+import { updateLocation, addLocaction } from "src/api/location";
 export default defineComponent({
   name: "PopupLocation",
   props: {
     row: Object,
     locationRows: Array,
+    projections: Array,
   },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
     const computedRow = ref(props.row);
+    const title = computed(() => {
+      return props.row.id ? `${$t('Update location')}: ${unref(computedRow).name}`: `${$t('Add location')}:`
+    })
     const saveEdit = async (value, _props) => {
       const updateParams = {
         id: value.id,
@@ -88,6 +116,16 @@ export default defineComponent({
           parseFloat(value.view?.latitude || _props.view.latitude),
         ],
       });
+      if (value.view?.projection !== _props.view.projection) {
+        Object.assign(updateParams, {
+          ...updateParams,
+          view: {
+            ...updateParams.view,
+            projection: value.view.projection
+          },
+        });
+      }
+
       Object.assign(updateParams, {
         ...updateParams,
         view: {
@@ -100,18 +138,24 @@ export default defineComponent({
           ]),
         },
       });
-      const response = await updateLocation(updateParams);
-      const currentRow = props.locationRows.find(
-        (row) => row.id === response.id
-      );
-      Object.assign(currentRow, { ...response });
-      return;
+      if (updateParams.id) {
+        const response = await updateLocation(updateParams);
+        const currentRow = props.locationRows.find(
+          (row) => row.id === response.id
+        );
+        Object.assign(currentRow, { ...response });
+        return
+      } else {
+        delete updateParams.id
+        const response = await addLocaction(updateParams)
+      }
     };
     const updateModel = (val) => {
-      console.log(val);
-    };
+      console.log(val)
+    }
     return {
       computedRow,
+      title,
       saveEdit,
       updateModel,
     };

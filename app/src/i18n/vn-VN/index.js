@@ -5,8 +5,8 @@ export default {
   English: 'Tiếng Anh',
   layers: 'Bộ lọc',
   Warning: 'Cảnh báo',
-  failed: 'Thất bại',
-  success: 'Thành công',
+  Failed: 'Thất bại',
+  Success: 'Thành công',
   Delete: 'Xóa',
   Download: 'Tải xuống',
   Detail: 'Chi tiết',
@@ -87,4 +87,6 @@ export default {
   "Feature name": "Tên đặc trưng (feature)",
   "Properties": "Thuộc tính",
   "Projection": "Trục chiếu",
+  "Layer type": "Layer type",
+  "Type": "Type",
 }

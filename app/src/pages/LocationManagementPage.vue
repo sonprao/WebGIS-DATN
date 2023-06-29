@@ -6,8 +6,7 @@
       title="Treats"
       v-model:rows="locationRows"
       :columns="locationColumns"
-      row-key="name"
-      v-model:pagination="pagination"
+      v-model:pagination="locationPagination"
       :visible-columns="visibleLocationColumns"
       :filter="filter"
     >
@@ -26,7 +25,7 @@
           option-value="name"
           style="min-width: 150px"
         />
-        <q-btn rounded icon="add" style="margin-left: 10px">
+        <q-btn rounded color="primary" icon="add" style="margin-left: 10px">
           <q-tooltip anchor="center right" self="center start">{{
             $t("Add location")
           }}</q-tooltip>
@@ -68,7 +67,23 @@
           <q-td key="layer" :props="propsLocation">
             <q-btn
               v-bind="actionButtonProps"
-              @click="propsLocation.expand = !propsLocation.expand"
+              @click="
+                () => {
+                  if (
+                    !propsLocation.expand &&
+                    !propsLocation.row.mapLayers?.length
+                  ) {
+                    getLayerRows({ locationId: propsLocation.row.id }).then(
+                      (res) => {
+                        propsLocation.row.mapLayers = res;
+                        propsLocation.expand = !propsLocation.expand;
+                      }
+                    );
+                  } else {
+                    propsLocation.expand = !propsLocation.expand;
+                  }
+                }
+              "
               :icon="propsLocation.expand ? 'expand_less' : 'expand_more'"
             />
           </q-td>
@@ -100,14 +115,11 @@
               class="tableLayerClass"
               v-bind="{ ...tableProps, cardClass: 'bg-primary text-white' }"
               virtual-scroll
-              hide-pagination
-              row-key="name"
-              style="max-height: 600px"
+              style="max-height: 800px"
               :virtual-scroll-sticky-size-start="48"
-              title="Layers"
               :columns="layerColumns"
               :rows="propsLocation?.row?.mapLayers"
-              v-model:pagination="pagination"
+              v-model:pagination="layerPagination"
             >
               <!-- layer header -->
               <template v-slot:top>
@@ -121,6 +133,11 @@
                   <q-tooltip anchor="center right" self="center start">{{
                     $t("Add layer")
                   }}</q-tooltip>
+                  <popupLayer
+                    v-model:row="newLayer"
+                    :layer-rows="propsLocation?.row?.mapLayers"
+                    :location="propsLocation.row"
+                  />
                 </q-btn>
                 <q-space />
                 <q-input debounce="300" class="bg-white" color="black">
@@ -140,7 +157,13 @@
                     {{ propsLayer.row[_key] }}
                   </q-td>
                   <q-td key="type" :props="propsLayer">
-                    <q-badge class="bg-white text-green">
+                    <q-badge
+                      v-if="propsLayer.row.type === LAYER_TYPE[0]"
+                      class="bg-white text-green"
+                    >
+                      {{ propsLayer.row.type }}
+                    </q-badge>
+                    <q-badge v-else class="bg-white text-orange">
                       {{ propsLayer.row.type }}
                     </q-badge>
                   </q-td>
@@ -153,7 +176,12 @@
                         @hide="showPopup(null)"
                       >
                         <q-banner>
-                          {{ propsLayer.row.url }}
+                          {{
+                            geoServerUrl({
+                              url: propsLayer.row.url,
+                              workspace: propsLocation.row.workspace,
+                            })
+                          }}
                         </q-banner>
                       </q-popup-proxy>
                     </q-btn>
@@ -166,10 +194,15 @@
                       dense
                       @click="
                         () => {
-                          propsLayer.expand = !propsLayer.expand;
-                          if (propsLayer.expand) {
-                            getFeatureRows(propsLayer.row.id).then(
-                              (res) => (propsLayer.row.features = res)
+                          if (
+                            !propsLayer.expand &&
+                            !propsLayer.row.features?.length
+                          ) {
+                            getFeatureRows({ layerId: propsLayer.row.id }).then(
+                              (res) => {
+                                propsLayer.row.features = res;
+                                propsLayer.expand = !propsLayer.expand;
+                              }
                             );
                           }
                         }
@@ -213,58 +246,61 @@
                       v-bind="tableProps"
                       virtual-scroll
                       hide-pagination
-                      row-key="name"
-                      style="max-height: 450px"
+                      style="max-height: 500px"
                       :virtual-scroll-sticky-size-start="48"
-                      title="Features"
                       :columns="featureColumns"
                       :rows="propsLayer.row.features"
-                      v-model:pagination="pagination"
+                      v-model:pagination="featurePagination"
                     >
-                      <template v-slot:body="props">
-                        <q-tr :props="props">
+                      <template v-slot:top>
+                        <div class="text-h6">{{ $t("Features") }}</div>
+                        <q-btn
+                          class="bg-primary text-white"
+                          rounded
+                          icon="add"
+                          style="margin-left: 10px"
+                        >
+                          <q-tooltip
+                            anchor="center right"
+                            self="center start"
+                            >{{ $t("Add feature") }}</q-tooltip
+                          >
+                          <popupFeature
+                            v-model:row="newFeature"
+                            :feature-rows="propsLayer.row.features"
+                            :layer="propsLayer.row"
+                          />
+                        </q-btn>
+                        <q-space />
+                        <q-input debounce="300" class="bg-white" color="black">
+                          <template v-slot:append>
+                            <q-icon name="search" />
+                          </template>
+                        </q-input>
+                      </template>
+                      <template v-slot:body="propsFeature">
+                        <q-tr :props="propsFeature">
                           <q-td
                             v-for="_key of ['id', 'name']"
                             :key="_key"
-                            :props="props"
+                            :props="propsFeature"
                           >
-                            {{ props.row[_key] }}
+                            {{ propsFeature.row[_key] }}
                           </q-td>
-                          <q-td key="properties" :props="props">
-                            {{ props.row.properties }}
+                          <q-td key="properties" :props="propsFeature">
+                            {{ propsFeature.row.properties }}
                           </q-td>
-                          <q-td key="action" :props="props">
+                          <q-td key="action" :props="propsFeature">
                             <q-btn
                               v-bind="actionButtonProps"
                               icon="edit"
                               style="margin-right: 10px"
                             >
                               <!-- popup feature edit -->
-                              <q-popup-edit
-                                class="popupEdit shadow-10"
-                                v-model="props.row"
-                                :title="`${$t('Update feature')}: ${
-                                  props.row.name
-                                }`"
-                                buttons
-                                :label-set="$t('Save')"
-                                :label-cancel="$t('Cancel')"
-                                @save="saveEdit"
-                                v-slot="scope"
-                              >
-                                <q-input
-                                  v-model="scope.value.name"
-                                  dense
-                                  autofocus
-                                  :label="$t('Name')"
-                                />
-                                <q-input
-                                  v-model="scope.value.properties"
-                                  dense
-                                  autofocus
-                                  :label="$t('Properties')"
-                                />
-                              </q-popup-edit>
+                              <popupFeature
+                                v-model:row="propsFeature.row"
+                                :feature-rows="propsLayer.row.features"
+                              />
                             </q-btn>
                             <q-btn
                               v-bind="{ ...actionButtonProps, color: 'red' }"
@@ -276,14 +312,67 @@
                         </q-tr>
                       </template>
                     </q-table>
+                    <!-- feature pagination -->
+                    <q-pagination
+                      input
+                      style="place-content: center"
+                      v-model="featurePagination.page"
+                      @update:model-value="
+                        (val) => {
+                          getFeatureRows({
+                            val,
+                            layerId: propsLayer.row.id,
+                          }).then((res) => (propsLayer.row.features = res));
+                        }
+                      "
+                      :max="featurePagination.rowsNumber"
+                      boundary-numbers
+                      direction-links
+                      flat
+                      color="grey"
+                      active-color="primary"
+                    />
                   </q-td>
                 </q-tr>
               </template>
             </q-table>
+            <!-- layer pagination -->
+            <q-pagination
+              input
+              style="place-content: center"
+              v-model="layerPagination.page"
+              @update:model-value="
+                getLayerRows({
+                  val: $event,
+                  locationId: propsLocation.row.id,
+                }).then((response) => {
+                  propsLocation.row.mapLayers = response;
+                })
+              "
+              :max="layerPagination.rowsNumber"
+              boundary-numbers
+              direction-links
+              flat
+              color="grey"
+              active-color="primary"
+            />
           </q-td>
         </q-tr>
       </template>
     </q-table>
+    <!-- location pagination -->
+    <q-pagination
+      input
+      style="place-content: center"
+      v-model="locationPagination.page"
+      @update:model-value="getAll"
+      :max="locationPagination.rowsNumber"
+      boundary-numbers
+      direction-links
+      flat
+      color="grey"
+      active-color="primary"
+    />
   </div>
 </template>
 
@@ -298,21 +387,25 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { LAYER_TYPE } from "src/constants/enum";
 import {
   deleteLocation,
   getAllLocation,
   updateLocation,
   addLocaction,
 } from "src/api/location";
+import { getLayerByLocation } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
 import { getAllProjection } from "src/api/projection";
-import PopupLocation from "src/pages/locationManagementPage/popupLocation.vue";
-import PopupLayer from "src/pages/locationManagementPage/popupLayer.vue";
+import PopupLocation from "src/components/locationManagementPage/popupLocation.vue";
+import PopupLayer from "src/components/locationManagementPage/popupLayer.vue";
+import PopupFeature from "src/components/locationManagementPage/popupFeature.vue";
 export default defineComponent({
   name: "LocationManagementPage",
   components: {
     PopupLocation,
     PopupLayer,
+    PopupFeature,
   },
   setup() {
     const vm = getCurrentInstance().proxy;
@@ -328,6 +421,8 @@ export default defineComponent({
       flat: true,
       bordered: true,
       "wrap-cells": true,
+      "hide-pagination": true,
+      "row-key": "name",
     };
     const filter = ref("");
     const visibleLocationColumns = ref([
@@ -346,8 +441,8 @@ export default defineComponent({
         required: true,
         label: "Id",
         align: "left",
-        field: (row) => row.id,
-        format: (val) => `${val}`,
+        field: "id",
+        style: "min-width: 90px; width: 90px",
       },
       {
         name: "name",
@@ -359,10 +454,8 @@ export default defineComponent({
       {
         name: "description",
         align: "center",
-        style: "min-width: 100px; width: 100px",
         label: $t("Description"),
         field: "description",
-        sortable: true,
       },
       {
         name: "longitude",
@@ -383,7 +476,6 @@ export default defineComponent({
         align: "center",
         label: $t("Workspace"),
         field: "workspace",
-        sortable: true,
       },
       {
         name: "projection",
@@ -397,7 +489,7 @@ export default defineComponent({
         align: "center",
         label: $t("Layers"),
         field: "mapLayers",
-        sortable: true,
+        style: "min-width: 90px; width: 90px",
       },
       {
         name: "action",
@@ -472,12 +564,38 @@ export default defineComponent({
       { name: "properties", align: "center", label: $t("Properties") },
       { name: "action", align: "center", label: $t("Action") },
     ]);
+    const locationPagination = ref({
+      page: 1,
+      rowsPerPage: 10,
+      rowsNumber: 0,
+    });
+    const layerPagination = ref({
+      page: 1,
+      rowsPerPage: 10,
+      rowsNumber: 0,
+    });
     const featurePagination = ref({
       page: 1,
       rowsPerPage: 10,
       rowsNumber: 0,
     });
-    const getFeatureRows = async (layerId) => {
+    const getLayerRows = async ({ val, locationId }) => {
+      const response = await getLayerByLocation({
+        locationId,
+        per_page: unref(layerPagination).rowsPerPage,
+        page: unref(layerPagination).page,
+      });
+      if (response) {
+        layerPagination.value.rowsNumber = parseInt(
+          Math.ceil(response.count / response.per_page)
+        );
+        layerPagination.value.page = response.page;
+        layerPagination.value.rowsPerPage = response.per_page;
+
+        return response.data;
+      } else return [];
+    };
+    const getFeatureRows = async ({ val = 1, layerId }) => {
       const response = await getFeaturesByLayer({
         layerId: layerId,
         per_page: unref(featurePagination).rowsPerPage,
@@ -492,14 +610,13 @@ export default defineComponent({
         return response.data;
       } else return [];
     };
-    const formatLongLat = (center) => {
-      const _center = JSON.parse(center ?? "{}");
-      return _center;
+    const geoServerUrl = ({ url, workspace }) => {
+      return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
     };
     const onDeleteLocation = async (row) => {
       const resolve = async () => {
-        locationRows.value = await getAll();
-      }
+        await getAll();
+      };
       const res = await deleteLocation(row, resolve);
     };
     const onDeleteLayer = async (row) => {};
@@ -521,14 +638,19 @@ export default defineComponent({
       });
     };
 
-    const getAll = async () => {
+    const getAll = async (val) => {
       const query = {
-        page: 1,
-        per_page: 10,
-        // search: 'namm'.replace(/[^a-zA-Z0-9\s]/g, ''),
+        page: val ? val : unref(locationPagination).page,
+        per_page: unref(locationPagination).rowsPerPage,
+        search: "",
       };
       const response = await getAllLocation(query);
-      return response;
+      locationRows.value = response.data;
+      locationPagination.value.page = response.page;
+      locationPagination.value.rowsPerPage = response.per_page;
+      locationPagination.value.rowsNumber = parseInt(
+        Math.ceil(response.count / response.per_page)
+      );
     };
     const newLocation = ref({
       name: null,
@@ -541,13 +663,21 @@ export default defineComponent({
         },
       },
     });
+    const newLayer = ref({
+      name: null,
+      description: null,
+      type: null,
+      url: null,
+      locationId: null,
+    });
+    const newFeature = ref({
+      name: null,
+      properties: null,
+    });
     const locationRows = ref([]);
     const projections = ref([]);
-    const pagination = ref({
-      rowsPerPage: 0,
-    });
     onMounted(async () => {
-      const allLocation = await getAll();
+      await getAll();
       getAllProjection()
         .then((response) => {
           projections.value = response;
@@ -555,33 +685,39 @@ export default defineComponent({
         .catch(() => {
           projections.value = [];
         });
-      locationRows.value = allLocation;
     });
 
     return {
       tableProps,
       actionButtonProps,
       filter,
+      getAll,
       visibleLocationColumns,
       locationColumns,
       layerColumns,
       featureColumns,
+      getLayerRows,
       getFeatureRows,
       locationRows,
+      locationPagination,
+      layerPagination,
+      featurePagination,
+      geoServerUrl,
       newLocation,
-      pagination,
-      formatLongLat,
+      newLayer,
+      newFeature,
       onDeleteLocation,
       onDeleteLayer,
       onDeleteFeature,
       currentPopupRef,
       showPopup,
       projections,
+      LAYER_TYPE: LAYER_TYPE,
     };
   },
 });
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 .tableLocationClass {
   ::-webkit-scrollbar {
     height: 12px;
@@ -663,12 +799,13 @@ export default defineComponent({
     background: $primary;
   }
 }
+.deleteWarningClass {
+  .q-card__section.q-card__section--vert.q-dialog__title {
+    color: orange !important;
 
-.q-card__section.q-card__section--vert.q-dialog__title {
-  color: orange;
-
-  &::before {
-    content: "\26A0";
+    &::before {
+      content: "\26A0" !important;
+    }
   }
 }
 

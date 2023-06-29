@@ -5,8 +5,8 @@ export default {
   English: 'English',
   layers: 'layers',
   Warning: 'Warning',
-  failed: 'Action failed',
-  success: 'Action was successful',
+  Failed: 'Action failed',
+  Success: 'Action was successful',
   Delete: 'Delete',
   Download: 'Download',
   Detail: 'Detail',
@@ -87,4 +87,6 @@ export default {
   "Feature name": "Feature name",
   "Properties": "Properties",
   "Projection": "Projection",
+  "Layer type": "Layer type",
+  "Type": "Type",
 }

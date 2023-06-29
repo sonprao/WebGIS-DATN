@@ -2,11 +2,11 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 module.exports = {
   create: async (req, res) => {
-    const { features, layer_id } = req.body;
+    const { features, layerId } = req.body;
     const featuresData = await prisma.feature.createMany({
       data: features.map((item) => ({
         ...item,
-        layerId: layer_id,
+        layerId: parseInt(layerId),
       })),
       skipDuplicates: true, // Skip 'Bobo'
     });
@@ -40,13 +40,14 @@ module.exports = {
    */
   update: async (req, res) => {
     const id = req.params.id;
-    const { feature } = req.body;
+    const { name, properties } = req.body;
     const data = await prisma.feature.update({
       where: {
         id,
       },
       data: {
-        ...feature,
+        name: name || undefined,
+        properties: properties || undefined,
       },
     });
     res.json(data);
