@@ -1,6 +1,7 @@
 import { api } from 'boot/axios';
 import { i18n } from "boot/i18n.js";
 import {
+  Dialog,
   Notify
 } from "quasar"
 const $t = i18n.global.t;
@@ -33,6 +34,27 @@ export const updateProjection = async (params) => {
     })
     return null
   }
+}
+
+export const deleteProjection = (params, resolve) => {
+  return Dialog.create({
+    icon: 'delete',
+    title: $t('Warning'),
+    message: `${$t('Delete Projection')}  ${params.name}?`,
+    ok: {
+      push: true
+    },
+    cancel: {
+      push: true,
+      color: 'negative'
+    },
+    persistent: true
+  }).onOk(async () => {
+    const response = await api.delete(`projections/${params.id}`)
+    resolve(response.data)
+  }).onCancel(() => {
+  }).onDismiss(() => {
+  })
 }
 
 export const createProjection = async (params) => {

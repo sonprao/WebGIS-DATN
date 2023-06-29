@@ -33,26 +33,46 @@
           <q-td key="definition" :props="props" style="white-space: pre-wrap">
             {{ props.row.definition }}
           </q-td>
-<!--          <q-td key="action" :props="propsLocation">-->
-<!--            <q-btn-->
-<!--              v-bind="actionButtonProps"-->
-<!--              icon="edit"-->
-<!--              style="margin-right: 10px"-->
-<!--            >-->
-<!--              &lt;!&ndash; popup location edit &ndash;&gt;-->
-<!--              <PopupLocation-->
-<!--                v-model:row="propsLocation.row"-->
-<!--                :location-rows="locationRows"-->
-<!--                :projections="projections"-->
-<!--              />-->
-<!--            </q-btn>-->
-<!--            <q-btn-->
-<!--              v-bind="{ ...actionButtonProps, color: 'red' }"-->
-<!--              icon="delete"-->
-<!--              @click="onDeleteLocation(propsLocation.row)"-->
-<!--            >-->
-<!--            </q-btn>-->
-<!--          </q-td>-->
+          <q-td key="action" :props="props">
+            <q-btn
+              v-bind="actionButtonProps"
+              icon="edit"
+              style="margin-right: 10px"
+            >
+              <!-- popup feature edit -->
+              <q-popup-edit
+                class="popupEdit shadow-10"
+                v-model="props.row"
+                :title="`${$t('Update Projection')}: ${
+                                  props.row.name
+                                }`"
+                buttons
+                :label-set="$t('Save')"
+                :label-cancel="$t('Cancel')"
+                @save="saveEdit"
+                v-slot="scope"
+              >
+                <q-input
+                  v-model="scope.value.name"
+                  dense
+                  autofocus
+                  :label="$t('Name')"
+                />
+                <q-input
+                  v-model="scope.value.definition"
+                  dense
+                  autofocus
+                  :label="$t('Definition')"
+                />
+              </q-popup-edit>
+            </q-btn>
+            <q-btn
+              v-bind="{ ...actionButtonProps, color: 'red' }"
+              icon="delete"
+              @click="onDeleteProjection(props.row)"
+            >
+            </q-btn>
+          </q-td>
         </q-tr>
       </template>
     </q-table>
@@ -70,7 +90,7 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { getAllProjection, getProjection } from 'src/api/projection'
+import { getAllProjection, getProjection , deleteProjection} from 'src/api/projection'
 export default defineComponent({
   name: "ProjectionManagementPage",
   setup() {
@@ -79,6 +99,12 @@ export default defineComponent({
     const filter = ref('')
     const value = ref(true)
     const visibleColumns = ref([ 'name', 'definition', "action"])
+    const actionButtonProps = {
+      size: "sm",
+      color: "primary",
+      round: true,
+      dense: true,
+    };
     const columns = computed(() => [
       {
         name: 'id',
@@ -123,6 +149,12 @@ export default defineComponent({
       rows.value = await getAll()
     })
 
+    const onDeleteProjection = async (row) => {
+      const resolve = async () => {
+        rows.value = await getAll();
+      }
+      const res = await deleteProjection(row, resolve);
+    };
     return {
       value,
       filter,
@@ -130,6 +162,8 @@ export default defineComponent({
       columns,
       rows,
       toggle,
+      onDeleteProjection,
+      actionButtonProps
     }
   }
 })
