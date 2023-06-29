@@ -204,6 +204,8 @@
                                 propsLayer.expand = !propsLayer.expand;
                               }
                             );
+                          } else {
+                            propsLayer.expand = !propsLayer.expand;
                           }
                         }
                       "

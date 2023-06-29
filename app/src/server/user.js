@@ -3,6 +3,25 @@ const { PrismaClient, Role } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = {
+  /**
+   * @swagger
+   * /api/register:
+   *   post:
+   *     tags:
+   *       - Users
+   *     summary:Register User
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Register'
+   *     responses:
+   *       200:
+   *         description: User registered successfully
+   *       401:
+   *         description: Unauthorized
+   */
   register: async (req, res) => {
     const { email, password, profile } = req.body;
     const user = await prisma.user.create({
