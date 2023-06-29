@@ -1,30 +1,90 @@
 # WebGIS-DATN
-install node > v16.7
-python 3.10
-install virtualenv for python library, modules (create virtualenv inside folder backend with command: python -m venv env)
-how to run nuxt-frontend
-go to frontend folder, run command: npm run dev
+required node version > v.16.7
 
-how to run nuxt-app:
-Nuxt project is created with v3 template. Next steps:
+# how to run nuxt-app:
+Nuxt project is created with v3 template. 
+
+Next steps:
+
  › cd app
+
  › Install dependencies with npm install or yarn install or pnpm install
+ 
  › Start development server with npm run dev or yarn dev or pnpm run dev
+# GIS app (app) command
 
- How to host express server:
-  generate a prisma client: npx prisma generate
-  yarn start:rest  (it will run on port 3000 by default)
-  if you want to access to prisma database, run: npx prisma studio
-  migrate: npx  prisma migrate dev (--create-only, -skip-generate)
+a GIS project using quasar
+
+## Install the dependencies
+```bash
+yarn install
+# or
+npm install
+```
+
+### Start the app in development mode (hot-code reloading, error reporting, etc.)
+```bash
+npm dev
+# or
+yarn dev
+# or
+quasar dev
+```
+
+### Start the GUI app in development mode (hot-code reloading, error reporting, etc.)
+
+```bash
+quasar dev -m electron
+```
 
 
-add this to .env
-  # Environment variables declared in this file are automatically made available to Prisma.
-# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+### Lint the files
+```bash
+yarn lint
+# or
+npm run lint
+```
 
-# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
-# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
-#mysql://USER:PASSWORD@HOST:PORT/DATABASE 
-DATABASE_URL=
-LOGOUT_TIMEOUT='60'
-GEO_SERVER_URL='http://localhost:8081/geoserver'
+
+### Format the files
+```bash
+yarn format
+# or
+npm run format
+```
+
+
+
+### Build the app for production
+```bash
+quasar build
+```
+
+### Customize the configuration
+See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+
+# How to host express server:
+Need to setup the database.
+
+First, typeScript is needed for prisma to work. install typeScript
+### generate a prisma client
+```bash
+npx prisma generate
+```
+### migrate database in prisma: can be use with --create-only, -skip-generate
+```bash
+npx prisma migrate
+npx prisma migrate --create-only
+npx prisma migrate --skip-generate
+```
+### To access the database through a simple tabular interface (port:5555 by default)
+```bash
+npx prisma studio
+```
+
+### Start server(port:3000 by default)
+```bash
+node server.js
+#or
+yarn start:rest
+```

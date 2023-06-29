@@ -9,7 +9,7 @@ module.exports = {
    *   post:
    *     tags:
    *       - Users
-   *     summary:Register User
+   *     summary: Register User
    *     requestBody:
    *       required: true
    *       content:

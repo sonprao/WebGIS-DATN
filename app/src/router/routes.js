@@ -18,11 +18,6 @@ const routes = [
             path: '',
             component: () => import('pages/MapPage/NoMapPage.vue'),
           },
-          {
-            name: 'DetailPage',
-            path: ':id',
-            component: () => import('pages/MapPage/DetailPage.vue'),
-          }
         ],
       },
       {
