@@ -97,6 +97,12 @@ export default defineComponent({
         to: "/location-management",
         show: role === 'ADMIN',
       },
+      {
+        title: $t("Projections management"),
+        icon: "img:icons/location-management.png",
+        to: "/projection-management",
+        show: role === 'ADMIN',
+      },
         // <q-icon name="img:icons/area.png" />
 
     ])

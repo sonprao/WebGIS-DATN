@@ -4,6 +4,25 @@ const { update, map } = require("lodash");
 const prisma = new PrismaClient();
 
 module.exports = {
+  /**
+   * @swagger
+   * /api/locations:
+   *   post:
+   *     tags:
+   *       - Locations
+   *     summary: Create a location
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Location'
+   *     responses:
+   *       200:
+   *         description: Location created successfully
+   *       400:
+   *         description: Invalid request
+   */
   create: async (req, res) => {
     const updateLocation = await prisma.location.create({
       data: {

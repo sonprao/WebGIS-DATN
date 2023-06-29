@@ -1,12 +1,31 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 module.exports = {
+  /**
+   * @swagger
+   * /api/features:
+   *   post:
+   *     tags:
+   *       - Features
+   *     summary: Create a feature
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Feature'
+   *     responses:
+   *       200:
+   *         description: Feature created successfully
+   *       400:
+   *         description: Invalid request
+   */
   create: async (req, res) => {
-    const { features, layerId } = req.body;
+    const { features, layer_id } = req.body;
     const featuresData = await prisma.feature.createMany({
       data: features.map((item) => ({
         ...item,
-        layerId: parseInt(layerId),
+        layerId: layer_id,
       })),
       skipDuplicates: true, // Skip 'Bobo'
     });
@@ -40,14 +59,13 @@ module.exports = {
    */
   update: async (req, res) => {
     const id = req.params.id;
-    const { name, properties } = req.body;
+    const { feature } = req.body;
     const data = await prisma.feature.update({
       where: {
         id,
       },
       data: {
-        name: name || undefined,
-        properties: properties || undefined,
+        ...feature,
       },
     });
     res.json(data);
@@ -81,7 +99,26 @@ module.exports = {
     });
     res.json(data);
   },
-
+  /**
+   * @swagger
+   * /api/features/{name}:
+   *   get:
+   *     tags:
+   *       - Features
+   *     summary: Get a feature by Layer
+   *     parameters:
+   *       - name: layerId
+   *         in: path
+   *         description: Feature name
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   *       404:
+   *         description: Feature not found
+   */
   getByLayer: async (req, res) => {
     const { layerId } = req.params;
     const { page = 1, per_page = 50 } = req.query;
