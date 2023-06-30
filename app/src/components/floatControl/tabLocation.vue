@@ -110,7 +110,6 @@ export default defineComponent({
         });
     };
     onMounted(() => {
-      console.log("TabLocation mounted");
       if (!_isEmpty(unref(location))) {
         setModel(unref(location))
       }
@@ -154,7 +153,6 @@ export default defineComponent({
       );
     });
     onUnmounted(() => {
-      console.log("unmounted");
     });
     return {
       map,

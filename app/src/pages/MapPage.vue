@@ -147,9 +147,6 @@ export default defineComponent({
         if (feature !== lastFeature) {
           const a = feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
-          feature.on('change', () => {
-            console.log('cchange')
-          })
           setTimeout(() => {
             captureScreenshot().then((response) => {
               floatDetailProps.value.image = response
@@ -174,7 +171,6 @@ export default defineComponent({
               duration: 1000,
             });
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
-            console.log(dataFeature)
             const coordinate = evt.coordinate;
             dataFeature.setLocation(coordinate);
             // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();

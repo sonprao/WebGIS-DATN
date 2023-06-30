@@ -82,7 +82,7 @@ export default defineComponent({
       {
         title: $t("Map"),
         icon: "fa-sharp fa-solid fa-map-location-dot",
-        to: "/",
+        to: "/map",
       },
     ]);
     const adminInteraction = computed(() => [

@@ -181,10 +181,6 @@ export default defineComponent({
         defaultOptions.value = response.data;
       });
     });
-    const hehe = (props) => {
-      console.log(props);
-    };
-
     // table
     const columns = computed(() => [
       {
@@ -220,7 +216,6 @@ export default defineComponent({
       dataLayers,
       layerCheckbox,
       fetchFeatures,
-      hehe,
       //table
       columns,
       rows,

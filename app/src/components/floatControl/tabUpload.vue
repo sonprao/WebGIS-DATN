@@ -185,7 +185,6 @@ export default defineComponent({
     }
 
     const parseJsonFile = async (file) => {
-      console.log(file.type)
       return new Promise((resolve, reject) => {
         const fileReader = new FileReader();
         fileReader.onload = (event) => resolve(JSON.parse(event.target.result));

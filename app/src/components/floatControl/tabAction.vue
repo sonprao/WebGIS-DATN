@@ -452,7 +452,6 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      console.log("mounte");
       watch(
         () => unref(props.tab),
         (val) => {
