@@ -135,9 +135,6 @@ export default defineComponent({
       })
     }
 
-    const hehe = (props) => {
-      console.log(props);
-    };
 
     watch(
       () => unref(props.content),
@@ -172,7 +169,6 @@ export default defineComponent({
       columns,
       saveEdit,
       addField,
-      hehe,
       location,
       dialog: ref(false),
       thumbStyle: {

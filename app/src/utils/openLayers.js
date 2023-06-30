@@ -147,9 +147,7 @@ export const FeatureUtils = {
         featureData = new BaseDataFeature();
         break;
     }
-    // console.log(layer, layer.get("name"));
     featureData.setData(feature);
-    // console.log(featureData, feature);
     return featureData;
   },
   /**
@@ -307,17 +305,8 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   const imageLayer= new TileLayer({
     source: wmsSource,
     extent: transformExtent()
-    // style: new Style({
-    //   stroke: new Stroke({ color: "rgba(0, 0, 0, 0)" }),
-    //   fill: new Fill({color: 'rgba(0, 0, 0, 0'}),
-    // })
   });
   unref(map).addLayer(imageLayer);
-  // const imageRenderer = unref(map).getRenderer().getLayerRenderer(imageLayer);
-  // imageRenderer.addEventListener('onclick', function (event) {
-  //   const coordinates = event.coordinate;
-  //   console.log(coordinates)
-  // })
   return imageLayer
 };
 

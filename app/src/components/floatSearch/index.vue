@@ -121,7 +121,6 @@ export default defineComponent({
         }
     }
      onMounted(() => {
-      console.log("TabLocation mounted");
       const query = {
         page: 1,
         per_page: 10,
@@ -131,7 +130,6 @@ export default defineComponent({
       });
     });
     onUnmounted(() => {
-      console.log("unmounted");
       mapStore.setLocation({
           location: {},
         })

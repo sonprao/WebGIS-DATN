@@ -110,7 +110,6 @@ export default defineComponent({
         });
     };
     onMounted(() => {
-      console.log("TabLocation mounted");
       if (!_isEmpty(unref(location))) {
         setModel(unref(location))
       }
@@ -154,7 +153,6 @@ export default defineComponent({
       );
     });
     onUnmounted(() => {
-      console.log("unmounted");
     });
     return {
       map,
@@ -193,6 +191,7 @@ export default defineComponent({
 .layerClass {
   border-top-left-radius: 1px;
   border-top-right-radius: 1px;
+  min-height: 0;
   height: 100vh;
   max-height: 55vh;
   max-width: 300px;

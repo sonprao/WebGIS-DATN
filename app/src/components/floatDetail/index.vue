@@ -4,8 +4,6 @@
       <q-carousel swipeable animated v-model="slideImage" control-color="secondary" arrows navigation infinite
         ref="carousel" style="height: 200px">
         <q-carousel-slide :name="1" :img-src="image" />
-        <q-carousel-slide :name="2" :img-src="image" />
-        <q-carousel-slide :name="3" :img-src="image" />
         <template v-slot:control>
           <q-carousel-control position="top-left" class="text-white rounded-borders">
             <q-btn class="absolute shadow-2 closeClass" round color="white" text-color="black" icon="close" size="sm"

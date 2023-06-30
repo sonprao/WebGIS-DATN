@@ -1,24 +1,13 @@
 
 const routes = [
   {
-    path: '/',
+    path: '',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: '',
-        component: () => import('pages/IndexPage.vue'),
-        name: 'HomePage',
-      },
-      {
         path: 'map',
-        component: () => import('pages/MapPage/index.vue'),
-        children: [
-          {
-            name: 'NoMapPage',
-            path: '',
-            component: () => import('pages/MapPage/NoMapPage.vue'),
-          },
-        ],
+        component: () => import('pages/MapPage.vue'),
+        name: 'HomePage',
       },
       {
         path: 'user-management',
