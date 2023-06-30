@@ -68,9 +68,9 @@ app.get('/api/locations', locationAPI.getAll)
 app.delete('/api/locations/:id', locationAPI.delete)
 // projection
 app.get('/api/projections', projectionAPI.getAll)
-app.get('/api/projections/:name',projectionAPI.get)
+app.get('/api/projections/:id',projectionAPI.get)
 app.post('/api/projections', projectionAPI.create)
-app.put('/api/projections/:name', projectionAPI.update)
+app.put('/api/projections/:id', projectionAPI.update)
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server started on port ${process.env.PORT || 3000}`)
 })

@@ -1,18 +1,26 @@
 <template>
   <div class="q-pa-md">
     <q-table
-      flat bordered
+      flat
+      bordered
+      wrap-cells
+      hide-pagination
+      row-key="name"
       title="Treats"
       :rows="rows"
       :columns="columns"
-      row-key="name"
-      :visible-columns="visibleColumns"
-      :filter="filter"
-      :rows-per-page-options="[0]"
+      separator="cell"
     >
       <template v-slot:top>
+        <div class="text-h6">{{ $t("Projections") }}</div>
+        <q-btn rounded color="primary" icon="add" style="margin-left: 10px">
+          <q-tooltip anchor="center right" self="center start">{{
+            $t("Add projection")
+          }}</q-tooltip>
+          <PopupProjection v-model:row="newProjection" :list="rows"/>
+        </q-btn>
         <q-space />
-        <q-input debounce="300" color="primary" v-model="filter">
+        <q-input debounce="300" color="primary" v-model="filter" @update:model-value="getAll()">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -21,9 +29,7 @@
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td key="id" :props="props">
-            <q-badge color="green">
               {{ props.row.id }}
-            </q-badge>
           </q-td>
           <q-td key="name" :props="props">
             <q-badge color="primary">
@@ -39,32 +45,8 @@
               icon="edit"
               style="margin-right: 10px"
             >
-              <!-- popup feature edit -->
-              <q-popup-edit
-                class="popupEdit shadow-10"
-                v-model="props.row"
-                :title="`${$t('Update Projection')}: ${
-                                  props.row.name
-                                }`"
-                buttons
-                :label-set="$t('Save')"
-                :label-cancel="$t('Cancel')"
-                @save="saveEdit"
-                v-slot="scope"
-              >
-                <q-input
-                  v-model="scope.value.name"
-                  dense
-                  autofocus
-                  :label="$t('Name')"
-                />
-                <q-input
-                  v-model="scope.value.definition"
-                  dense
-                  autofocus
-                  :label="$t('Definition')"
-                />
-              </q-popup-edit>
+              <!-- popup projection edit -->
+              <PopupProjection v-model:row="props.row" :list="rows" />
             </q-btn>
             <q-btn
               v-bind="{ ...actionButtonProps, color: 'red' }"
@@ -76,6 +58,18 @@
         </q-tr>
       </template>
     </q-table>
+    <q-pagination
+      input
+      style="place-content: center"
+      v-model="projectionPagination.page"
+      @update:model-value="getAll"
+      :max="projectionPagination.rowsNumber"
+      boundary-numbers
+      direction-links
+      flat
+      color="grey"
+      active-color="primary"
+    />
   </div>
 </template>
 
@@ -90,15 +84,24 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { getAllProjection, getProjection , deleteProjection} from 'src/api/projection'
+import PopupProjection from "src/components/managementPage/popupProjection.vue";
+
+import {
+  getAllProjection,
+  getProjection,
+  deleteProjection,
+} from "src/api/projection";
+
 export default defineComponent({
   name: "ProjectionManagementPage",
+  components: {
+    PopupProjection,
+  },
   setup() {
     const $t = i18n.global.t;
     const $q = useQuasar();
-    const filter = ref('')
-    const value = ref(true)
-    const visibleColumns = ref([ 'name', 'definition', "action"])
+    const filter = ref("");
+    const visibleColumns = ref(["name", "definition", "action"]);
     const actionButtonProps = {
       size: "sm",
       color: "primary",
@@ -107,73 +110,101 @@ export default defineComponent({
     };
     const columns = computed(() => [
       {
-        name: 'id',
+        name: "id",
         required: true,
-        label: 'Id',
-        align: 'left',
-        field: row => row.id,
-        format: val => `${val}`,
+        label: "Id",
+        align: "left",
+        field: "id",
       },
-      { name: 'name', align: 'center', label: $t('Name'), field: 'name', sortable: true },
-      { name: 'definition', align: 'center', label: $t('Def'), field: 'definition' },
-      { name: 'action', align: 'center', label: $t('Action')},
-    ])
+      {
+        name: "name",
+        align: "center",
+        label: $t("Name"),
+        field: "name",
+        sortable: true,
+      },
+      {
+        name: "definition",
+        align: "center",
+        label: $t("Definition"),
+        field: "definition",
+      },
+      { name: "action", align: "center", label: $t("Action") },
+    ]);
+
+    const newProjection = ref({
+      name: null,
+      definition: null,
+    })
     const toggle = async (row) => {
-       $q.dialog({
-        title: $t('Warning'),
-         message:
-           !row.activate ?
-             `${$t('Deactivate user')}  ${row.email}?`:
-             `${$t('Activate user')}  ${row.email}?`,
+      $q.dialog({
+        title: $t("Warning"),
+        message: !row.activate
+          ? `${$t("Deactivate user")}  ${row.email}?`
+          : `${$t("Activate user")}  ${row.email}?`,
         ok: {
-          push: true
+          push: true,
         },
         cancel: {
           push: true,
-          color: 'negative'
+          color: "negative",
         },
-        persistent: true
-      }).onOk(async() => {
-        const response = await activateUser(row)
-      }).onCancel(() => {
-        row.activate = !row.activate
-      }).onDismiss(() => {
+        persistent: true,
       })
-    }
-    const getAll = async() => {
-      const response = await getAllProjection()
-        return response
-    }
-    const rows = ref([])
+        .onOk(async () => {
+          const response = await activateUser(row);
+        })
+        .onCancel(() => {
+          row.activate = !row.activate;
+        })
+        .onDismiss(() => { });
+    };
+    const projectionPagination = ref({
+      page: 1,
+      rowsPerPage: 10,
+      rowsNumber: 0,
+    });
+    const getAll = async (val) => {
+      const query = {
+        page: val ? val : unref(projectionPagination).page,
+        per_page: unref(projectionPagination).rowsPerPage,
+        search: unref(filter),
+      }
+      if (unref(filter)) {
+        query.page = 1
+      }
+      const response = await getAllProjection(query);
+      rows.value = response.data;
+      projectionPagination.value.page = response.page;
+      projectionPagination.value.rowsPerPage = response.per_page;
+      projectionPagination.value.rowsNumber = parseInt(
+        Math.ceil(response.count / response.per_page)
+      );
+    };
+    const rows = ref([]);
     onMounted(async () => {
-      rows.value = await getAll()
-    })
+      await getAll();
+    });
 
     const onDeleteProjection = async (row) => {
       const resolve = async () => {
-        rows.value = await getAll();
-      }
+        await getAll();
+      };
       const res = await deleteProjection(row, resolve);
     };
     return {
-      value,
+      newProjection,
       filter,
       visibleColumns,
       columns,
       rows,
       toggle,
       onDeleteProjection,
-      actionButtonProps
-    }
-  }
-})
+      actionButtonProps,
+      projectionPagination,
+      getAll,
+    };
+  },
+});
 </script>
-<style lang="scss">
-.q-dialog__title {
-  color: orange;
-
-  &::before {
-    content: "\26A0";
-  }
-}
-</style>
+<style lang="scss"></style>

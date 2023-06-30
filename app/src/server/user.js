@@ -141,6 +141,9 @@ module.exports = {
       },
     });
     delete user["password"];
+    if (!user["activate"]) {
+      res.status(400).json({ error: 'This account has been deactivated!' })
+    }
     res.json(user);
   },
   /**

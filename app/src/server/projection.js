@@ -23,10 +23,10 @@ module.exports = {
    *         description: Invalid request
    */
   create: async (req, res) => {
-   const response = await prisma.projection.create({
+    const response = await prisma.projection.create({
       data: {
-        name: req.body.name || '',
-        definition: req.body.description || '',
+        name: req.body.name || "",
+        definition: req.body.description || "",
       },
     });
     res.json(response);
@@ -52,10 +52,10 @@ module.exports = {
    *         description: projection not found
    */
   get: async (req, res) => {
-    const { name } = req.params;
+    const { id } = req.params;
     const response = await prisma.projection.findUnique({
       where: {
-        name: name,
+        id: parseInt(id),
       },
     });
     res.json(response);
@@ -87,14 +87,14 @@ module.exports = {
    *         description: Projection not found
    */
   update: async (req, res) => {
-    const { name } = req.params;
+    const { id } = req.params;
     const response = await prisma.projection.update({
       where: {
-        name: name,
+        id: parseInt(id),
       },
       data: {
-        name: req.body.name || '',
-        definition: req.body.description || '',
+        name: req.body.name || undefined,
+        definition: req.body.definition || undefined,
       },
     });
     res.json(response);
@@ -128,39 +128,62 @@ module.exports = {
    *         description: Projection not found
    */
   getAll: async (req, res) => {
-    const { page = null, per_page = null, search = null } = req.query;
-    let projections = null;
-    if (page && per_page) {
-      if (search) {
-        projections = await prisma.projection.findMany({
-          skip: (parseInt(page) - 1) * parseInt(per_page),
-          take: parseInt(per_page),
-          where: {
-            name: {
-              search: search,
+    const { page = 1, per_page = 10, search = "" } = req.query;
+    const [count, data] = await prisma.$transaction([
+      prisma.projection.count({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: search,
+              },
             },
-          },
-        });
-      } else {
-        projections = await prisma.projection.findMany({
-          skip: (parseInt(page) - 1) * parseInt(per_page),
-          take: parseInt(per_page),
-        });
-      }
-    } else {
-      if (search) {
-        projections = await prisma.projection.findMany({
-          where: {
-            name: {
-              search: search,
+            {
+              name: {
+                in: search || undefined,
+              },
             },
-          },
-        });
-      } else {
-        projections = await prisma.projection.findMany();
-      }
-    }
-    res.json(projections);
+            {
+              name: {
+                equals: search || undefined,
+              },
+            },
+          ],
+        },
+      }),
+      prisma.projection.findMany({
+        skip: (parseInt(page) - 1) * parseInt(per_page),
+        take: parseInt(per_page),
+        where: {
+          OR: [
+            {
+              name: {
+                contains: search,
+              },
+            },
+            {
+              name: {
+                in: search || undefined,
+              },
+            },
+            {
+              name: {
+                equals: search || undefined,
+              },
+            },
+          ],
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      }),
+    ]);
+    res.json({
+      count,
+      data,
+      per_page: parseInt(per_page),
+      page: parseInt(page),
+    });
   },
 
   /**
