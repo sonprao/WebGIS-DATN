@@ -45,12 +45,14 @@ import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import TabAction from 'src/components/floatControl/tabAction.vue';
 import TabLocation from 'src/components/floatControl/TabLocation.vue';
+import TabUpload from 'src/components/floatControl/TabUpload.vue';
 
 export default defineComponent({
   name: "FloatControl",
   components: {
     "tab-action": TabAction,
-    "tab-location":TabLocation,
+    "tab-location": TabLocation,
+    "tab-upload": TabUpload,
   },
   props: {
     map: {
