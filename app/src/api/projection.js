@@ -8,18 +8,24 @@ const $t = i18n.global.t;
 
 
 export const getProjection = async (params) => {
-  const response = await api.get(`projections/${params.name}`, params)
+  const response = await api.get(`projections/${params.id}`, params)
   return response.data
 }
 
-export const getAllProjection = async (params) => {
-  const response = await api.get(`projections`, params)
+export const getAllProjection = async (query) => {
+  const queryURL = new URLSearchParams()
+  Object.entries(query).forEach((i) => {
+    queryURL.append(i[0], i[1])  
+  })
+  const response = await api.get(`projections`, {
+    params: queryURL,
+  })
   return response.data
 }
 
 export const updateProjection = async (params) => {
   try {
-    const response = await api.put(`projections/${params.name}`, params)
+    const response = await api.put(`projections/${params.id}`, params)
     Notify.create({
       message:  $t('Success'),
       color: 'primary',

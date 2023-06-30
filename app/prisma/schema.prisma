@@ -57,7 +57,7 @@ model User {
 
 model Profile {
   id          String    @id @default(uuid())
-  sub         String    @unique
+  sub         String
   email       String    @unique
   name        String?
   given_name  String?
@@ -126,6 +126,8 @@ model Projection {
   createdById String?
   updatedBy   User?     @relation("ProjectionUpdated", fields: [updatedById], references: [id])
   updatedById String?
+
+  @@fulltext([name])
 }
 
 model MapLayer {

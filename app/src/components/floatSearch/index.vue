@@ -132,6 +132,9 @@ export default defineComponent({
     });
     onUnmounted(() => {
       console.log("unmounted");
+      mapStore.setLocation({
+          location: {},
+        })
     });
     return {
       map,

@@ -1,6 +1,6 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
-    <q-card class="my-card" flat bordered style="width: 300px">
+    <q-card class="my-card" flat bordered style="">
       <q-tabs v-model="tabModel" class="bg-teal text-white" style="min-height: 56px;">
         <q-tab v-for="(tab, index) of tabList" 
           :key="index"
@@ -74,6 +74,13 @@ export default defineComponent({
       {
         label: $t('Action'),
         component: 'tab-action',
+        props: {
+          tab: tabModel,
+        },
+      },
+      {
+        label: $t('Upload'),
+        component: 'tab-upload',
         props: {
           tab: tabModel,
         },

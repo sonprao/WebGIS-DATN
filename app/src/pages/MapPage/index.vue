@@ -1,31 +1,4 @@
 <template>
-    <!-- <q-select
-      ref="locationSearchRef"
-      v-model="search"
-      use-input
-      clearable
-      hide-dropdown-icon
-      input-debounce="400"
-      label="Select location"
-      option-label="name"
-      option-value="name"
-      :hint="hint"
-      :options="options"
-      @filter="filterFn"
-      @update:model-value="setModel"
-      style="width: 250px; padding-bottom: 32px"
-    >
-      <template v-slot:prepend>
-        <q-icon name="search" />
-      </template>
-      <template v-slot:no-option>
-        <q-item>
-          <q-item-section class="text-grey">
-            {{ $t("No results") }}
-          </q-item-section>
-        </q-item>
-      </template>
-    </q-select> -->
   <q-layout container style="height: 93vh; padding: 0">
     <q-page-container class="mapContainer">
       <router-view :key="search?.id" />
@@ -61,20 +34,6 @@ export default defineComponent({
     const search = ref("");
     const hint = ref("");
     const options = ref([]);
-    const filterFn = (val, update, abort) => {
-      if (val.length < 1) {
-        abort();
-        return;
-      }
-      update(async () => {
-        const query = {
-          search: val,
-          search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
-        };
-        const response = await getAllLocation(query);
-        options.value = response.data;
-      });
-    };
     const location = ref(null);
     provide('location', location);
     const setModel = async (val) => {
@@ -96,7 +55,6 @@ export default defineComponent({
       search,
       hint,
       options,
-      filterFn,
       setModel,
     };
   },

@@ -399,9 +399,9 @@ import {
 import { getLayerByLocation } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
 import { getAllProjection } from "src/api/projection";
-import PopupLocation from "src/components/locationManagementPage/popupLocation.vue";
-import PopupLayer from "src/components/locationManagementPage/popupLayer.vue";
-import PopupFeature from "src/components/locationManagementPage/popupFeature.vue";
+import PopupLocation from "src/components/managementPage/popupLocation.vue";
+import PopupLayer from "src/components/managementPage/popupLayer.vue";
+import PopupFeature from "src/components/managementPage/popupFeature.vue";
 export default defineComponent({
   name: "LocationManagementPage",
   components: {
