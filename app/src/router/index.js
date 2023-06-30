@@ -34,7 +34,7 @@ export default route(function (/* { store, ssrContext } */) {
       if (role === 'ADMIN') {
         next()
       } else {
-        next({ path: '/' })
+        next({ name: 'HomePage' })
       }
     } else if (to?.meta?.public){
       next()

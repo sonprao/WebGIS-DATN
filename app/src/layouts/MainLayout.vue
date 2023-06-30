@@ -55,7 +55,7 @@
 
 <script>
 import _debounce from "lodash/debounce";
-import { getCurrentInstance, defineComponent, ref, unref, computed } from "vue";
+import { getCurrentInstance, defineComponent, ref, unref, computed, onMounted } from "vue";
 
 import EssentialLink from "components/EssentialLink.vue";
 import { useI18n } from "vue-i18n";
@@ -82,7 +82,7 @@ export default defineComponent({
       {
         title: $t("Map"),
         icon: "fa-sharp fa-solid fa-map-location-dot",
-        to: "/map",
+        to: "/",
       },
     ]);
     const adminInteraction = computed(() => [
@@ -100,7 +100,7 @@ export default defineComponent({
       },
       {
         title: $t("Projections management"),
-        icon: "img:icons/location-management.png",
+        icon: "img:icons/coordinate.png",
         to: "/projection-management",
         show: role === 'ADMIN',
       },
@@ -126,6 +126,10 @@ export default defineComponent({
         },
       },
     ]);
+    
+    onMounted(() => {
+      router.push({name: 'HomePage'})
+    })
     
     return {
       vm,

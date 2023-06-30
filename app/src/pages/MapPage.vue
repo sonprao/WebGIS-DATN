@@ -18,7 +18,7 @@ import { Map, View, Overlay } from "ol";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
-import { OSM, ImageWMS } from "ol/source";
+import { OSM, ImageWMS, XYZ } from "ol/source";
 import { Tile as TileLayer, Image, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
@@ -226,7 +226,12 @@ export default defineComponent({
         },
         serverType: "geoserver",
       });
-
+      const worldImagery = new TileLayer({
+        source: new XYZ({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          maxZoom: 19
+        })
+      });
       // Create a new Image layer
       const imageLayer = new Image({
         source: wmsSource,
@@ -238,6 +243,7 @@ export default defineComponent({
         overlays: [unref(overlay)],
         layers: [
           // imageLayer,
+          // worldImagery,
           new TileLayer({
             source: new OSM(), // tiles are served by OpenStreetMap
           }),

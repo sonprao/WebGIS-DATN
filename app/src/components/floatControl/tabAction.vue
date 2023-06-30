@@ -198,7 +198,7 @@ export default defineComponent({
       new VectorLayer({
         source: unref(source),
         style: {
-          "fill-color": "rgba(255, 255, 255, 0.2)",
+          "fill-color": "rgba(255, 255, 255, 0.4)",
           "stroke-color": "#ffcc33",
           "stroke-width": 2,
           "circle-radius": 7,
@@ -409,7 +409,7 @@ export default defineComponent({
           const downloadLink = document.createElement("a");
           downloadLink.href =
             "data:text/json;charset=utf-8," + encodeURIComponent(geoJsonData);
-          downloadLink.download = "drawn_features.geojson";
+          downloadLink.download = "drawn_features.json";
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);

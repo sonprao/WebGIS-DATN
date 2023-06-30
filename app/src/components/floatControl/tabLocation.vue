@@ -193,6 +193,7 @@ export default defineComponent({
 .layerClass {
   border-top-left-radius: 1px;
   border-top-right-radius: 1px;
+  min-height: 0;
   height: 100vh;
   max-height: 55vh;
   max-width: 300px;
