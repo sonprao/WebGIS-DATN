@@ -121,7 +121,7 @@ module.exports = {
    */
   getByLayer: async (req, res) => {
     const { layerId } = req.params;
-    const { page = 1, per_page = 50 } = req.query;
+    const { page = 1, per_page = 50, search = "" } = req.query;
     // const data = await prisma.$transaction([
     //   prisma.feature.count({
     //     where: {
@@ -142,12 +142,46 @@ module.exports = {
     // SELECT * FROM feature WHERE feature.layerId = ${layerId}
     //   ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC
     //   LIMIT ${per_page} OFFSET ${(page - 1) * per_page};
-    const data = await prisma.$queryRaw`SELECT * FROM feature  WHERE feature.layerId = ${parseInt(layerId)}  ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC LIMIT ${per_page} OFFSET ${(page - 1) * per_page};`
+    const query = "%" + search + "%";
+    const data =
+      await prisma.$queryRaw`SELECT * FROM feature  WHERE feature.layerId = ${parseInt(
+        layerId
+      )} AND name LIKE ${query} ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC LIMIT ${per_page} OFFSET ${
+        (page - 1) * per_page
+      };`;
     const count = await prisma.feature.count({
-        where: {
-          layerId: parseInt(layerId),
-        },
-      })
-    res.json({ data, per_page: parseInt(per_page), page: parseInt(page), count });
+      where: {
+        AND: [
+          {
+            layerId: parseInt(layerId),
+          },
+          {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                },
+              },
+              {
+                name: {
+                  in: search || undefined,
+                },
+              },
+              {
+                name: {
+                  equals: search || undefined,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    res.json({
+      data,
+      per_page: parseInt(per_page),
+      page: parseInt(page),
+      count,
+    });
   },
 };

@@ -37,7 +37,7 @@
           />
         </q-btn>
         <q-space />
-        <q-input debounce="300" color="primary" v-model="locationFilter" @update:model-value="getAll()">
+        <q-input :label="$t('Search for location')" debounce="300" color="primary" v-model="locationFilter" @update:model-value="getAll()">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
