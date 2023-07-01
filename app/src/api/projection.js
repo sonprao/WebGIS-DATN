@@ -13,10 +13,12 @@ export const getProjection = async (params) => {
 }
 
 export const getAllProjection = async (query) => {
-  const queryURL = new URLSearchParams()
-  Object.entries(query).forEach((i) => {
-    queryURL.append(i[0], i[1])  
-  })
+  let queryURL = new URLSearchParams()
+  if (query) {
+    Object.entries(query).forEach((i) => {
+      queryURL.append(i[0], i[1])  
+    })
+  }
   const response = await api.get(`projections`, {
     params: queryURL,
   })

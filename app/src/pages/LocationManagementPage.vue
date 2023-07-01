@@ -682,7 +682,7 @@ export default defineComponent({
       await getAll();
       getAllProjection()
         .then((response) => {
-          projections.value = response;
+          projections.value = response.data;
         })
         .catch(() => {
           projections.value = [];

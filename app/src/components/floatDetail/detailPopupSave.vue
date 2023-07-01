@@ -192,7 +192,7 @@ export default defineComponent({
         style: "min-width: 90px; width: 90px;",
       },
       { name: 'name', align: 'center', label: $t('Feature name'), field: 'name' },
-      { name: 'action', align: 'center', label: $t('') },
+      { name: 'action', align: 'center', label: '' },
     ])
     const rows = ref([])
     const pagination = ref({

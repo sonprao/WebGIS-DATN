@@ -10,6 +10,7 @@
       :rows="rows"
       :columns="columns"
       separator="cell"
+      v-model:pagination="projectionPagination"
     >
       <template v-slot:top>
         <div class="text-h6">{{ $t("Projections") }}</div>

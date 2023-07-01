@@ -1,6 +1,6 @@
 <template>
   <div v-if="role === 'ADMIN'" class="adminClass">
-    <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="save" @click="dialog = true">
+    <q-btn v-if="ableToSave" class="gt-xs" size="12px" flat dense round icon="save" @click="dialog = true">
       <q-tooltip anchor="top middle" self="center middle">{{ $t("Save to database") }}</q-tooltip>
       <q-dialog v-model="dialog">
         <detail-popup-save />
@@ -58,11 +58,13 @@ import { i18n } from "boot/i18n.js";
 import { useUserStore } from 'src/stores/user';
 import { useMapStore } from "stores/map";
 import detailPopupSave from 'src/components/floatDetail/detailPopupSave.vue'
+import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "detailTable",
   props: {
     content: Object,
+    type: String,
   },
   components: {
     'detail-popup-save': detailPopupSave,
@@ -77,6 +79,7 @@ export default defineComponent({
     const { role } = userStore.getUser
 
     const isEditting = ref(false);
+    const ableToSave = computed(() => unref(isEditting) && props.type !== LAYER_TYPE[0])
     const rows = ref(
       Object.entries(props.content).map((i) => {
         let value = ''
@@ -170,6 +173,7 @@ export default defineComponent({
       saveEdit,
       addField,
       location,
+      ableToSave,
       dialog: ref(false),
       thumbStyle: {
         right: "4px",

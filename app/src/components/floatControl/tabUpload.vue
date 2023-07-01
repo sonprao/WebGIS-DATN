@@ -1,35 +1,14 @@
 <template>
   <div>
-    <q-uploader
-      label="Custom header"
-      multiple
-      color="teal"
-      style="max-width: 300px"
-      :filter="checkFileType"
-      @added="addEvent"
-      @removed="removeEvent"
-      @rejected="onRejected"
-    >
+    <q-uploader ref="uploaderRef" label="Custom header" multiple color="teal" style="max-width: 300px"
+      :filter="checkFileType" accept=".json" @added="addEvent" @removed="removeEvent" @rejected="onRejected">
       <template v-slot:header="scope">
         <div class="row no-wrap items-center q-pa-sm q-gutter-xs">
-          <q-btn
-            v-if="scope.queuedFiles.length > 0"
-            icon="clear_all"
-            @click="scope.removeQueuedFiles"
-            round
-            dense
-            flat
-          >
+          <q-btn v-if="scope.queuedFiles.length > 0" icon="clear_all" @click="scope.removeQueuedFiles" round dense flat>
             <q-tooltip>Clear All</q-tooltip>
           </q-btn>
-          <q-btn
-            v-if="scope.uploadedFiles.length > 0"
-            icon="done_all"
-            @click="scope.removeUploadedFiles"
-            round
-            dense
-            flat
-          >
+          <q-btn v-if="scope.uploadedFiles.length > 0" icon="done_all" @click="scope.removeUploadedFiles" round dense
+            flat>
             <q-tooltip>Remove Uploaded Files</q-tooltip>
           </q-btn>
           <q-spinner v-if="scope.isUploading" class="q-uploader__spinner" />
@@ -39,37 +18,11 @@
               {{ scope.uploadSizeLabel }} / {{ scope.uploadProgressLabel }}
             </div>
           </div>
-          <q-btn
-            v-if="scope.canAddFiles"
-            type="a"
-            icon="add_box"
-            @click="scope.pickFiles"
-            round
-            dense
-            flat
-          >
+          <q-btn v-if="scope.canAddFiles" type="a" icon="add_box" @click="scope.pickFiles" round dense flat>
             <q-uploader-add-trigger />
             <q-tooltip>Pick Files</q-tooltip>
           </q-btn>
-          <q-btn
-            v-if="scope.canUpload"
-            icon="cloud_upload"
-            @click="scope.upload"
-            round
-            dense
-            flat
-          >
-            <q-tooltip>Upload Files</q-tooltip>
-          </q-btn>
-
-          <q-btn
-            v-if="scope.isUploading"
-            icon="clear"
-            @click="scope.abort"
-            round
-            dense
-            flat
-          >
+          <q-btn v-if="scope.isUploading" icon="clear" @click="scope.abort" round dense flat>
             <q-tooltip>Abort Upload</q-tooltip>
           </q-btn>
         </div>
@@ -94,14 +47,7 @@
             </q-item-section>
 
             <q-item-section top side>
-              <q-btn
-                class="gt-xs"
-                size="12px"
-                flat
-                dense
-                round
-                icon="more_vert"
-              >
+              <q-btn class="gt-xs" size="12px" flat dense round icon="more_vert">
                 <q-menu>
                   <q-list dense>
                     <q-item clickable v-close-popup @click="detailFile(index)">
@@ -110,11 +56,7 @@
                         <q-icon name="info" />
                       </q-item-section>
                     </q-item>
-                    <q-item
-                      clickable
-                      v-close-popup
-                      @click="scope.removeFile(file)"
-                    >
+                    <q-item clickable v-close-popup @click="scope.removeFile(file)">
                       <q-item-section>{{ $t("Delete") }}</q-item-section>
                       <q-item-section avatar>
                         <q-icon name="delete" />
@@ -144,8 +86,16 @@ import {
   provide,
   inject,
 } from "vue";
+import _difference from "lodash/difference";
+import _isEmpty from "lodash/isEmpty";
 import { i18n } from "boot/i18n.js";
+import { $bus } from "boot/bus.js";
 import { Map, View } from "ol";
+import { containsExtent } from "ol/extent";
+import { transform } from "ol/proj";
+
+import { toStringHDMS } from "ol/coordinate";
+
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
 import { Vector } from "ol/layer";
@@ -154,16 +104,16 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import { LineString, Polygon } from "ol/geom";
 
+import { writeGeoJSON } from "src/utils/openLayers";
+import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
-
-import _difference from "lodash/difference";
-import _isEmpty from "lodash/isEmpty";
 import { MAP_LAYERS } from "src/constants/layer.js";
 import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
   transformProjection,
 } from "src/utils/openLayers.js";
+
 import { useQuasar } from "quasar";
 
 export default defineComponent({
@@ -173,6 +123,7 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    const uploaderRef = ref(null);
     const map = inject("map", {});
 
     const uploadSource = ref(null);
@@ -181,8 +132,8 @@ export default defineComponent({
     const uploadList = ref([]);
 
     const checkFileType = (files) => {
-      return files.filter(file => file.type === 'application/json')
-    }
+      return files.filter((file) => file.type === "application/json");
+    };
 
     const parseJsonFile = async (file) => {
       return new Promise((resolve, reject) => {
@@ -195,8 +146,44 @@ export default defineComponent({
 
     const addEvent = async (files) => {
       files.forEach(async (file) => {
+        const mapProjection = unref(map).getView().getProjection().getCode();
+        const mapExtent = unref(map).getView().calculateExtent();
+
         const obj = await parseJsonFile(file);
         if (obj) {
+          const geojsonFormat = new GeoJSON().readFeature(obj, {
+            dataProjection: "EPSG:4326",
+            featureProjection: unref(map).getView().getProjection().getCode(),
+          });
+          // check if feature in bound extent of the map
+          const geomExtent = geojsonFormat?.getGeometry?.()?.getExtent?.();
+          if (geomExtent) {
+            if (!containsExtent(mapExtent, geomExtent)) {
+              unref(uploaderRef)?.removeFile(file);
+              $q.notify({
+                type: "negative",
+                message: "This feature not in bound of current view!",
+              });
+              return;
+            }
+          }
+
+          const time = new Date().toLocaleString();
+          geojsonFormat.setId(time);
+          uploadList.value.push({
+            id: time,
+            file: file,
+          });
+          const geom = geojsonFormat.getGeometry();
+          let output;
+          let tooltipCoord;
+          if (geom instanceof Polygon) {
+            output = formatArea(geom);
+            tooltipCoord = geom.getInteriorPoint().getCoordinates();
+          } else if (geom instanceof LineString) {
+            output = formatLength(geom);
+            tooltipCoord = geom.getLastCoordinate();
+          }
           if (!unref(uploadVector)) {
             if (!unref(uploadSource)) {
               uploadSource.value = new VectorSource({ wrapX: false });
@@ -215,28 +202,8 @@ export default defineComponent({
           }
           measureTooltipElement.value = null;
           createMeasureTooltip();
-          const geojsonFormat = new GeoJSON().readFeature(obj, {
-            dataProjection: "EPSG:4326",
-            featureProjection: unref(map).getView().getProjection().getCode(),
-          });
-          const time = new Date().toLocaleString();
-          geojsonFormat.setId(time);
-          uploadList.value.push({
-            id: time,
-            file: file,
-          });
-          unref(uploadSource).addFeature(geojsonFormat);
-          const geom = geojsonFormat.getGeometry();
-          let output;
-          let tooltipCoord;
-          if (geom instanceof Polygon) {
-            output = formatArea(geom);
-            tooltipCoord = geom.getInteriorPoint().getCoordinates();
-          } else if (geom instanceof LineString) {
-            output = formatLength(geom);
-            tooltipCoord = geom.getLastCoordinate();
-          }
           measureTooltipElement.value.innerHTML = output;
+          unref(uploadSource).addFeature(geojsonFormat);
           unref(measureTooltip).setPosition(tooltipCoord);
         }
       });
@@ -246,22 +213,26 @@ export default defineComponent({
       if (files.length === unref(uploadList).length) {
         unref(uploadSource).clear();
         uploadList.value = [];
-        document.querySelectorAll("div.ol-tooltip.ol-tooltip-upload").forEach((d) => {
-          d.remove();
-        })
+        document
+          .querySelectorAll("div.ol-tooltip.ol-tooltip-upload")
+          .forEach((d) => {
+            d.remove();
+          });
         return;
       }
       files.forEach(async (file) => {
         const featureIndex = unref(uploadList).findIndex(
           (u) => u.file === file
         );
-        const feature = unref(uploadSource).getFeatureById(
+        const feature = unref(uploadSource)?.getFeatureById(
           unref(uploadList)[featureIndex].id
         );
         if (feature) {
           unref(uploadSource).removeFeature(feature);
           uploadList.value.splice(featureIndex, 1);
-          document.querySelectorAll("div.ol-tooltip.ol-tooltip-upload")[featureIndex].remove();
+          document
+            .querySelectorAll("div.ol-tooltip.ol-tooltip-upload")
+          [featureIndex].remove();
         }
       });
     };
@@ -293,28 +264,55 @@ export default defineComponent({
     };
 
     const onRejected = (rejectedEntries) => {
-      // Notify plugin needs to be installed
-      // https://quasar.dev/quasar-plugins/notify#Installation
       $q.notify({
-        type: 'negative',
-        message: '*.json file only!'
-      })
-    }
+        type: "negative",
+        message: "*.json file only!",
+      });
+    };
 
     const detailFile = async (index) => {
       const feature = unref(uploadSource).getFeatureById(
         unref(uploadList)[index].id
       );
       if (feature) {
-        const extent = feature.getGeometry().getExtent()
-        unref(map).getView().fit(extent, {
-            padding: [100, 100, 100, 100],
-            duration: 1000,
+        const coordinate = feature.getGeometry().getLastCoordinate();
+        const extent = feature.getGeometry().getExtent();
+        const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
+        unref(map)
+          .getView()
+          .fit(extent, {
+            padding: [100, 100, 200, 300],
+            duration: 100,
           });
+        setTimeout(() => {
+          const coordinateText = toStringHDMS(
+            transform(
+              coordinate,
+              unref(map).getView().getProjection().getCode(),
+              "EPSG:4326"
+            )
+          );
+          captureScreenshot().then((response) => {
+            $bus.emit("on-show-detail", {
+              title: unref(uploadList)[index].file.name,
+              content: geoJsonData,
+              image: response,
+              coordinate: coordinateText,
+            });
+            unref(map)
+          .getView()
+          .fit(extent, {
+            padding: [100, 100, 100, 100],
+            duration: 500,
+          });
+          });
+          $bus.emit("on-show-detail", { content: geoJsonData });
+        }, 150);
       }
     };
 
     return {
+      uploaderRef,
       map,
       location,
       checkFileType,
@@ -369,18 +367,5 @@ export default defineComponent({
 
 .ol-tooltip-static:before {
   border-top-color: #3366ff;
-}
-
-.drawListClass {
-  max-height: 60vh;
-  max-width: 300px;
-
-  .q-scrollarea__content.absolute {
-    display: flex;
-    flex-direction: column-reverse;
-  }
-}
-.q-item__section--avatar {
-  min-width: 30px;
 }
 </style>

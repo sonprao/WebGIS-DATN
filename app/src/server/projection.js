@@ -128,7 +128,9 @@ module.exports = {
    *         description: Projection not found
    */
   getAll: async (req, res) => {
-    const { page = 1, per_page = 10, search = "" } = req.query;
+    const { page = 1, per_page: _per_page, search = "" } = req.query;
+    let per_page = 10;
+    if (!_per_page) per_page = await prisma.projection.count()
     const [count, data] = await prisma.$transaction([
       prisma.projection.count({
         where: {

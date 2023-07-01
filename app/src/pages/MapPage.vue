@@ -52,6 +52,7 @@ import {
 } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 import { captureScreenshot } from "src/utils/html2Canvas";
+import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "NoMapPage",
@@ -73,13 +74,16 @@ export default defineComponent({
       title: null,
       image: 'https://cdn.quasar.dev/img/chicken-salad.jpg',
       content: {},
-      type: 'string',
+      type: LAYER_TYPE[0],
       id: null,
       coordinate: null,
     })
     const onShowDetail = (option) => {
-      const { content, image, title, type = 'layer', coordinate } = option
+      const { content, image, title, type = LAYER_TYPE[0], coordinate } = option
       showDetail.value = true;
+      if (title) {
+        floatDetailProps.value.title = title
+      }
       if (image) {
         floatDetailProps.value.image = image
       }
@@ -89,7 +93,7 @@ export default defineComponent({
       if (coordinate) {
         floatDetailProps.value.coordinate = coordinate
       }
-      if (type !== 'layer') {
+      if (type !== LAYER_TYPE[0]) {
         floatDetailProps.value.type = type
       }
     };

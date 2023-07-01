@@ -150,6 +150,7 @@ import { writeGeoJSON } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 import {  transformProjection } from "src/utils/openLayers.js";
+import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "TabAction",
@@ -389,7 +390,8 @@ export default defineComponent({
             ))
             captureScreenshot().then((response) => {
               $bus.emit("on-show-detail", {
-                title: 'a',
+                title: unref(drawList)[index].text,
+                type: LAYER_TYPE[1],
                 content: geoJsonData,
                 image: response,
                 coordinate: coordinate,

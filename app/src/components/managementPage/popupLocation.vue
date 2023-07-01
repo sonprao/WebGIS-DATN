@@ -62,6 +62,12 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
+import { transformExtent, get as getProj } from "ol/proj";
+import { getWidth } from 'ol/extent';
+
+import proj4 from "proj4";
+import { register } from "ol/proj/proj4";
+
 import { transformProjection } from "src/utils/openLayers.js";
 import { updateLocation, addLocaction } from "src/api/location";
 export default defineComponent({
@@ -77,8 +83,10 @@ export default defineComponent({
     const $t = i18n.global.t;
     const computedRow = ref(props.row);
     const title = computed(() => {
-      return props.row.id ? `${$t('Update location')}: ${unref(computedRow).name}`: `${$t('Add location')}:`
-    })
+      return props.row.id
+        ? `${$t("Update location")}: ${unref(computedRow).name}`
+        : `${$t("Add location")}:`;
+    });
     const saveEdit = async (value, _props) => {
       const updateParams = {
         id: value.id,
@@ -108,6 +116,16 @@ export default defineComponent({
           },
         });
       }
+      if (value.view?.projection !== _props.view.projection) {
+        Object.assign(updateParams, {
+          ...updateParams,
+          view: {
+            ...updateParams.view,
+            projection: value.view.projection,
+          },
+        });
+      }
+      
       const longLat = transformProjection({
         to: _props.view?.projection?.name || "EPSG:4326",
         definition: _props.view?.projection?.definition || "",
@@ -116,15 +134,6 @@ export default defineComponent({
           parseFloat(value.view?.latitude || _props.view.latitude),
         ],
       });
-      if (value.view?.projection !== _props.view.projection) {
-        Object.assign(updateParams, {
-          ...updateParams,
-          view: {
-            ...updateParams.view,
-            projection: value.view.projection
-          },
-        });
-      }
 
       Object.assign(updateParams, {
         ...updateParams,
@@ -144,15 +153,15 @@ export default defineComponent({
           (row) => row.id === response.id
         );
         Object.assign(currentRow, { ...response });
-        return
+        return;
       } else {
-        delete updateParams.id
-        const response = await addLocaction(updateParams)
+        delete updateParams.id;
+        const response = await addLocaction(updateParams);
       }
     };
     const updateModel = (val) => {
-      console.log(val)
-    }
+      console.log(val);
+    };
     return {
       computedRow,
       title,
