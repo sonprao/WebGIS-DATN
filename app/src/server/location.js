@@ -106,30 +106,54 @@ module.exports = {
    *         description: Location not found
    */
   getAll: async (req, res) => {
-    const { page = 1, per_page = 10, search = '' } = req.query;
+    const { page = 1, per_page = 10, search = "" } = req.query;
     const [count, data] = await prisma.$transaction([
-          prisma.location.count(),
-          prisma.location.findMany({
-            skip: (parseInt(page) - 1) * parseInt(per_page),
-            take: parseInt(per_page),
-            where: {
+      prisma.location.count(),
+      prisma.location.findMany({
+        skip: (parseInt(page) - 1) * parseInt(per_page),
+        take: parseInt(per_page),
+        where: {
+          OR: [
+            {
               name: {
-                search: search || undefined,
+                search: search,
               },
             },
+            {
+              name: {
+                contains: search,
+              },
+            },
+            {
+              name: {
+                in: search || undefined,
+              },
+            },
+            {
+              name: {
+                equals: search || undefined,
+              },
+            },
+          ],
+        },
+        include: {
+          view: {
             include: {
-              view: {
-                include: {
-                  projection: true,
-                },
-              },
+              projection: true,
             },
-            orderBy: {
-              createdAt: "asc",
-            },
-          }),
-        ]);
-    res.json({count, data, per_page: parseInt(per_page), page: parseInt(page)});
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      }),
+    ]);
+    res.json({
+      count,
+      data,
+      per_page: parseInt(per_page),
+      page: parseInt(page),
+    });
   },
   /**
    * @swagger
@@ -170,7 +194,7 @@ module.exports = {
             extent: req.body.view?.extent || undefined,
             longitude: parseFloat(req.body.view?.longitude) || 0,
             latitude: parseFloat(req.body.view?.latitude) || 0,
-            projectionId: req.body.view.projection.id || undefined,
+            projectionId: req.body.view?.projection?.id || undefined,
           },
         },
       },
