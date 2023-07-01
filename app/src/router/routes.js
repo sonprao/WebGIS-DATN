@@ -1,29 +1,13 @@
 
 const routes = [
   {
-    path: '/',
+    path: '',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: '',
+        path: '/map',
         component: () => import('pages/IndexPage.vue'),
         name: 'HomePage',
-      },
-      {
-        path: 'map',
-        component: () => import('pages/MapPage/index.vue'),
-        children: [
-          {
-            name: 'NoMapPage',
-            path: '',
-            component: () => import('pages/MapPage/NoMapPage.vue'),
-          },
-          {
-            name: 'DetailPage',
-            path: ':id',
-            component: () => import('pages/MapPage/DetailPage.vue'),
-          }
-        ],
       },
       {
         path: 'user-management',
@@ -33,8 +17,15 @@ const routes = [
         },
       },
       {
+        path: 'projection-management',
+        component: () => import('pages/ProjectionManagementPage/index.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'location-management',
-        component: () => import('pages/LocationManagementPage.vue'),
+        component: () => import('pages/locationManagementPage/index.vue'),
         meta: {
           authRequired: true,
         },

@@ -52,13 +52,12 @@ export class CityLandDataFeature extends BaseDataFeature {
   getDisplayHtml() {
     const $t = i18n.global.t;
     const hdms = toStringHDMS(toLonLat(this.location));
-    let str = "<p>" + (this.name) + "</p>" +
-      "<p>" + $t('Location') + " : " + hdms + "</p>" +
-      "<p>" + $t('Area') + " : " + Math.round(this.area) + " m2 " + "</p>" +
-      "<p>" + $t('Owner') + " : " + (this.ownerName) + "</p>" +
-      "<p>" + $t('SoilType') + " : " + (this.soilType) + "</p>" +
-      "<p>" + $t('Status') + " : " + (this.progress) + "</p>" +
-      "<p>" + $t('SoilTypeId') + " : " + (this.soilTypeId) + "</p>";
+    let str = "<p>" + convertStringNull(this.name) + "</p>" +
+      "<p>" + $t('Location') + ": " + hdms + "</p>" +
+      "<p>" + $t('Area') + ": " + Math.round(this.area) + " m2 " + "</p>" +
+      "<p>" + $t('Owner') + ": " + convertStringNull(this.ownerName) + "</p>" +
+      "<p>" + $t('Soil type') + ": " + convertStringNull(this.soilType) + "</p>" +
+      "<p>" + $t('Status') + " : " + convertStringNull(this.progress) + "</p>";
     return str;
   }
 }
@@ -96,10 +95,10 @@ export class RoadDataFeature extends BaseDataFeature {
     const $t = i18n.global.t;
     const hdms = toStringHDMS(toLonLat(this.location));
     let str = "<p>" + convertToCorrectFormat(this.name) + "</p>" +
-      "<p>" + $t('code') + " : " + hdms + "</p>" +
-      "<p>" + $t('fclass') + " : " + $t(this.fclass) + "</p>" +
-      "<p>" + $t('oneWay') + " : " + (this.oneWay) + "</p>" +
-      "<p>" + $t('maxSpeed') + " : " + (this.maxSpeed) + "</p>"
+      "<p>" + $t('Code') + ": " + hdms + "</p>" +
+      "<p>" + $t('Fclass') + ": " + $t(this.fclass) + "</p>" +
+      "<p>" + $t('One way') + ": " + convertStringNull(this.oneWay) + "</p>" +
+      "<p>" + $t('Max speed') + ": " + convertStringNull(this.maxSpeed) + "</p>"
     ;
     return str;
   }
@@ -126,9 +125,9 @@ export class ForestLandDataFeature extends BaseDataFeature {
     const $t = i18n.global.t;
     const hdms = toStringHDMS(toLonLat(this.location));
     let str = "<p>" + (this.name) + "</p>" +
-      "<p>" + $t('Location') + " : " + hdms + "</p>" +
-      "<p>" + $t('Area') + " : " + Math.round(this.area) + " m2 " + "</p>" +
-      "<p>" + $t('SoilType') + " : " + (this.soilType) + "</p>";
+      "<p>" + $t('Location') + ": " + hdms + "</p>" +
+      "<p>" + $t('Area') + ": " + Math.round(this.area) + " m2 " + "</p>" +
+      "<p>" + $t('Soil type') + ": " + convertStringNull(this.soilType) + "</p>";
     return str;
   }
 }
@@ -146,7 +145,7 @@ export class RiverDataFeature extends BaseDataFeature {
   getDisplayHtml() {
     const $t = i18n.global.t;
     const hdms = toStringHDMS(toLonLat(this.location));
-    let str = "<p>" + (this.name) + "</p>" +
+    let str = "<p>" + convertStringNull(this.name) + "</p>" +
       "<p>" + $t("location") + (hdms) + "</p>" +
       "<p>" + $t("area") + (this.area) + "</p>";
     return str;
@@ -155,6 +154,13 @@ export class RiverDataFeature extends BaseDataFeature {
 
 const convertToCorrectFormat = function (string) {
   return decodeURIComponent(escape(string));
+}
+
+const convertStringNull = function (str) {
+  const $t = i18n.global.t;
+  if (str === null) {
+        return $t("Updating");
+    } else return str
 }
 
 // SoilTypeID:

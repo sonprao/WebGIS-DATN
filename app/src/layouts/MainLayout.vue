@@ -14,7 +14,8 @@
         <q-toolbar-title> GIS App </q-toolbar-title>
         <!-- login component -->
         <q-avatar>
-          <img :src="profile.picture">
+          <img v-if="profile?.picture" :src="profile?.picture">
+          <img v-else src="~assets/account.jpg">
         </q-avatar>
       </q-toolbar>
     </q-header>
@@ -24,9 +25,6 @@
       elevated
       side="left"
       behavior="desktop"
-      :mini="miniState"
-      @mouseover="miniState =false"
-      @mouseout="miniState =true"
       >
       <q-list>
         <EssentialLink
@@ -57,7 +55,7 @@
 
 <script>
 import _debounce from "lodash/debounce";
-import { getCurrentInstance, defineComponent, ref, unref, computed } from "vue";
+import { getCurrentInstance, defineComponent, ref, unref, computed, onBeforeMount } from "vue";
 
 import EssentialLink from "components/EssentialLink.vue";
 import { useI18n } from "vue-i18n";
@@ -76,6 +74,7 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $t = i18n.global.t;
     const router = useRouter();
+    const route = useRoute();
     const userStore = useUserStore();
     const { role, profile } = userStore.getUser;
     const leftDrawerOpen = ref(true);
@@ -100,6 +99,12 @@ export default defineComponent({
         to: "/location-management",
         show: role === 'ADMIN',
       },
+      {
+        title: $t("Projections management"),
+        icon: "img:icons/coordinate.png",
+        to: "/projection-management",
+        show: role === 'ADMIN',
+      },
         // <q-icon name="img:icons/area.png" />
 
     ])
@@ -122,6 +127,12 @@ export default defineComponent({
         },
       },
     ]);
+    
+    onBeforeMount(() => {
+      if (route.path === '/') {
+        router.replace({name: 'HomePage'})
+      }
+    })
     
     return {
       vm,

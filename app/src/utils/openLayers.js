@@ -1,17 +1,19 @@
+import { Map, View } from 'ol';
+
 import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
 import { ScaleLine } from "ol/control";
-import { ImageWMS } from "ol/source";
+import { ImageWMS, TileWMS } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
   VectorImage as VectorImageLayer,
   Image,
+  Tile as TileLayer,
 } from "ol/layer";
 import GeoJSON from "ol/format/GeoJSON";
 import { Draw, Modify, Snap } from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
-import View from "ol/View";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 
@@ -79,7 +81,7 @@ export const createTextStyle = function (feature, resolution, dom) {
 // control
 export const scaleControl = new ScaleLine({
   units: "metric",
-  minWidth: 50,
+  minWidth: 100,
 });
 
 export const zoomMapToLayer = function (map, vectorLayer) {
@@ -122,7 +124,7 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Polygon": {
+      case "Đất Đà Nẵng": {
         switch (feature.get("SoilTypeId")) {
           case SOIL_TYPE_ID.DAT_DON_VI_O:
             featureData = new CityLandDataFeature();
@@ -145,9 +147,7 @@ export const FeatureUtils = {
         featureData = new BaseDataFeature();
         break;
     }
-    console.log(layer, layer.get("name"));
     featureData.setData(feature);
-    console.log(featureData, feature);
     return featureData;
   },
   /**
@@ -161,7 +161,7 @@ export const FeatureUtils = {
         color: "BLUE",
         width: 3,
       }),
-      fill: style.getFill(),
+      fill: style?.getFill?.(),
     })
   },
 
@@ -199,21 +199,17 @@ export const FeatureUtils = {
         color = "WHITE";
     }
     let style = feature.getStyle();
-    feature.setStyle( new Style({
-      stroke : style.getStroke(),
-      fill : new Fill({
-        color : color
-      })
-    }))
+    style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
 };
 
 // control
-import { transform } from "ol/proj";
+import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
+import {LineString} from "ol/geom";
 
 export const transformProjection = (option) => {
   const {
@@ -223,9 +219,11 @@ export const transformProjection = (option) => {
     coordinates = [0, 0],
   } = option;
   if (from !== "EPSG:4326") {
-    proj4.defs(from, definition);
+    if (definition) proj4.defs(from, definition);
+    else proj4.defs(from);
   } else if (to !== "EPSG:4326") {
-    proj4.defs(to, definition);
+    if (definition) proj4.defs(to, definition);
+    else proj4.defs(to);
   }
   register(proj4);
 
@@ -263,7 +261,7 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       fill: new Fill({
         color,
       }),
-      text: createTextStyle(feature, resolution, layer),
+      // text: createTextStyle(feature, resolution, layer),
     });
   };
   const vectorLayer = new VectorImageLayer({
@@ -288,8 +286,13 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   return vectorLayer;
 };
 
+  /**
+   *
+   * @param {{ map: Map}} params
+   * @returns {Style}
+   */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const wmsSource = new ImageWMS({
+  const wmsSource = new TileWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
@@ -299,8 +302,9 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   });
 
   // Create a new Image layer
-  const imageLayer= new Image({
+  const imageLayer= new TileLayer({
     source: wmsSource,
+    extent: transformExtent()
   });
   unref(map).addLayer(imageLayer);
   return imageLayer
@@ -318,3 +322,9 @@ export const writeGeoJSON = (option) => {
   const transformedFeature = new Feature(transformedGeometry);
   return geoJsonFormat.writeFeature(transformedFeature);
 };
+
+
+export const distanceBetweenPoints = (latlng1, latlng2) => {
+  const line = new LineString([latlng1, latlng2]);
+  return Math.round(line.getLength() * 100) / 100;
+}

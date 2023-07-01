@@ -76,7 +76,7 @@ import {
   getCurrentInstance,
   onMounted,
 } from "vue";
-import { useQuasar } from "quasar";
+import { useQuasar, Dialog } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { getAll, activateUser } from 'src/api/user'
 export default defineComponent({
@@ -102,7 +102,8 @@ export default defineComponent({
       { name: 'activate', align: 'center', label: $t('Activate'), field: 'activate', sortable: true },
     ])
     const toggle = async (row) => {
-       $q.dialog({
+      Dialog.create({
+        class: 'deleteWarningClass',
         title: $t('Warning'),
          message:
            !row.activate ?
@@ -145,11 +146,13 @@ export default defineComponent({
 })
 </script>
 <style lang="scss">
-.q-dialog__title {
-  color: orange;
-
-  &::before {
-    content: "\26A0";
+.deleteWarningClass {
+  .q-dialog__title {
+    color: orange;
+  
+    &::before {
+      content: "\26A0";
+    }
   }
 }
 </style>

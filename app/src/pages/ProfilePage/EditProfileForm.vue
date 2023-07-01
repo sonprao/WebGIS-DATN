@@ -2,7 +2,7 @@
   <q-card class="myCardClass" flat bordered>
       <q-card-section horizontal>
         <q-card-section class="q-pt-xs inputClass" style="width: 800px;">
-          <div class="text-h4">{{$t("PROFILE")}}</div>
+          <div class="text-h4">{{$t("Profile")}}</div>
           <div class="text-h6">{{$t("Basic information")}}</div>
           <q-card-section horizontal>
             <q-input label="First Name" v-model="userProfile.given_name" />

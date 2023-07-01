@@ -1,145 +1,261 @@
-const { PrismaClient } = require('@prisma/client')
-const { update, map } = require('lodash')
+const { PrismaClient } = require("@prisma/client");
+const { update, map } = require("lodash");
 
-const prisma = new PrismaClient()
-
-
+const prisma = new PrismaClient();
 
 module.exports = {
-    updateOrCreate: async (req, res) => {
-        const { id } = req.params
-        const { name = '', description = '', workspace = '', longitude = 0, latitude = 0, mapLayers = [] } = req.body
-        const location = await prisma.location.upsert({
-            where: {
-                id: id
+  /**
+   * @swagger
+   * /api/locations:
+   *   post:
+   *     tags:
+   *       - Locations
+   *     summary: Create a location
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Location'
+   *     responses:
+   *       200:
+   *         description: Location created successfully
+   *       400:
+   *         description: Invalid request
+   */
+  create: async (req, res) => {
+    const updateLocation = await prisma.location.create({
+      data: {
+        name: req.body.name || "",
+        description: req.body.description || "",
+        workspace: req.body.workspace || "",
+        view: {
+          create: {
+            extent: req.body.view?.extent || "",
+            longitude: parseFloat(req.body.view?.longitude) || 0,
+            latitude: parseFloat(req.body.view?.latitude) || 0,
+            projectionId: req.body.view.projection.id || undefined,
+          },
+        },
+      },
+    });
+    res.json(updateLocation);
+  },
+  /**
+   * @swagger
+   * /api/locations/{id}:
+   *   get:
+   *     tags:
+   *       - Locations
+   *     summary: Get a location by ID
+   *     parameters:
+   *       - name: id
+   *         in: path
+   *         description: Location ID
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   *       404:
+   *         description: Location not found
+   */
+  get: async (req, res) => {
+    const id = parseInt(req.params.id);
+    const location = await prisma.location.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        mapLayers: true,
+        view: {
+          include: {
+            projection: true,
+          },
+        },
+      },
+    });
+    res.json(location);
+  },
+  /**
+   * @swagger
+   * /api/locations:
+   *   get:
+   *     tags:
+   *       - Locations
+   *     summary: Get all locations
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   *   post:
+   *     tags:
+   *       - Locations
+   *     summary: Post a location
+   *     parameters:
+   *       - name: id
+   *         in: path
+   *         description: Location ID
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   *       404:
+   *         description: Location not found
+   */
+  getAll: async (req, res) => {
+    const { page = 1, per_page: _per_page, search = "" } = req.query;
+    let per_page = 10;
+    if (!_per_page) per_page = await prisma.location.count()
+    const [count, data] = await prisma.$transaction([
+      prisma.location.count({
+        where: {
+          OR: [
+            {
+              name: {
+                search: search,
+              },
             },
-            update: {
-                name: name,
-                description: description,
-                mapLayers: mapLayers,
+            {
+              name: {
+                contains: search,
+              },
             },
-            create: {
-                id,
-                name: name,
-                description: description,
-                mapLayers: mapLayers,
+            {
+              name: {
+                in: search || undefined,
+              },
             },
-        })
-        res.json(location)
-    },
-
-    get: async (req, res) => {
-        const id = parseInt(req.params.id);
-        const location = await prisma.location.findUnique({
-            where: {
-                id: id,
+            {
+              name: {
+                equals: search || undefined,
+              },
             },
-            include : {
-                mapLayers: true,
-                view: {
-                    include: {
-                        projection: true,
-                    },
-                },
-            }
-        })
-        res.json(location)
-    },
-
-    getAll: async (req, res) => {
-        const { page = null, per_page = null, search = null } = req.query;
-        let locations = null
-        if (page && per_page) {
-            if (search) {
-                locations = await prisma.location.findMany({
-                    skip: (parseInt(page) - 1 ) * parseInt(per_page),
-                    take: parseInt(per_page),
-                    where: {
-                        name: {
-                            search: search,
-                        },
-                        description: {
-                            search: search,
-                        }
-                    },
-                    // include: {
-                    //     mapLayers: true,
-                    // },
-                })
-            } else {
-                locations = await prisma.location.findMany({
-                    skip: (parseInt(page) - 1 ) * parseInt(per_page),
-                    take: parseInt(per_page),
-                    include: {
-                        mapLayers: true,
-                        view: {
-                        include: {
-                            projection: true,
-                        },
-                },
-                    },
-                })
-            }
-        } else {
-            if (search) {
-                locations = await prisma.location.findMany({
-                    where: {
-                        name: {
-                            search: search,
-                        },
-                    },
-                })
-            } else {
-                locations = await prisma.location.findMany({
-                    include: {
-                        mapLayers: true, // Return all fields
-                        view: {
-                            include: {
-                                projection: true,
-                            },
-                        },
-                    },
-                })
-            }
-        }
-        res.json(locations)
-    },
-
-    update: async (req, res) => {
-        const id = parseInt(req.params.id);
-        const updateLocation = await prisma.location.update({
-            where: { id },
-            data: {
-                name: req.body.name || undefined,
-                description: req.body.description || undefined,
-                workspace: req.body.workspace || undefined,
-                view: {
-                    update: {
-                        extent: req.body.view?.extent || undefined,
-                        longitude: parseFloat(req.body.view?.longitude) || 0,
-                        latitude: parseFloat(req.body.view?.latitude) || 0,
-                    }
-                }
+          ],
+        },
+      }),
+      prisma.location.findMany({
+        skip: (parseInt(page) - 1) * parseInt(per_page),
+        take: parseInt(per_page),
+        where: {
+          OR: [
+            {
+              name: {
+                search: search,
+              },
             },
-            include : {
-                mapLayers: true, // Return all fields
-                view: {
-                    include: {
-                        projection: true,
-                    },
-                },
-            }
-        })
-        res.json(updateLocation);
-    },
-
-    delete: async (req, res) => {
-        const { id } = req.query;
-        const deleteLocation = await prisma.location.delete({
-            where: {
-                id: id,
+            {
+              name: {
+                contains: search,
+              },
             },
-        })
-        res.json(deleteLocation);
-    }
-}
+            {
+              name: {
+                in: search || undefined,
+              },
+            },
+            {
+              name: {
+                equals: search || undefined,
+              },
+            },
+          ],
+        },
+        include: {
+          view: {
+            include: {
+              projection: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      }),
+    ]);
+    res.json({
+      count,
+      data,
+      per_page: parseInt(per_page),
+      page: parseInt(page),
+    });
+  },
+  /**
+   * @swagger
+   * /api/locations/{id}:
+   *   put:
+   *     tags:
+   *       - Locations
+   *     summary: Update a location by ID
+   *     parameters:
+   *       - name: id
+   *         in: path
+   *         description: Location ID
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Location'
+   *     responses:
+   *       200:
+   *         description: Location updated successfully
+   *       404:
+   *         description: Location not found
+   */
+  update: async (req, res) => {
+    const id = parseInt(req.params.id);
+    const updateLocation = await prisma.location.update({
+      where: { id },
+      data: {
+        name: req.body.name || undefined,
+        description: req.body.description || undefined,
+        workspace: req.body.workspace || undefined,
+        view: {
+          update: {
+            extent: req.body.view?.extent || undefined,
+            longitude: parseFloat(req.body.view?.longitude) || 0,
+            latitude: parseFloat(req.body.view?.latitude) || 0,
+            projectionId: req.body.view?.projection?.id || undefined,
+          },
+        },
+      },
+      include: {
+        mapLayers: true, // Return all fields
+        view: {
+          include: {
+            projection: true,
+          },
+        },
+      },
+    });
+    res.json(updateLocation);
+  },
+  /**
+   * @swagger
+   * /api/locations/{id}:
+   *   delete:
+   *     tags:
+   *       - Locations
+   *     summary: Delete a location
+   *     responses:
+   *       200:
+   *         description: Location deleted successfully
+   *       404:
+   *         description: Location not found
+   */
+  delete: async (req, res) => {
+    const { id } = req.params;
+    const deleteLocation = await prisma.location.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    res.json(deleteLocation);
+  },
+};

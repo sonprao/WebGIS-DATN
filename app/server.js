@@ -1,4 +1,7 @@
 // server.js
+const workspaceAPI = require('./src/server/services/workspace')
+const projectionAPI = require('./src/server/projection')
+const featureAPI = require('./src/server/feature')
 const userAPI = require('./src/server/user')
 const profileAPI = require('./src/server/profile')
 const mapLayerAPI = require('./src/server/mapLayer')
@@ -13,9 +16,31 @@ const cors = require('cors')
 const app = express()
 app.use(cors())
 app.use(express.json())
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'WebGIS API',
+      version: '1.0.0',
+      description: 'API documentation for WebGIS',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000', // Update with your server URL
+      },
+    ],
+  },
+  apis: ['./src/server/*.js'], // Update with the path to your API files
+};
+
+const specs = swaggerJsdoc(options);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // user
-app.delete('/api/users', userAPI.delete)
 app.get('/api/users/:id',  userAPI.findUser)
+app.delete('/api/users', userAPI.delete)
 app.get('/api/users',  userAPI.getAll)
 app.post('/api/users', userAPI.updateOrCreateUser)
 app.put('/api/users/:id', userAPI.activateUser)
@@ -26,16 +51,29 @@ app.get('/api/profile',  userAPI.getAll)
 app.put('/api/profile/:id',  profileAPI.update)
 
 // mapLayer
-app.post('/api/mapLayers',  mapLayerAPI.updateOrCreate)
-app.get('/api/mapLayers', mapLayerAPI.find)
+app.post('/api/mapLayers',  mapLayerAPI.create)
+app.put('/api/mapLayers/:id', mapLayerAPI.updateOrCreate)
+app.get('/api/mapLayers/:id', mapLayerAPI.find)
+app.get('/api/mapLayers/getByLocation/:locationId', mapLayerAPI.getbyLocation)
 app.delete('/api/mapLayers', mapLayerAPI.delete)
+// feature
+app.post('/api/features',featureAPI.create)
+app.get('/api/features/:name',featureAPI.get)
+app.put('/api/features/:id', featureAPI.update)
+app.get('/api/mapLayers/:layerId/features', featureAPI.getByLayer)
 //location
-// app.post('/api/locations', locationAPI.updateOrCreate)
+app.post('/api/locations', locationAPI.create)
 app.put('/api/locations/:id', locationAPI.update)
 app.get('/api/locations/:id', locationAPI.get)
 app.get('/api/locations', locationAPI.getAll)
-app.delete('/api/locations', locationAPI.delete)
-
+app.delete('/api/locations/:id', locationAPI.delete)
+// projection
+app.get('/api/projections', projectionAPI.getAll)
+app.get('/api/projections/:id',projectionAPI.get)
+app.post('/api/projections', projectionAPI.create)
+app.put('/api/projections/:id', projectionAPI.update)
+// workspace
+app.get('/api/workspaces', workspaceAPI.getWorkspace)
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server started on port ${process.env.PORT || 3000}`)
 })

@@ -6,7 +6,7 @@
     clearable
     color="white"
     text-color="#666666"
-    toggle-color="primary"
+    toggle-color="teal"
     v-model="buttonModel"
     :options="options"
     @update:model-value="selectControl"
@@ -79,6 +79,18 @@
             >
               <q-menu>
                 <q-list dense>
+                  <q-item clickable v-close-popup @click="detailDraw(index)">
+                    <q-item-section>{{ $t("Detail") }}</q-item-section>
+                    <q-item-section avatar>
+                      <q-icon name="info" />
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="downloadDraw(index)">
+                    <q-item-section>{{ $t("Download") }}</q-item-section>
+                    <q-item-section avatar>
+                      <q-icon name="download" />
+                    </q-item-section>
+                  </q-item>
                   <q-item
                     clickable
                     v-close-popup
@@ -87,12 +99,6 @@
                     <q-item-section>{{ $t("Delete") }}</q-item-section>
                     <q-item-section avatar>
                       <q-icon name="delete" />
-                    </q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="downloadDraw(index)">
-                    <q-item-section>{{ $t("Download") }}</q-item-section>
-                    <q-item-section avatar>
-                      <q-icon name="download" />
                     </q-item-section>
                   </q-item>
                 </q-list>
@@ -137,17 +143,23 @@ import { LineString, Polygon } from "ol/geom";
 import { Draw } from "ol/interaction";
 import { unByKey } from "ol/Observable";
 import GeoJSON from "ol/format/GeoJSON";
+import { toStringHDMS } from "ol/coordinate";
+import { transform } from "ol/proj";
 import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
+import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
+import {  transformProjection } from "src/utils/openLayers.js";
+import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "TabAction",
-  components: {},
+  components: {
+  },
   emits: ["closePopup"],
   props: {
     tab: {
-      type: String,
+      type: Object,
       default: null,
     },
   },
@@ -187,7 +199,7 @@ export default defineComponent({
       new VectorLayer({
         source: unref(source),
         style: {
-          "fill-color": "rgba(255, 255, 255, 0.2)",
+          "fill-color": "rgba(255, 255, 255, 0.4)",
           "stroke-color": "#ffcc33",
           "stroke-width": 2,
           "circle-radius": 7,
@@ -239,6 +251,7 @@ export default defineComponent({
       }
       if (val !== "place") {
         $bus.emit("close-popup", true);
+        clearControl();
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
@@ -256,17 +269,6 @@ export default defineComponent({
       unref(map).removeInteraction(unref(snap));
       draw.value = null;
       snap.value = null;
-      vector.value = new VectorLayer({
-        source: unref(source),
-        style: {
-          "fill-color": "rgba(255, 255, 255, 0.2)",
-          "stroke-color": "#ffcc33",
-          "stroke-width": 2,
-          "circle-radius": 7,
-          "circle-fill-color": "#ffcc33",
-        },
-        zIndex: 10,
-      });
       if (unref(measureTooltipElement)) {
         unref(measureTooltipElement)?.parentNode?.removeChild?.(
           unref(measureTooltipElement)
@@ -275,7 +277,8 @@ export default defineComponent({
     };
     const addInteraction = (type) => {
       if (unref(draw)) {
-        clearControl();
+        unref(map).addInteraction(unref(draw));
+        return
       }
       if (!unref(map).getLayers().getArray().includes(unref(vector))) {
         unref(map).addLayer(unref(vector));
@@ -346,12 +349,12 @@ export default defineComponent({
           unref(helpTooltipElement).classList.add("hidden");
         });
     };
-    const zoomToDraw = (position) => {
+    const zoomToDraw = (position, duration = 1000, padding = [100, 100, 100, 100]) => {
       unref(map)
         .getView()
         .fit(position, {
-          padding: [100, 100, 100, 100],
-          duration: 1000,
+          padding,
+          duration,
         });
     };
     const deleteDraw = (index = -1) => {
@@ -373,6 +376,33 @@ export default defineComponent({
       }
     };
 
+    const detailDraw = async (index = -1) => {
+      if (index !== -1) {
+        const feature = unref(source).getFeatureById(unref(drawList)[index].id);
+        if (feature) {
+          const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
+          zoomToDraw(unref(drawList)[index].position, 100, [100, 100, 200, 300])
+          setTimeout(() => {
+            const coordinate = toStringHDMS(transform(
+                  unref(drawList)[index].position,
+                  unref(map).getView().getProjection().getCode(),
+                  'EPSG:4326'
+            ))
+            captureScreenshot().then((response) => {
+              $bus.emit("on-show-detail", {
+                title: unref(drawList)[index].text,
+                type: LAYER_TYPE[1],
+                content: geoJsonData,
+                image: response,
+                coordinate: coordinate,
+              });
+              zoomToDraw(unref(drawList)[index].position, 1000, [100, 100, 100, 100])
+            });
+            $bus.emit("on-show-detail", {content: geoJsonData});
+          }, 150);
+        }
+      }
+    }
     const downloadDraw = async (index = -1) => {
       if (index !== -1) {
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
@@ -381,7 +411,7 @@ export default defineComponent({
           const downloadLink = document.createElement("a");
           downloadLink.href =
             "data:text/json;charset=utf-8," + encodeURIComponent(geoJsonData);
-          downloadLink.download = "drawn_features.geojson";
+          downloadLink.download = "drawn_features.json";
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
@@ -396,6 +426,7 @@ export default defineComponent({
       }
       measureTooltipElement.value = document.createElement("div");
       measureTooltipElement.value.className = "ol-tooltip ol-tooltip-measure";
+      measureTooltipElement.value.setAttribute("data-html2canvas-ignore", "true");
       measureTooltip.value = new Overlay({
         element: unref(measureTooltipElement),
         offset: [0, -15],
@@ -413,6 +444,7 @@ export default defineComponent({
       }
       helpTooltipElement.value = document.createElement("div");
       helpTooltipElement.value.className = "ol-tooltip hidden";
+      helpTooltipElement.value.setAttribute("data-html2canvas-ignore", "true");
       helpTooltip.value = new Overlay({
         element: unref(helpTooltipElement),
         offset: [15, 0],
@@ -422,12 +454,12 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      console.log("mounte");
       watch(
-        () => props.tab,
+        () => unref(props.tab),
         (val) => {
-          if (val !== "TabAction") {
+          if (val !== "tab-action") {
             clearControl();
+            $bus.emit("close-popup", false);
             buttonModel.value = null;
           }
         }
@@ -441,6 +473,7 @@ export default defineComponent({
     });
     return {
       vm,
+      map,
       buttonModel,
       options,
       drawList,
@@ -452,6 +485,7 @@ export default defineComponent({
       zoomToDraw,
       deleteDraw,
       downloadDraw,
+      detailDraw,
     };
   },
 });
