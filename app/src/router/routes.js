@@ -5,8 +5,8 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: 'map',
-        component: () => import('pages/MapPage.vue'),
+        path: '/map',
+        component: () => import('pages/IndexPage.vue'),
         name: 'HomePage',
       },
       {
@@ -18,14 +18,14 @@ const routes = [
       },
       {
         path: 'projection-management',
-        component: () => import('pages/ProjectionManagementPage.vue'),
+        component: () => import('pages/ProjectionManagementPage/index.vue'),
         meta: {
           authRequired: true,
         },
       },
       {
         path: 'location-management',
-        component: () => import('pages/locationManagementPage.vue'),
+        component: () => import('pages/locationManagementPage/index.vue'),
         meta: {
           authRequired: true,
         },

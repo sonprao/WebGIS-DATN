@@ -33,9 +33,8 @@ export const updateFeature = async (params) => {
     return response.data
   } catch (e) {
     Notify.create({
+      type: "negative",
       message:  e?.message || $t('Error!'),
-      color: 'red',
-      icon: 'error_outline'
     })
     return null
   }
@@ -53,8 +52,7 @@ export const createFeature = async (params) => {
   } catch (e) {
     Notify.create({
       message:  e?.message || $t('Error!'),
-      color: 'red',
-      icon: 'error_outline'
+      type: "negative",
     })
     return null
   }

@@ -106,9 +106,36 @@ module.exports = {
    *         description: Location not found
    */
   getAll: async (req, res) => {
-    const { page = 1, per_page = 10, search = "" } = req.query;
+    const { page = 1, per_page: _per_page, search = "" } = req.query;
+    let per_page = 10;
+    if (!_per_page) per_page = await prisma.location.count()
     const [count, data] = await prisma.$transaction([
-      prisma.location.count(),
+      prisma.location.count({
+        where: {
+          OR: [
+            {
+              name: {
+                search: search,
+              },
+            },
+            {
+              name: {
+                contains: search,
+              },
+            },
+            {
+              name: {
+                in: search || undefined,
+              },
+            },
+            {
+              name: {
+                equals: search || undefined,
+              },
+            },
+          ],
+        },
+      }),
       prisma.location.findMany({
         skip: (parseInt(page) - 1) * parseInt(per_page),
         take: parseInt(per_page),

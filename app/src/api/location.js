@@ -16,10 +16,9 @@ export const addLocaction = async (params) => {
     })
     return response
   } catch (e) {
-     Notify.create({
+    Notify.create({
+      type: "negative", 
       message:  e?.message || $t('Error!'),
-      color: 'red',
-      icon: 'error_outline'
     })
     return null
   }
@@ -35,10 +34,9 @@ export const updateLocation = async (params) => {
     })
     return response.data
   } catch (e) {
-     Notify.create({
+    Notify.create({
+      type: "negative", 
       message:  e?.message || $t('Error!'),
-      color: 'red',
-      icon: 'error_outline'
      })
     return null
   }
@@ -64,8 +62,15 @@ export const deleteLocation = (params, resolve) => {
     },
     persistent: true
   }).onOk(async () => {
-    const response = await api.delete(`locations/${params.id}`)
-    resolve(response.data)
+    try {
+      const response = await api.delete(`locations/${params.id}`)
+      resolve(response.data)
+    } catch (e){
+      Notify.create({
+      type: "negative", 
+      message:  e?.message || $t('Error!'),
+     })
+    }
   }).onCancel(() => {
   }).onDismiss(() => {
   })

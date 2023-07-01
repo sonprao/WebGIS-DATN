@@ -27,10 +27,10 @@ module.exports = {
     const { name, description, url, type, locationId } = req.body;
     const upsertMapLayer = await prisma.mapLayer.create({
       data: {
-        name: name || '',
-        description: description || '',
-        url: url || '',
-        type: type || LayerType.VECTOR_LAYER, 
+        name: name || "",
+        description: description || "",
+        url: url || "",
+        type: type || LayerType.VECTOR_LAYER,
         locationId: locationId ? parseInt(locationId) : null,
       },
     });
@@ -120,20 +120,66 @@ module.exports = {
    *         description: Invalid request
    */
   getbyLocation: async (req, res) => {
-    const { locationId } = req.params;
-    const _locationId = parseInt(locationId);
+    const { locationId: _locationId } = req.params;
+    const locationId = parseInt(_locationId);
     const { page = 1, per_page = 10, search = "" } = req.query;
     const [count, data] = await prisma.$transaction([
       prisma.mapLayer.count({
         where: {
-          locationId: _locationId,
+          AND: [
+            {
+              locationId,
+            },
+            {
+              OR: [
+                {
+                  name: {
+                    contains: search,
+                  },
+                },
+                {
+                  name: {
+                    in: search || undefined,
+                  },
+                },
+                {
+                  name: {
+                    equals: search || undefined,
+                  },
+                },
+              ],
+            },
+          ],
         },
       }),
       prisma.mapLayer.findMany({
         skip: (parseInt(page) - 1) * parseInt(per_page),
         take: parseInt(per_page),
         where: {
-          locationId: _locationId,
+          AND: [
+            {
+              locationId,
+            },
+            {
+              OR: [
+                {
+                  name: {
+                    contains: search,
+                  },
+                },
+                {
+                  name: {
+                    in: search || undefined,
+                  },
+                },
+                {
+                  name: {
+                    equals: search || undefined,
+                  },
+                },
+              ],
+            },
+          ],
         },
       }),
     ]);
