@@ -130,27 +130,30 @@ export default defineComponent({
       source: wmsSource,
     });
     
-    const groupOSM = () => new Group({
+    const groupOSM = (list) => new Group({
       layers: [
         new TileLayer({
           source: new OSM(),
         }),
+        ...list,
       ],
     });
 
-    const groupImagery = () => new Group({
+    const groupImagery = (list) => new Group({
       layers: [
         worldImagery,
+        ...list,
       ],
     });
 
     const setTile = (type) => {
+      const list = unref(map)?.getLayers()?.getArray?.()?.slice?.(1) || []
       switch (type) {
         case "groupOSM":
-          unref(map).setLayerGroup(groupOSM())
+          unref(map).setLayerGroup(groupOSM(list))
           break;
         case "groupImagery":
-          unref(map).setLayerGroup(groupImagery())
+          unref(map).setLayerGroup(groupImagery(list))
         default:
           break;
       }

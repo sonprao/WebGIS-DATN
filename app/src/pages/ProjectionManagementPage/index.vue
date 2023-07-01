@@ -85,11 +85,10 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import PopupProjection from "src/components/managementPage/popupProjection.vue";
+import PopupProjection from "src/pages/ProjectionManagementPage/popupProjection.vue";
 
 import {
   getAllProjection,
-  getProjection,
   deleteProjection,
 } from "src/api/projection";
 

@@ -55,7 +55,7 @@
 
 <script>
 import _debounce from "lodash/debounce";
-import { getCurrentInstance, defineComponent, ref, unref, computed, onMounted } from "vue";
+import { getCurrentInstance, defineComponent, ref, unref, computed, onBeforeMount } from "vue";
 
 import EssentialLink from "components/EssentialLink.vue";
 import { useI18n } from "vue-i18n";
@@ -74,6 +74,7 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $t = i18n.global.t;
     const router = useRouter();
+    const route = useRoute();
     const userStore = useUserStore();
     const { role, profile } = userStore.getUser;
     const leftDrawerOpen = ref(true);
@@ -82,7 +83,7 @@ export default defineComponent({
       {
         title: $t("Map"),
         icon: "fa-sharp fa-solid fa-map-location-dot",
-        to: "/map",
+        to: "/",
       },
     ]);
     const adminInteraction = computed(() => [
@@ -127,8 +128,10 @@ export default defineComponent({
       },
     ]);
     
-    onMounted(() => {
-      router.push({name: 'HomePage'})
+    onBeforeMount(() => {
+      if (route.path === '/') {
+        router.replace({name: 'HomePage'})
+      }
     })
     
     return {
