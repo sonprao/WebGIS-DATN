@@ -72,7 +72,7 @@ export default defineComponent({
     const showDetail = ref(false);
     const floatDetailProps = ref({
       title: null,
-      image: 'https://cdn.quasar.dev/img/chicken-salad.jpg',
+      image: "images/No-image-available.png",
       content: {},
       type: LAYER_TYPE[0],
       id: null,

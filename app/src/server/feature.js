@@ -184,4 +184,34 @@ module.exports = {
       count,
     });
   },
+
+  /**
+   * @swagger
+   * /api/features/{name}:
+   *   delete:
+   *     tags:
+   *       - Features
+   *     summary: Get a feature by Layer
+   *     parameters:
+   *       - name: featureId
+   *         in: path
+   *         description: Feature id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Successful operation
+   *       404:
+   *         description: Feature not found
+   */
+  delete: async (req, res) => {
+    const id = req.params.id;
+    const response = await prisma.feature.delete({
+      where: {
+        id,
+      },
+    });
+    res.json(response);
+  },
 };

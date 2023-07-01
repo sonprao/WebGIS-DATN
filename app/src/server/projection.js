@@ -36,7 +36,7 @@ module.exports = {
    * /api/projections/{name}:
    *   get:
    *     tags:
-   *       - projections
+   *       - Projections
    *     summary: Get a projection by name
    *     parameters:
    *       - name: name
@@ -65,7 +65,7 @@ module.exports = {
    * /api/projections/{name}:
    *   put:
    *     tags:
-   *       - projection
+   *       - Projections
    *     summary: Update a projection by name
    *     parameters:
    *       - name: name
