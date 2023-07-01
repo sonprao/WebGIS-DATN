@@ -1,6 +1,32 @@
 # WebGIS-DATN
 required node version > v.16.7
 
+install GeoServer 2.22.0, the account default will be (username: admin, password: geoserver)
+
+# how to upload GIS data into geoserver (This step only for user that not using postgresql for storage):
+required GIS GUI, here we use QGIS 3.30.0
+
+Most important plugins (DB Manager, GeoCat Bridge)
+
+Step:
+
+› Open data with QGIS (in type geopackage, shp, xml, ...).
+
+› The layer list of data will appear in the bottom left
+![Alt text](image-2.png)
+
+› choose publish on the menu bar -> Web -> GeoCat Bridge
+![Alt text](image.png)
+
+› Setup for the available GeoServer
+![Alt text](image-1.png)
+
+› Select the layers you want to setup on GeoServer than Publish
+![Alt text](image-3.png)
+
+› The layers are now ready on GeoServer
+![Alt text](image-4.png)
+
 # how to run nuxt-app:
 Nuxt project is created with v3 template. 
 
