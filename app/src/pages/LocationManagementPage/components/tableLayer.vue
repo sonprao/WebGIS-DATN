@@ -1,35 +1,19 @@
 <template>
   <div class="q-pa-md">
-    <q-table
-      class="tableLayerClass"
-      v-bind="{ ...tableProps, cardClass: 'bg-primary text-white' }"
-      virtual-scroll
-      style="max-height: 800px"
-      :virtual-scroll-sticky-size-start="48"
-      :columns="layerColumns"
-      :rows="propsLocation.mapLayers"
-      v-model:pagination="layerPagination"
-    >
+    <q-table class="tableLayerClass" v-bind="{ ...tableProps, cardClass: 'bg-primary text-white' }" virtual-scroll
+      style="max-height: 800px" :virtual-scroll-sticky-size-start="48" :columns="layerColumns"
+      :rows="propsLocation.mapLayers" v-model:pagination="layerPagination">
       <!-- layer header -->
       <template v-slot:top>
         <div class="text-h6 text-white">{{ $t("Layers") }}</div>
-        <q-btn
-          class="bg-white text-primary"
-          rounded
-          icon="add"
-          style="margin-left: 10px"
-        >
+        <q-btn class="bg-white text-primary" rounded icon="add" style="margin-left: 10px">
           <q-tooltip anchor="center right" self="center start">{{
             $t("Add layer")
           }}</q-tooltip>
-          <popupLayer
-            v-model:row="newLayer"
-            :layer-rows="propsLocation?.mapLayers"
-            :location="propsLocation"
-          />
+          <popupLayer v-model:row="newLayer" :layer-rows="propsLocation?.mapLayers" :location="propsLocation" />
         </q-btn>
         <q-space />
-        <q-input debounce="300" class="bg-white" color="black" v-model="layerFilter" @update:model-value="getLayerRows">
+        <q-input :label="$t('Search for layer')" debounce="300" class="bg-white" color="black" v-model="layerFilter" @update:model-value="getLayerRows">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -38,32 +22,18 @@
 
       <template v-slot:body="propsLayer">
         <q-tr :props="propsLayer">
-          <q-td
-            v-for="_key of ['id', 'name', 'description']"
-            :key="_key"
-            :props="propsLayer"
-          >
+          <q-td v-for="_key of ['id', 'name', 'description']" :key="_key" :props="propsLayer">
             {{ propsLayer.row[_key] }}
           </q-td>
           <q-td key="type" :props="propsLayer">
-            <q-badge
-              v-if="propsLayer.row.type === LAYER_TYPE[0]"
-              class="bg-white text-green"
-            >
-              {{ propsLayer.row.type }}
-            </q-badge>
-            <q-badge v-else class="bg-white text-orange">
+            <q-badge :class="`bg-white text-${propsLayer.row.type === LAYER_TYPE[0] ? 'green' : ' orange'}`">
               {{ propsLayer.row.type }}
             </q-badge>
           </q-td>
           <q-td key="url" :props="propsLayer" auto-width>
             <q-btn push color="white" text-color="primary" icon="link">
-              <q-popup-proxy
-                style="width: 500px; word-wrap: break-word"
-                :ref="`popupRef${propsLayer.row.id}`"
-                @show="showPopup(`popupRef${propsLayer.row.id}`)"
-                @hide="showPopup(null)"
-              >
+              <q-popup-proxy style="width: 500px; word-wrap: break-word" :ref="`popupRef${propsLayer.row.id}`"
+                @show="showPopup(`popupRef${propsLayer.row.id}`)" @hide="showPopup(null)">
                 <q-banner>
                   {{
                     geoServerUrl({
@@ -76,165 +46,39 @@
             </q-btn>
           </q-td>
           <q-td key="feature" :props="propsLayer">
-            <q-btn
-              size="sm"
-              class="bg-white text-primary"
-              round
-              dense
-              @click="
-                () => {
-                  if (!propsLayer.expand && !propsLayer.row.features?.length) {
-                    getFeatureRows({ layerId: propsLayer.row.id }).then(
-                      (res) => {
-                        propsLayer.row.features = res;
-                        propsLayer.expand = !propsLayer.expand;
-                      }
-                    );
-                  } else {
-                    propsLayer.expand = !propsLayer.expand;
-                  }
-                }
-              "
-              :icon="propsLayer.expand ? 'expand_less' : 'expand_more'"
-            />
+            <q-btn size="sm" class="bg-white text-primary" round dense @click="propsLayer.expand = !propsLayer.expand"
+              :icon="propsLayer.expand ? 'expand_less' : 'expand_more'" />
           </q-td>
           <q-td key="action" :props="propsLayer">
-            <q-btn
-              v-bind="{
-                ...actionButtonProps,
-                color: 'white',
-                textColor: 'primary',
-                icon: 'edit',
-              }"
-              style="margin-right: 10px"
-            >
+            <q-btn v-bind="{
+              ...actionButtonProps,
+              color: 'white',
+              textColor: 'primary',
+              icon: 'edit',
+            }" style="margin-right: 10px">
               <!-- popup layer edit -->
-              <popupLayer
-                v-model:row="propsLayer.row"
-                :layer-rows="propsLocation?.mapLayers"
-              />
+              <popupLayer v-model:row="propsLayer.row" :layer-rows="propsLocation?.mapLayers" />
             </q-btn>
-            <q-btn
-              v-bind="{
-                ...actionButtonProps,
-                color: 'white',
-                textColor: 'red',
-                icon: 'delete',
-              }"
-              @click="onDeleteLayer(propsLayer.row)"
-            >
+            <q-btn v-bind="{
+              ...actionButtonProps,
+              color: 'white',
+              textColor: 'red',
+              icon: 'delete',
+            }" @click="onDeleteLayer(propsLayer.row)">
             </q-btn>
           </q-td>
         </q-tr>
         <q-tr v-show="propsLayer.expand" :props="propsLayer">
           <q-td colspan="100%" v-if="propsLayer.expand">
             <!-- feature table -->
-            <q-table
-              class="tableFeatureClass"
-              v-bind="tableProps"
-              virtual-scroll
-              hide-pagination
-              style="max-height: 500px"
-              :virtual-scroll-sticky-size-start="48"
-              :columns="featureColumns"
-              :rows="propsLayer.row.features"
-              v-model:pagination="featurePagination"
-            >
-              <template v-slot:top>
-                <div class="text-h6">{{ $t("Features") }}</div>
-                <q-btn
-                  class="bg-primary text-white"
-                  rounded
-                  icon="add"
-                  style="margin-left: 10px"
-                >
-                  <q-tooltip anchor="center right" self="center start">{{
-                    $t("Add feature")
-                  }}</q-tooltip>
-                  <popupFeature
-                    v-model:row="newFeature"
-                    :feature-rows="propsLayer.row.features"
-                    :layer="propsLayer.row"
-                  />
-                </q-btn>
-                <q-space />
-                <q-input debounce="300" class="bg-white" color="black">
-                  <template v-slot:append>
-                    <q-icon name="search" />
-                  </template>
-                </q-input>
-              </template>
-              <template v-slot:body="propsFeature">
-                <q-tr :props="propsFeature">
-                  <q-td
-                    v-for="_key of ['id', 'name']"
-                    :key="_key"
-                    :props="propsFeature"
-                  >
-                    {{ propsFeature.row[_key] }}
-                  </q-td>
-                  <q-td key="properties" :props="propsFeature">
-                    {{ propsFeature.row.properties }}
-                  </q-td>
-                  <q-td key="action" :props="propsFeature">
-                    <q-btn
-                      v-bind="actionButtonProps"
-                      icon="edit"
-                      style="margin-right: 10px"
-                    >
-                      <!-- popup feature edit -->
-                      <popupFeature
-                        v-model:row="propsFeature.row"
-                        :feature-rows="propsLayer.row.features"
-                      />
-                    </q-btn>
-                    <q-btn
-                      v-bind="{ ...actionButtonProps, color: 'red' }"
-                      icon="delete"
-                      @click="onDeleteLocation(props.row)"
-                    >
-                    </q-btn>
-                  </q-td>
-                </q-tr>
-              </template>
-            </q-table>
-            <!-- feature pagination -->
-            <q-pagination
-              input
-              style="place-content: center"
-              v-model="featurePagination.page"
-              @update:model-value="
-                (val) => {
-                  getFeatureRows({
-                    val,
-                    layerId: propsLayer.row.id,
-                  }).then((res) => (propsLayer.row.features = res));
-                }
-              "
-              :max="featurePagination.rowsNumber"
-              boundary-numbers
-              direction-links
-              flat
-              color="grey"
-              active-color="primary"
-            />
+            <TableFeature :props-layer="propsLayer.row" />
           </q-td>
         </q-tr>
       </template>
     </q-table>
     <!-- layer pagination -->
-    <q-pagination
-      input
-      style="place-content: center"
-      v-model="layerPagination.page"
-      @update:model-value="getLayerRows"
-      :max="layerPagination.rowsNumber"
-      boundary-numbers
-      direction-links
-      flat
-      color="grey"
-      active-color="primary"
-    />
+    <q-pagination input style="place-content: center" v-model="layerPagination.page" @update:model-value="getLayerRows"
+      :max="layerPagination.rowsNumber" boundary-numbers direction-links flat color="grey" active-color="primary" />
   </div>
 </template>
 
@@ -250,22 +94,17 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { LAYER_TYPE } from "src/constants/enum";
-import {
-  deleteLocation,
-  getAllLocation,
-  updateLocation,
-  addLocaction,
-} from "src/api/location";
 import { getLayerByLocation } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
 import { getAllProjection } from "src/api/projection";
 import PopupLayer from "src/pages/LocationManagementPage/components/popupLayer.vue";
-import PopupFeature from "src/pages/LocationManagementPage/components/popupFeature.vue";
+import TableFeature from "src/pages/LocationManagementPage/components/tableFeature.vue";
+
 export default defineComponent({
   name: "LocationManagementPage",
   components: {
     PopupLayer,
-    PopupFeature,
+    TableFeature,
   },
   props: {
     propsLocation: Object,
@@ -288,7 +127,6 @@ export default defineComponent({
       "row-key": "name",
     };
     const layerFilter = ref("");
-    const featureFilter = ref("");
     const layerColumns = computed(() => [
       {
         name: "id",
@@ -337,30 +175,7 @@ export default defineComponent({
         label: $t("Action"),
       },
     ]);
-    const featureColumns = computed(() => [
-      {
-        required: true,
-        name: "id",
-        label: "Id",
-        field: "id",
-        align: "center",
-        style: "min-width: 90px; width: 90px;",
-      },
-      {
-        name: "name",
-        align: "center",
-        label: $t("Feature name"),
-        field: "name",
-      },
-      { name: "properties", align: "center", label: $t("Properties") },
-      { name: "action", align: "center", label: $t("Action") },
-    ]);
     const layerPagination = ref({
-      page: 1,
-      rowsPerPage: 10,
-      rowsNumber: 0,
-    });
-    const featurePagination = ref({
       page: 1,
       rowsPerPage: 10,
       rowsNumber: 0,
@@ -378,29 +193,13 @@ export default defineComponent({
         );
         layerPagination.value.page = response.page;
         layerPagination.value.rowsPerPage = response.per_page;
-        Object.assign (props.propsLocation, {...props.propsLocation, mapLayers: response.data });
+        Object.assign(props.propsLocation, { ...props.propsLocation, mapLayers: response.data });
       }
-    };
-    const getFeatureRows = async ({ val = 1, layerId }) => {
-      const response = await getFeaturesByLayer({
-        layerId: layerId,
-        per_page: unref(featurePagination).rowsPerPage,
-        page: unref(featurePagination).page,
-      });
-      if (response) {
-        featurePagination.value.rowsNumber = parseInt(
-          Math.ceil(response.count / response.per_page)
-        );
-        featurePagination.value.page = response.page;
-        featurePagination.value.rowsPerPage = response.per_page;
-        return response.data;
-      } else return [];
     };
     const geoServerUrl = ({ url, workspace }) => {
       return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
     };
-    const onDeleteLayer = async (row) => {};
-    const onDeleteFeature = async (row) => {};
+    const onDeleteLayer = async (row) => { };
     const scrollTable = ref(null);
     const currentPopupRef = ref(null);
     const showPopup = (ref) => {
@@ -425,10 +224,6 @@ export default defineComponent({
       url: null,
       locationId: null,
     });
-    const newFeature = ref({
-      name: null,
-      properties: null,
-    });
 
     onMounted(async () => {
       await getLayerRows()
@@ -438,18 +233,12 @@ export default defineComponent({
       tableProps,
       actionButtonProps,
       layerFilter,
-      featureFilter,
       layerColumns,
-      featureColumns,
       getLayerRows,
-      getFeatureRows,
       layerPagination,
-      featurePagination,
       geoServerUrl,
       newLayer,
-      newFeature,
       onDeleteLayer,
-      onDeleteFeature,
       currentPopupRef,
       showPopup,
       LAYER_TYPE: LAYER_TYPE,
@@ -512,6 +301,7 @@ export default defineComponent({
     background: $primary;
   }
 }
+
 .deleteWarningClass {
   .q-card__section.q-card__section--vert.q-dialog__title {
     color: orange !important;
