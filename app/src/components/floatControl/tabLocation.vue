@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-input v-if="defaultOptions.length > 0" class="searchClass" :label="$t('Search layer')" v-model="searchLayer" @update:model-value="onSearch"/>
+    <q-input v-if="defaultOptions.length > 0" debounce="300" class="searchClass" :label="$t('Search layer')" v-model="searchLayer" @update:model-value="onSearch"/>
     <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
       @update:model-value="selectAll" />
     <q-list overlay>
