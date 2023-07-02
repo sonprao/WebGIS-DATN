@@ -113,7 +113,9 @@ import {
   actionAddLayerWMS,
   transformProjection,
 } from "src/utils/openLayers.js";
+import { LAYER_TYPE } from "src/constants/enum";
 
+import { useMapStore } from "stores/map";
 import { useQuasar } from "quasar";
 
 export default defineComponent({
@@ -125,6 +127,8 @@ export default defineComponent({
     const $t = i18n.global.t;
     const uploaderRef = ref(null);
     const map = inject("map", {});
+    const mapStore = useMapStore();
+    const location = computed(() => mapStore.getLocation);
 
     const uploadSource = ref(null);
     const uploadVector = ref(null);
@@ -145,9 +149,9 @@ export default defineComponent({
     };
 
     const addEvent = async (files) => {
+      const mapProjection = unref(map).getView().getProjection().getCode();
+      const mapExtent = JSON.parse(unref(location)?.view?.extent || null) || unref(map).getView().calculateExtent();
       files.forEach(async (file) => {
-        const mapProjection = unref(map).getView().getProjection().getCode();
-        const mapExtent = unref(map).getView().calculateExtent();
 
         const obj = await parseJsonFile(file);
         if (obj) {
@@ -156,6 +160,7 @@ export default defineComponent({
             featureProjection: unref(map).getView().getProjection().getCode(),
           });
           // check if feature in bound extent of the map
+          console.log(geojsonFormat)
           const geomExtent = geojsonFormat?.getGeometry?.()?.getExtent?.();
           if (geomExtent) {
             if (!containsExtent(mapExtent, geomExtent)) {
@@ -186,7 +191,7 @@ export default defineComponent({
           }
           if (!unref(uploadVector)) {
             if (!unref(uploadSource)) {
-              uploadSource.value = new VectorSource({ wrapX: false });
+              uploadSource.value = new VectorSource({ wrapX: false, zIndex: 10 });
             }
             uploadVector.value = new Vector({
               source: unref(uploadSource),
@@ -295,6 +300,7 @@ export default defineComponent({
           captureScreenshot().then((response) => {
             $bus.emit("on-show-detail", {
               title: unref(uploadList)[index].file.name,
+              type: LAYER_TYPE[1],
               content: geoJsonData,
               image: response,
               coordinate: coordinateText,

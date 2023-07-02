@@ -3,10 +3,10 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
-const api = axios.create({ baseURL: 'http://localhost:3000/api/' })
+let api = null
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
-
+  api = axios.create({ baseURL: 'http://localhost:3000/api/' })
   app.config.globalProperties.$axios = axios
   // ^ ^ ^ this will allow you to use this.$axios (for Vue Options API form)
   //       so you won't necessarily have to import axios in each vue file

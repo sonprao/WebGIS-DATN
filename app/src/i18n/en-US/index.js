@@ -27,6 +27,7 @@ export default {
   Login: 'Login',
   Logout: 'Logout',
   //map
+  'Back to world map': 'Back to world map',
   'Zoom in': 'Zoom in',
   'Zoom out': 'Zoom out',
   Map: 'Map',

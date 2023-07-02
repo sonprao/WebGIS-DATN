@@ -1,4 +1,4 @@
-import { Map, View } from 'ol';
+import { Map } from 'ol';
 
 import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
 import { ScaleLine } from "ol/control";
@@ -19,12 +19,12 @@ import Point from "ol/geom/Point";
 
 // vue
 import { ref, unref } from "vue";
-import { i18n } from "boot/i18n.js";
 import {
   CityLandDataFeature,
   BaseDataFeature, SOIL_TYPE_ID, ForestLandDataFeature, RoadDataFeature,
 } from "src/feature/FeatureData.js";
-const $t = i18n.global.t;
+import { getExternalFeaturesByLayer } from "src/api/feature";
+
 
 const getText = function (feature, resolution, dom) {
   const type = "wrap";
@@ -274,15 +274,24 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     style: polygonStyleFunction,
     zindex: 1,
   });
-
   let vectorSource = vectorLayer.getSource();
-  vectorSource.once('change', () => {
-    vectorSource.getFeatures().forEach((feature) => {
-      feature.setStyle(vectorLayer.getStyle()());
-      FeatureUtils.setStyleBySoilType(feature);
-    })
-  });
   unref(map).addLayer(vectorLayer);
+  getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
+    response.forEach((res) => {
+      const jsonData = JSON.parse(res.properties)
+      const feature = new GeoJSON().readFeature(jsonData);
+      feature.setId(res.name)
+      vectorSource.addFeature(feature)
+    })
+    // console.log(response)
+    // change
+    vectorSource.once('change', () => {
+      vectorSource.getFeatures().forEach((feature) => {
+        feature.setStyle(vectorLayer.getStyle()());
+        FeatureUtils.setStyleBySoilType(feature);
+      })
+    });
+  })
   return vectorLayer;
 };
 
@@ -314,7 +323,7 @@ export const writeGeoJSON = (option) => {
   const { feature, map } = option;
   const geoJsonFormat = new GeoJSON();
   const geometry = feature.getGeometry();
-  const sourceProjection = unref(map).getView().getProjection();
+  const sourceProjection = "EPSG:4326";  // unref(map).getView().getProjection();
   const targetProjection = "EPSG:4326";
   const transformedGeometry = geometry
     .clone()

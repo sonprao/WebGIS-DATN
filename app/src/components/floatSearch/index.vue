@@ -1,25 +1,13 @@
 <template>
-  <q-page-sticky class="stickyClass" position="top-left" :offset="[350, 10]">
-    <q-select
-      class="searchClass"
-      ref="locationSearchRef"
-      v-model="searchLocation"
-      rounded
-      outlined
-      bg-color="white"
-      color="teal"
-      use-input
-      hide-dropdown-icon
-      input-debounce="400"
-      label="Select location"
-      option-label="name"
-      option-value="name"
-      :options="options"
-      @filter="filterFn"
-      @update:model-value="setModel"
-    >
+  <div style="display: flex; flex-direction: row; gap: 10px; max-height: 56px;">
+    <q-btn class="bg-secondary text-white" rounded icon="public" @click="backToWorldMap">
+      <q-tooltip>{{$t("Back to world map")}}</q-tooltip>
+    </q-btn>
+    <q-select class="searchClass shadow-10" ref="locationSearchRef" v-model="searchLocation" rounded outlined
+      bg-color="white" color="teal" use-input hide-dropdown-icon input-debounce="400" label="Select location"
+      option-label="name" option-value="name" :options="options" @filter="filterFn" @update:model-value="setModel">
       <template v-slot:append>
-        <q-icon name="search" color="teal"/>
+        <q-icon name="search" color="teal" />
       </template>
       <template v-slot:no-option>
         <q-item>
@@ -29,7 +17,7 @@
         </q-item>
       </template>
     </q-select>
-  </q-page-sticky>
+  </div>
 </template>
 
 <script>
@@ -45,6 +33,7 @@ import {
   provide,
   inject,
 } from "vue";
+import { useQuasar } from "quasar";
 // import { $bus } from "boot/bus.js";
 import { i18n } from "boot/i18n.js";
 import _difference from "lodash/difference";
@@ -52,16 +41,21 @@ import _difference from "lodash/difference";
 import { Map, View } from "ol";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
-import {  transformProjection } from "src/utils/openLayers.js";
+import { transformProjection } from "src/utils/openLayers.js";
+import {
+  Vector as VectorLayer,
+  VectorImage as VectorImageLayer,
+} from "ol/layer";
 
 import { useMapStore } from "stores/map";
 import { getAllLocation, getLocation } from "src/api/location";
 export default defineComponent({
   name: "FloatSearch",
-   setup() {
-     const $t = i18n.global.t;
-     const map = inject("map", {});
-     const mapStore = useMapStore();
+  setup() {
+    const $q = useQuasar();
+    const $t = i18n.global.t;
+    const map = inject("map", {});
+    const mapStore = useMapStore();
     const locationSearchRef = ref(null);
     const searchLocation = ref("");
     const options = ref([]);
@@ -83,44 +77,69 @@ export default defineComponent({
       }
     };
     const location = ref(null);
-    const onClearSearch = () => {
-    };
-     const setModel = async (val) => {
+    const onClearSearch = () => { };
+    const setModel = async (val) => {
       if (val) {
         location.value = await getLocation({ id: val.id });
         mapStore.setLocation({
           location: unref(location),
           resolve: setView,
-        })
+        });
       }
       unref(locationSearchRef).blur();
-     };
-     const setView = () => {
+    };
+    const setView = () => {
       if (unref(location).view) {
-          const { longitude, latitude, extent, zoom, maxZoom } =
-            unref(location).view;
-          if (unref(location).view.projection) {
-            const { name: projectionName, definition: projectionDef } =
-              unref(location).view.projection;
-            proj4.defs(projectionName, projectionDef);
-            register(proj4);
-            const center = transformProjection({
-              to: projectionName,
-              definition: projectionDef,
-              coordinates: [longitude, latitude],
+        const { longitude, latitude, extent, zoom, maxZoom } =
+          unref(location).view;
+        if (unref(location).view.projection) {
+          const { name: projectionName, definition: projectionDef } =
+            unref(location).view.projection;
+          const oldProjection = unref(map).getView().getProjection();
+          proj4.defs(projectionName, projectionDef);
+          register(proj4);
+          const center = transformProjection({
+            to: projectionName,
+            definition: projectionDef,
+            coordinates: [longitude, latitude],
+          });
+          const newView = new View({
+            projection: projectionName,
+            center,
+            extent: JSON.parse(extent),
+            zoom,
+            maxZoom,
+          });
+          unref(map)
+            .getLayers()
+            .getArray()
+            .forEach((layer) => {
+              if (layer instanceof VectorLayer) {
+                layer
+                  .getSource()
+                  .getFeatures()
+                  .forEach(function (feature) {
+                    const geometry = feature.getGeometry();
+                    geometry.transform(oldProjection, newView.getProjection());
+                  });
+              } else if (layer instanceof VectorImageLayer) {
+                unref(map).removeLayer(layer);
+              }
             });
-            const newView = new View({
-              projection: projectionName,
-              center,
-              extent: JSON.parse(extent),
-              zoom,
-              maxZoom,
-            });
-            unref(map).setView(newView);
-          }
+          unref(map).setView(newView);
         }
+      }
+    };
+
+    const backToWorldMap = () => {
+      const newView = new View({
+        zoom: 0,
+        center: [0, 0],
+        maxZoom: 12,
+      });
+      unref(map).setView(newView)
     }
-     onMounted(() => {
+    onMounted(() => {
       const query = {
         page: 1,
         per_page: 10,
@@ -131,8 +150,8 @@ export default defineComponent({
     });
     onUnmounted(() => {
       mapStore.setLocation({
-          location: {},
-        })
+        location: {},
+      });
     });
     return {
       map,
@@ -141,6 +160,7 @@ export default defineComponent({
       options,
       filterFn,
       setModel,
+      backToWorldMap,
     };
   },
 });
@@ -176,6 +196,7 @@ body {
     color: teal;
   }
 }
+
 // .q-field__native .q-placeholder {
 //   color: black;
 

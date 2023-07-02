@@ -27,6 +27,11 @@ enum LayerType {
   VECTOR_LAYER
 }
 
+enum FeatureType {
+  EXTERNAL
+  INTERNAL
+}
+
 model User {
   id       String   @id @default(uuid())
   email    String   @unique
@@ -152,11 +157,13 @@ model MapLayer {
 }
 
 model Feature {
-  id         String    @id @default(uuid())
-  name       String    @unique
-  properties String?   @db.LongText
-  layer      MapLayer? @relation(fields: [layerId], references: [id], onDelete: Cascade)
-  layerId    Int?
+  id         String      @id @default(uuid())
+  name       String      @unique
+  properties String?     @db.LongText
+  type       FeatureType @default(INTERNAL)
+
+  layer   MapLayer? @relation(fields: [layerId], references: [id], onDelete: Cascade)
+  layerId Int?
 
   createdAt   DateTime? @default(now())
   updatedAt   DateTime? @default(now()) @updatedAt

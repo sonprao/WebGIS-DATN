@@ -1,5 +1,5 @@
 <template>
-  <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
+  <div>
     <q-card class="my-card" flat bordered style="">
       <q-tabs v-model="tabModel" class="bg-teal text-white" style="min-height: 56px;">
         <q-tab v-for="(tab, index) of tabList" 
@@ -29,7 +29,7 @@
         </div>
       </q-slide-transition>
     </q-card>
-  </q-page-sticky>
+  </div>
 </template>
 
 <script>

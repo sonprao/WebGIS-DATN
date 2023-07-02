@@ -17,6 +17,17 @@ export const getFeaturesByLayer = async (query) => {
   return response.data
 }
 
+export const getExternalFeaturesByLayer = async (query) => {
+  const queryURL = new URLSearchParams()
+  Object.entries(query).forEach((i) => {
+    queryURL.append(i[0], i[1])  
+  })
+  const response = await api.get(`mapLayers/${query.layerId}/features/external`, {
+    params: queryURL
+  })
+  return response.data
+}
+
 export const getFeature = async (params) => {
   const response = await api.get(`features/${params.name}`, params)
   return response.data
@@ -43,6 +54,24 @@ export const updateFeature = async (params) => {
 export const createFeature = async (params) => {
   try {
     const response = await api.post('features', params)
+    Notify.create({
+      message:  $t('Success'),
+      color: 'primary',
+      icon: 'check_circle'
+    })
+    return response.data
+  } catch (e) {
+    Notify.create({
+      message:  e?.message || $t('Error!'),
+      type: "negative",
+    })
+    return null
+  }
+}
+
+export const deleteFeature = async (params) => {
+  try {
+    const response = await api.delete(`features/${params.id}`)
     Notify.create({
       message:  $t('Success'),
       color: 'primary',

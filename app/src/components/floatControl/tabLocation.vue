@@ -4,9 +4,11 @@
     <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
       @update:model-value="selectAll" />
     <q-list overlay>
-      <q-scroll-area class="layerClass"
-        :thumb-style="thumbStyle" :bar-style="barStyle">
-        <q-item v-for="(item, index) of dataLayers" :key="item.id + index">
+      <!-- <q-scroll-area class="layerClass"
+        :thumb-style="thumbStyle" :bar-style="barStyle"> -->
+        <q-virtual-scroll :items="dataLayers" :item-size="layerPagination.count" separator v-slot="{ item, index }" class="layerClass"
+          @virtual-scroll="onScroll">
+        <q-item :key="item.id + index">
           <q-item-section avatar>
             <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
           </q-item-section>
@@ -26,8 +28,8 @@
           </q-item-section>
           <q-separator />
         </q-item>
-      </q-scroll-area>
-      <!-- </q-virtual-scroll> -->
+      <!-- </q-scroll-area> -->
+      </q-virtual-scroll>
     </q-list>
   </div>
 </template>
@@ -54,6 +56,7 @@ import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
 
 import _difference from "lodash/difference";
+import _debounce from "lodash/debounce";
 import _isEmpty from "lodash/isEmpty";
 import { MAP_LAYERS } from "src/constants/layer.js";
 import {
@@ -61,6 +64,7 @@ import {
   actionAddLayerWMS,
   transformProjection,
 } from "src/utils/openLayers.js";
+import { getLayerByLocation } from "src/api/mapLayer";
 export default defineComponent({
   name: "TabLocation",
   components: {},
@@ -70,11 +74,50 @@ export default defineComponent({
     const mapStore = useMapStore();
     const map = inject("map", {});
     const searchLayer = ref('');
-    const onSearch = (val) => {
-      const _val = val.toLowerCase()
-      dataLayers.value = unref(defaultOptions).filter(
-        (opt) => opt.name.toLowerCase().includes(_val))
+    const layerPagination = ref({
+      page: 1,
+      rowsPerPage: 20,
+      rowsNumber: 21,
+      count: 21,
+    })
+    const onSearch = async () => {
+      const response = await getLayerByLocation({
+        locationId: unref(location).id,
+        per_page: unref(layerPagination).rowsPerPage,
+        page: val,
+        search: unref(layerFilter),
+      })
+      if (response) {
+        dataLayers.value = response.data;
+        layerPagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
+        layerPagination.value.page = response.page;
+        layerPagination.value.rowsPerPage = response.per_page;
+      }
     }
+    const onScroll = _debounce(
+      async (detail) => {
+      const layersLength = unref(dataLayers).length
+        if (
+          detail.direction === 'increase' &&
+          detail.index >= layersLength - 5 &&
+          layersLength < layerPagination.value.rowsNumber &&
+          (detail.to + 1) % layersLength === 0
+        ) {
+          layerPagination.value.page = unref(layerPagination).page + 1
+          const response = await getLayerByLocation({
+            locationId: unref(location).id,
+            per_page: unref(layerPagination).rowsPerPage,
+            page: unref(layerPagination).page,
+            search: unref(searchLayer),
+          })
+          if (response) {
+            dataLayers.value.push(...response.data);
+            layerPagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
+            layerPagination.value.rowsPerPage = response.per_page;
+          }
+        }
+      }
+    ,300)
     const defaultOptions = ref([]);
     const location = computed(() => mapStore.getLocation);
     const dataLayers = ref([]);
@@ -158,6 +201,7 @@ export default defineComponent({
       map,
       location,
       searchLayer,
+      layerPagination,
       onSearch,
       setModel,
       defaultOptions,
@@ -166,6 +210,7 @@ export default defineComponent({
       layerCheckAll,
       selectAll,
       actionFocusLayer,
+      onScroll,
       thumbStyle: {
         right: '4px',
         borderRadius: '5px',
