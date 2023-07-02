@@ -68,7 +68,10 @@ module.exports = {
         id: id,
       },
       include: {
-        mapLayers: true,
+        mapLayers: {
+          skip: 0 * 20,
+          take: 20,
+        },
         view: {
           include: {
             projection: true,

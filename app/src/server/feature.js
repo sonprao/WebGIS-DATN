@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, FeatureType } = require("@prisma/client");
 const prisma = new PrismaClient();
 module.exports = {
   /**
@@ -21,11 +21,18 @@ module.exports = {
    *         description: Invalid request
    */
   create: async (req, res) => {
-    const { features, layer_id } = req.body;
+    const { features, layerId } = req.body;
+    let count =
+      await prisma.$queryRaw`SELECT SUBSTRING_INDEX(f.name, '.', 1) as name , SUBSTRING_INDEX(f.name, '.', -1) as largest FROM Feature AS f
+        WHERE f.layerId = ${parseInt(layerId)}
+        ORDER BY CAST(SUBSTRING_INDEX(f.name, '.', -1) AS UNSIGNED) DESC LIMIT ${1}`;
+    count = count[0];
     const featuresData = await prisma.feature.createMany({
       data: features.map((item) => ({
+        name: `${count.name}.${++count.largest}`,
+        type: FeatureType.EXTERNAL,
         ...item,
-        layerId: layer_id,
+        layerId: layerId,
       })),
       skipDuplicates: true, // Skip 'Bobo'
     });
@@ -183,6 +190,27 @@ module.exports = {
       page: parseInt(page),
       count,
     });
+  },
+
+  getByLayerExternal: async (req, res) => {
+    const { layerId } = req.params;
+    const data = await prisma.feature.findMany({
+      where: {
+        AND: [
+          {
+            layerId: parseInt(layerId),
+          },
+          {
+            type: FeatureType.EXTERNAL,
+          },
+        ]
+      },
+      select: {
+        name: true,
+        properties: true,
+      }
+    });
+    res.json(data);
   },
 
   /**

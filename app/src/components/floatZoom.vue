@@ -1,70 +1,63 @@
 <template>
-  <q-page-sticky
-    ref="stickyRef"
-    class="sticky"
-    position="top-left"
-    :offset="[760, 10]"
-  >
-    <div style="display: flex; flex-direction: row; gap: 10px">
-      <q-btn-group
-        outline
-        color="white"
-        style="flex-direction: column; gap: 2px"
+  <div style="display: flex; flex-direction: row; gap: 10px; max-height: 56px;">
+    <q-btn-group
+      outline
+      color="white"
+      style="flex-direction: column; gap: 2px"
+    >
+      <q-btn
+        color="teal"
+        text-color="white"
+        round
+        icon="add"
+        size="sm"
+        class="circle shadow-3"
+        @click="zoom('in')"
       >
-        <q-btn
-          color="teal"
-          text-color="white"
-          round
-          icon="add"
-          size="sm"
-          class="circle shadow-3"
-          @click="zoom('in')"
-        >
-          <q-tooltip anchor="center right" self="center start">{{
-            $t("Zoom in")
-          }}</q-tooltip>
-        </q-btn>
-        <q-space />
-        <q-btn
-          color="teal"
-          text-color="white"
-          round
-          icon="remove"
-          size="sm"
-          class="circle shadow-3"
-          @click="zoom('out')"
-        >
-          <q-tooltip anchor="center right" self="center start">{{
-            $t("Zoom out")
-          }}</q-tooltip>
-        </q-btn>
-      </q-btn-group>
-      <div style="align-items: center; display: flex">
-        <q-fab
+        <q-tooltip anchor="center right" self="center start">{{
+          $t("Zoom in")
+        }}</q-tooltip>
+      </q-btn>
+      <q-space />
+      <q-btn
+        color="teal"
+        text-color="white"
+        round
+        icon="remove"
+        size="sm"
+        class="circle shadow-3"
+        @click="zoom('out')"
+      >
+        <q-tooltip anchor="center right" self="center start">{{
+          $t("Zoom out")
+        }}</q-tooltip>
+      </q-btn>
+    </q-btn-group>
+    <div style="align-items: center; display: flex">
+      <q-fab
+        square
+        color="secondary"
+        icon="layers"
+        active-icon="layers"
+        direction="down"
+        style="width: 56px; height: 56px"
+        padding="0"
+      >
+        <q-fab-action
+          v-for="(group, index) of layerGroups"
+          :key="index"
           square
-          color="secondary"
-          icon="layers"
-          active-icon="layers"
-          direction="down"
-          style="width: 56px; height: 56px"
-          padding="0"
+          color="white"
+          text-color="black"
+          :icon="group.icon"
+          @click="setTile(group.type)"
         >
-          <q-fab-action
-            v-for="(group, index) of layerGroups"
-            :key="index"
-            square
-            color="white"
-            text-color="black"
-            :icon="group.icon"
-            @click="setTile(group.type)"
-          >
-          <q-tooltip>{{ group.tooltip }}</q-tooltip>
-        </q-fab-action>
-          <!-- <q-fab-action square anchor="end" color="secondary" icon="alarm" /> -->
-        </q-fab>
-      </div>
+        <q-tooltip>{{ group.tooltip }}</q-tooltip>
+      </q-fab-action>
+        <!-- <q-fab-action square anchor="end" color="secondary" icon="alarm" /> -->
+      </q-fab>
     </div>
-  </q-page-sticky>
+  </div>
 </template>
 
 <script>
@@ -122,6 +115,7 @@ export default defineComponent({
     const worldImagery = new TileLayer({
       source: new XYZ({
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        crossOrigin: 'Anonymous',
         maxZoom: 19,
       }),
     });

@@ -42,12 +42,5 @@ export const captureScreenshot = async () => {
     );
     const imgURL = croppedCanvas.toDataURL();
     return imgURL;
-    // Create a link element for downloading
-
-    // Programmatically trigger the download
-    // const link = document.createElement("a");
-    // link.href = imgURL;
-    // link.download = "screenshot.png";
-    // link.click();
   });
 };

@@ -1,10 +1,14 @@
 <template>
   <div ref="mapRoot" class="mapView">
-    <FloatZoom data-html2canvas-ignore />
-    <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+    <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
+      <div style="display: flex; flex-direction: row; gap: 10px">
+        <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+        <FloatSearch data-html2canvas-ignore />
+        <FloatZoom data-html2canvas-ignore />
+      </div>
+    </q-page-sticky>
     <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps"
       @update:model-content="floatDetailProps.content = $event" />
-    <FloatSearch data-html2canvas-ignore />
   </div>
   <div ref="popupRef" class="ol-popup">
     <q-btn ref="popupCloser" class="ol-popup-closer" flat round icon="close" @click="actionClosePopup"></q-btn>
@@ -18,8 +22,8 @@ import { Map, View, Overlay } from "ol";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
-import { OSM, ImageWMS, XYZ } from "ol/source";
-import { Tile as TileLayer, Image, Vector as VectorLayer } from "ol/layer";
+import { OSM } from "ol/source";
+import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform } from "ol/proj";
@@ -218,32 +222,11 @@ export default defineComponent({
     );
     onMounted(() => {
       addOverlay();
-      const wmsSource = new ImageWMS({
-        url: `${process.env.GEO_SERVER_URL}/ne/wms`,
-        params: {
-          LAYERS: "ne:world",
-          FORMAT: "image/png", // Specify the desired image format
-        },
-        serverType: "geoserver",
-      });
-      const worldImagery = new TileLayer({
-        source: new XYZ({
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          maxZoom: 19
-        })
-      });
-      // Create a new Image layer
-      const imageLayer = new Image({
-        source: wmsSource,
-      });
-
       map.value = new Map({
         target: vm.$refs["mapRoot"],
         controls: [scaleControl],
         overlays: [unref(overlay)],
         layers: [
-          // imageLayer,
-          // worldImagery,
           new TileLayer({
             source: new OSM(), // tiles are served by OpenStreetMap
           }),
@@ -293,6 +276,11 @@ body {
   //   left: auto;
   // }
 }
+
+.stickyClass {
+  z-index: 1;
+}
+
 
 .ol-popup {
   position: absolute;
