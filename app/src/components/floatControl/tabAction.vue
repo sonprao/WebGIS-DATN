@@ -149,13 +149,12 @@ import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
-import {  transformProjection } from "src/utils/openLayers.js";
+import { transformProjection } from "src/utils/openLayers.js";
 import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "TabAction",
-  components: {
-  },
+  components: {},
   emits: ["closePopup"],
   props: {
     tab: {
@@ -278,7 +277,20 @@ export default defineComponent({
     const addInteraction = (type) => {
       if (unref(draw)) {
         unref(map).addInteraction(unref(draw));
-        return
+        return;
+      }
+      if (!unref(vector)) {
+        vector.value = new VectorLayer({
+          source: unref(source),
+          style: {
+            "fill-color": "rgba(255, 255, 255, 0.4)",
+            "stroke-color": "#ffcc33",
+            "stroke-width": 2,
+            "circle-radius": 7,
+            "circle-fill-color": "#ffcc33",
+          },
+          zIndex: 10,
+        });
       }
       if (!unref(map).getLayers().getArray().includes(unref(vector))) {
         unref(map).addLayer(unref(vector));
@@ -349,13 +361,15 @@ export default defineComponent({
           unref(helpTooltipElement).classList.add("hidden");
         });
     };
-    const zoomToDraw = (position, duration = 1000, padding = [100, 100, 100, 100]) => {
-      unref(map)
-        .getView()
-        .fit(position, {
-          padding,
-          duration,
-        });
+    const zoomToDraw = (
+      position,
+      duration = 1000,
+      padding = [100, 100, 100, 100]
+    ) => {
+      unref(map).getView().fit(position, {
+        padding,
+        duration,
+      });
     };
     const deleteDraw = (index = -1) => {
       if (index !== -1) {
@@ -381,13 +395,19 @@ export default defineComponent({
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
         if (feature) {
           const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
-          zoomToDraw(unref(drawList)[index].position, 100, [100, 100, 200, 300])
+          zoomToDraw(
+            unref(drawList)[index].position,
+            100,
+            [100, 100, 200, 300]
+          );
           setTimeout(() => {
-            const coordinate = toStringHDMS(transform(
-                  unref(drawList)[index].position,
-                  unref(map).getView().getProjection().getCode(),
-                  'EPSG:4326'
-            ))
+            const coordinate = toStringHDMS(
+              transform(
+                unref(drawList)[index].position,
+                unref(map).getView().getProjection().getCode(),
+                "EPSG:4326"
+              )
+            );
             captureScreenshot().then((response) => {
               $bus.emit("on-show-detail", {
                 title: unref(drawList)[index].text,
@@ -396,18 +416,22 @@ export default defineComponent({
                 image: response,
                 coordinate: coordinate,
               });
-              zoomToDraw(unref(drawList)[index].position, 1000, [100, 100, 100, 100])
+              zoomToDraw(
+                unref(drawList)[index].position,
+                1000,
+                [100, 100, 100, 100]
+              );
             });
-            $bus.emit("on-show-detail", {content: geoJsonData});
+            $bus.emit("on-show-detail", { content: geoJsonData });
           }, 150);
         }
       }
-    }
+    };
     const downloadDraw = async (index = -1) => {
       if (index !== -1) {
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
         if (feature) {
-          const geoJsonData = await writeGeoJSON({feature, map: unref(map)});
+          const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
           const downloadLink = document.createElement("a");
           downloadLink.href =
             "data:text/json;charset=utf-8," + encodeURIComponent(geoJsonData);
@@ -426,7 +450,10 @@ export default defineComponent({
       }
       measureTooltipElement.value = document.createElement("div");
       measureTooltipElement.value.className = "ol-tooltip ol-tooltip-measure";
-      measureTooltipElement.value.setAttribute("data-html2canvas-ignore", "true");
+      measureTooltipElement.value.setAttribute(
+        "data-html2canvas-ignore",
+        "true"
+      );
       measureTooltip.value = new Overlay({
         element: unref(measureTooltipElement),
         offset: [0, -15],

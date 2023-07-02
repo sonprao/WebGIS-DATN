@@ -30,7 +30,7 @@
             <!-- popup feature edit -->
             <popupFeature v-model:row="propsFeature.row" :feature-rows="propsLayer.features" />
           </q-btn>
-          <q-btn v-bind="{ ...actionButtonProps, color: 'red' }" icon="delete" @click="onDeleteLocation(props.row)">
+          <q-btn v-bind="{ ...actionButtonProps, color: 'red' }" icon="delete" @click="onDeleteFeature(propsFeature.row)">
           </q-btn>
         </q-td>
       </q-tr>
@@ -52,7 +52,7 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { getFeaturesByLayer } from "src/api/feature";
+import { getFeaturesByLayer, deleteFeature } from "src/api/feature";
 import PopupFeature from "src/pages/LocationManagementPage/components/popupFeature.vue";
 export default defineComponent({
   name: "LocationManagementPage",
@@ -119,7 +119,14 @@ export default defineComponent({
         Object.assign(props.propsLayer, { ...props.propsLayer, features: response.data });
       }
     };
-    const onDeleteFeature = async (row) => { };
+    const onDeleteFeature = async (row) => {
+      await deleteFeature(row)
+      // props.propsLayer.features.splice()
+      const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
+      const _tempFeatures = props?.propsLayer?.features || []
+      _tempFeatures.splice(index, 1)
+      Object.assign(props.propsLayer, { ...props.propsLayer, features: _tempFeatures });
+    };
     const scrollTable = ref(null);
     const currentPopupRef = ref(null);
     const showPopup = (ref) => {

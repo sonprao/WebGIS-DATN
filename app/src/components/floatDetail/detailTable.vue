@@ -3,7 +3,7 @@
     <q-btn v-if="ableToSave" class="gt-xs" size="12px" flat dense round icon="save" @click="dialog = true">
       <q-tooltip anchor="top middle" self="center middle">{{ $t("Save to database") }}</q-tooltip>
       <q-dialog v-model="dialog">
-        <detail-popup-save />
+        <detail-popup-save :content="content" />
       </q-dialog>
     </q-btn>
     <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="done" @click="saveEdit">

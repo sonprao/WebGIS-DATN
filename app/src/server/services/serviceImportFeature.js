@@ -1,9 +1,12 @@
+const dotenv = require('dotenv').config();
 const { PrismaClient } = require("@prisma/client");
 const fetch = require("node-fetch");
 const prisma = new PrismaClient();
+const baseUrl = dotenv.parsed.GEO_SERVER_URL;
+
 module.exports = {
   updateFeature: async (req, res) => {
-    const { name } = req.params;
+    const { name, workspace } = req.params;
     const mapLayers = await prisma.mapLayer.findMany({
       select: {
         url: true,
@@ -13,7 +16,7 @@ module.exports = {
     for (const ml of mapLayers) {
       const url = ml.url;
       fetch(
-        `http://localhost:8081/geoserver/danang/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=50&outputFormat=application%2Fjson`,
+        `${baseUrl}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=50&outputFormat=application%2Fjson`,
         {
           method: "GET",
           headers: {

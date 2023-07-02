@@ -28,6 +28,7 @@ export default {
   Login: 'Đăng nhập',
   Logout: 'Đăng xuất',
   //map
+  'Back to world map': 'Back to world map',
   'Zoom in': 'Phóng to',
   'Zoom out': 'Phóng nhỏ',
   Map: 'Bản đồ',
