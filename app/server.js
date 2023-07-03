@@ -1,3 +1,4 @@
+const dotenv = require('dotenv').config();
 // server.js
 const workspaceAPI = require('./src/server/services/workspace')
 const projectionAPI = require('./src/server/projection')
@@ -28,7 +29,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000', // Update with your server URL
+        url: `${dotenv.parsed.BASE_HOST}:${dotenv.parsed.API_PORT}`, // Update with your server URL
       },
     ],
   },

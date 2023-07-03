@@ -26,7 +26,7 @@ import { OSM } from "ol/source";
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
-import { transform } from "ol/proj";
+import { transform, Projection } from "ol/proj";
 import { register } from 'ol/proj/proj4';
 import { useLocationStore } from "stores/location";
 import proj4 from 'proj4';
@@ -135,6 +135,7 @@ export default defineComponent({
       lastFeature && lastFeature.setStyle(lastFeature.originStyle);
       unref(overlay).setPosition(undefined);
     };
+
     const getFeatureAPI = _debounce((featureId) => {
       getFeature({ name: featureId })
         .then((response) => {
@@ -144,6 +145,17 @@ export default defineComponent({
           })
         }).catch((e) => console.log(e))
     }, 200)
+
+    const styleChangeListener = function (feature) {
+      feature.on('change', function (event) {
+        setTimeout(() => {
+            captureScreenshot().then((response) => {
+              floatDetailProps.value.image = response
+            });
+          }, 1000);
+      });
+    };
+
     const initPopupEvent = () => {
       const highLightFeature = function (feature, layer) {
         let lastFeature = unref(popupEvent).lastFeature;
@@ -151,15 +163,11 @@ export default defineComponent({
         unref(popupEvent).lastFeature = null;
         feature.originStyle = feature.getStyle();
         if (!feature.originStyle) return
+        styleChangeListener(feature)
         let selectedStyle = FeatureUtils.getSelectedStyle(feature.originStyle);
         if (feature !== lastFeature) {
           const a = feature.setStyle(selectedStyle);
           unref(popupEvent).lastFeature = feature;
-          setTimeout(() => {
-            captureScreenshot().then((response) => {
-              floatDetailProps.value.image = response
-            });
-          }, 1000);
           return true;
         } else {
           return false;
@@ -176,7 +184,7 @@ export default defineComponent({
             const featureId = feature.getId();
             unref(map).getView().fit(feature.getGeometry().getExtent(), {
               padding: [250, 250, 250, 250],
-              duration: 1000,
+              duration: 500,
             });
             const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
             const coordinate = evt.coordinate;
@@ -213,11 +221,15 @@ export default defineComponent({
      */
     const map = ref(null);
     provide("map", map);
+    // const projection = new Projection({
+    //   code: 'EPSG:4326',
+    //   // extent: [-180, -90, 180, 90],
+    //   units: 'degrees',
+    // });
     const view = ref(
       new View({
         zoom: 0,
         center: [0, 0],
-        maxZoom: 12,
       })
     );
     onMounted(() => {

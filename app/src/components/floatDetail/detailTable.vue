@@ -16,7 +16,7 @@
       <q-tooltip anchor="top left" self="center middle">{{ $t("Add field") }}</q-tooltip>
     </q-btn>
   </div>
-  <q-scroll-area class="panelClass" :thumb-style="thumbStyle" :bar-style="barStyle">
+  <q-scroll-area class="panelClass" v-bind="SCROLL_STYLE.SECONDARY">
     <q-table class="tableClass" :rows="rows" :columns="columns" separator="cell" row-key="name" virtual-scroll hide-header
       hide-bottom flat bordered wrap-cells :rows-per-page-options="[0]">
       <template v-slot:body="props">
@@ -59,6 +59,7 @@ import { useUserStore } from 'src/stores/user';
 import { useMapStore } from "stores/map";
 import detailPopupSave from 'src/components/floatDetail/detailPopupSave.vue'
 import { LAYER_TYPE } from "src/constants/enum";
+import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 
 export default defineComponent({
   name: "detailTable",
@@ -175,20 +176,7 @@ export default defineComponent({
       location,
       ableToSave,
       dialog: ref(false),
-      thumbStyle: {
-        right: "4px",
-        borderRadius: "5px",
-        backgroundColor: "teal",
-        width: "5px",
-        opacity: 0.75,
-      },
-      barStyle: {
-        right: "2px",
-        borderRadius: "9px",
-        backgroundColor: "teal",
-        width: "9px",
-        opacity: 0.2,
-      },
+      SCROLL_STYLE,
     };
   },
 });

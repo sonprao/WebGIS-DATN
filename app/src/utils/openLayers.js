@@ -237,12 +237,6 @@ export const randomColor = function () {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 };
 export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
-  // for (const [index, ly] of Object.entries(unref(map).getLayers().getArray())) {
-  //   if (ly instanceof VectorImageLayer && ly.get('id') === layer.id) {
-  //     ly.setVisible(true)
-  //     return
-  //   }
-  // }
   const currentLayer = unref(map)
     .getLayers()
     .getArray()
@@ -261,7 +255,6 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       fill: new Fill({
         color,
       }),
-      // text: createTextStyle(feature, resolution, layer),
     });
   };
   const vectorLayer = new VectorImageLayer({
@@ -323,13 +316,21 @@ export const writeGeoJSON = (option) => {
   const { feature, map } = option;
   const geoJsonFormat = new GeoJSON();
   const geometry = feature.getGeometry();
-  const sourceProjection = "EPSG:4326";  // unref(map).getView().getProjection();
-  const targetProjection = "EPSG:4326";
+  const sourceProjection = unref(map).getView().getProjection();
+  const targetProjection = "EPSG:3857";
   const transformedGeometry = geometry
     .clone()
     .transform(sourceProjection, targetProjection);
   const transformedFeature = new Feature(transformedGeometry);
-  return geoJsonFormat.writeFeature(transformedFeature);
+  return JSON.stringify({
+    ...geoJsonFormat.writeFeaturesObject([transformedFeature]),
+    crs: {
+      type: 'name',
+      properties: {
+        name: 'urn:ogc:def:crs:EPSG::3857'
+      }
+    }
+  });
 };
 
 
