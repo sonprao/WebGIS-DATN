@@ -136,6 +136,7 @@ export default defineComponent({
         zoom: 0,
         center: [0, 0],
         maxZoom: 12,
+        // projection: "EPSG:4326"
       });
       unref(map).setView(newView)
     }

@@ -1,35 +1,36 @@
 <template>
   <div>
-    <q-input v-if="defaultOptions.length > 0" debounce="300" class="searchClass" :label="$t('Search layer')" v-model="searchLayer" @update:model-value="onSearch"/>
+    <q-input v-if="defaultOptions.length > 0" debounce="300" class="searchClass" :label="$t('Search layer')"
+      v-model="searchLayer" @update:model-value="onSearch" />
     <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
       @update:model-value="selectAll" />
     <q-list overlay>
-      <!-- <q-scroll-area class="layerClass"
-        :thumb-style="thumbStyle" :bar-style="barStyle"> -->
-        <q-virtual-scroll :items="dataLayers" :item-size="layerPagination.count" separator v-slot="{ item, index }" class="layerClass"
-          @virtual-scroll="onScroll">
-        <q-item :key="item.id + index">
-          <q-item-section avatar>
-            <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>
-              <span v-html="item.name"></span>
-            </q-item-label>
-            <q-item-label caption>
-              {{ item.description }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <div class="text-grey-8 q-gutter-xs">
-              <q-btn v-if="layerCheckbox.includes(item)" flat dense round size="12px" class="gt-xs"
-                icon="center_focus_strong" @click="actionFocusLayer(item.vectorLayer)" />
-            </div>
-          </q-item-section>
-          <q-separator />
-        </q-item>
-      <!-- </q-scroll-area> -->
-      </q-virtual-scroll>
+      <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
+        <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"
+          scroll-target="#scroll-area-with-virtual-scroll-1 > .scroll">
+          <q-item :key="item.id + index">
+            <q-item-section avatar>
+              <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>
+                <span v-html="item.name"></span>
+              </q-item-label>
+              <q-item-label caption>
+                {{ item.description }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <div class="text-grey-8 q-gutter-xs">
+                <q-btn v-if="layerCheckbox.includes(item)" flat dense round size="12px" class="gt-xs"
+                  icon="center_focus_strong" @click="actionFocusLayer(item.vectorLayer)" />
+              </div>
+            </q-item-section>
+            <q-separator />
+          </q-item>
+          <!-- </q-scroll-area> -->
+        </q-virtual-scroll>
+      </q-scroll-area>
     </q-list>
   </div>
 </template>
@@ -59,6 +60,7 @@ import _difference from "lodash/difference";
 import _debounce from "lodash/debounce";
 import _isEmpty from "lodash/isEmpty";
 import { MAP_LAYERS } from "src/constants/layer.js";
+import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
@@ -96,7 +98,7 @@ export default defineComponent({
     }
     const onScroll = _debounce(
       async (detail) => {
-      const layersLength = unref(dataLayers).length
+        const layersLength = unref(dataLayers).length
         if (
           detail.direction === 'increase' &&
           detail.index >= layersLength - 5 &&
@@ -117,7 +119,7 @@ export default defineComponent({
           }
         }
       }
-    ,300)
+      , 300)
     const defaultOptions = ref([]);
     const location = computed(() => mapStore.getLocation);
     const dataLayers = ref([]);
@@ -211,27 +213,13 @@ export default defineComponent({
       selectAll,
       actionFocusLayer,
       onScroll,
-      thumbStyle: {
-        right: '4px',
-        borderRadius: '5px',
-        backgroundColor: 'teal',
-        width: '5px',
-        opacity: 0.75
-      },
-      barStyle: {
-        right: '2px',
-        borderRadius: '9px',
-        backgroundColor: 'teal',
-        width: '9px',
-        opacity: 0.2
-      }
+      SCROLL_STYLE,
     };
   },
 });
 </script>
 <style lang="scss" scoped>
-.searchClass {
-}
+.searchClass {}
 
 .layerClass {
   border-top-left-radius: 1px;
