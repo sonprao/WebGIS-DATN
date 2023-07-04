@@ -1,6 +1,6 @@
 <template>
   <q-card class="bg-secondary shadow-2 popupCardClass">
-    <q-card-section style="padding-bottom: 0; margin: 0;">
+    <q-card-section style="padding-bottom: 0; margin: 0">
       <div class="text-h6 text-white">Add new feature</div>
     </q-card-section>
     <q-card-section>
@@ -20,36 +20,39 @@
       </q-select>
     </q-card-section>
     <q-card-section class="bg-white" horizontal>
-      <q-card-section style="width: 100%; max-height: 65vh;">
+      <q-card-section style="width: 100%; max-height: 65vh">
         <q-input :label="$t('Search for layer')" debounce="300" class="bg-white" color="black" v-model="layerFilter"
           @update:model-value="fetchLayers()">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
         </q-input>
-        <q-virtual-scroll :items-size="layerPagination.count" :items="dataLayers" separator v-slot="{ item, index }" class="layerClass"
-          @virtual-scroll="onScroll">
-          <q-item :key="item.id + index">
-            <q-item-section avatar>
-              <q-radio v-model="layerRadio" :val="item" color="secondary" @update:model-value="(val) => {
-                layerRadio = val
-                fetchFeatures()
-              }" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>
-                <span v-html="item.name"></span>
-              </q-item-label>
-              <q-item-label caption>
-                {{ item.description }}
-              </q-item-label>
-            </q-item-section>
-            <q-separator />
-          </q-item>
-        </q-virtual-scroll>
+        <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
+          <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"
+            scroll-target="#scroll-area-with-virtual-scroll-1 > .scroll">
+            <q-item :key="item.id + index">
+              <q-item-section avatar>
+                <q-radio v-model="layerRadio" :val="item" color="secondary" @update:model-value="(val) => {
+                  layerRadio = val;
+                  fetchFeatures();
+                }
+                  " />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  <span v-html="item.name"></span>
+                </q-item-label>
+                <q-item-label caption>
+                  {{ item.description }}
+                </q-item-label>
+              </q-item-section>
+              <q-separator />
+            </q-item>
+          </q-virtual-scroll>
+        </q-scroll-area>
       </q-card-section>
       <q-separator v-if="layerRadio" vertical />
-      <q-card-section v-if="layerRadio" style="padding: 0  0 0 0;">
+      <q-card-section v-if="layerRadio" style="padding: 0 0 0 0">
         <q-table flat bordered wrap-cells hide-pagination row-key="name" class="tableClass" :title="$t('Feature')"
           :rows="featureRows" :columns="featureColumns" :virtual-scroll-sticky-size-start="48"
           v-model:pagination="featurePagination" @update:selected="fetchFeatures">
@@ -72,11 +75,10 @@
                 {{ props.row.name }}
               </q-td>
             </q-tr>
-            <q-tr v-show="props.expand" :props="props">
-            </q-tr>
+            <q-tr v-show="props.expand" :props="props"> </q-tr>
           </template>
         </q-table>
-        <q-pagination input style="place-content: center;" v-model="featurePagination.page"
+        <q-pagination input style="place-content: center" v-model="featurePagination.page"
           @update:model-value="fetchFeatures" :max="featurePagination.rowsNumber" boundary-numbers direction-links flat
           color="grey" active-color="primary" />
       </q-card-section>
@@ -103,17 +105,18 @@ import {
   inject,
   watch,
 } from "vue";
-import _isEqual from 'lodash/isEqual'
-import _debounce from 'lodash/debounce'
-import _isEmpty from 'lodash/isEmpty'
+import _isEqual from "lodash/isEqual";
+import _debounce from "lodash/debounce";
+import _isEmpty from "lodash/isEmpty";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { useUserStore } from 'src/stores/user';
+import { useUserStore } from "src/stores/user";
 import { useMapStore } from "stores/map";
 import { getAllLocation, getLocation } from "src/api/location";
 import { getLayerByLocation } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
-import { createFeature, updateFeature } from 'src/api/feature'
+import { createFeature, updateFeature } from "src/api/feature";
+import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 
 export default defineComponent({
   name: "detailPopupSave",
@@ -126,9 +129,11 @@ export default defineComponent({
     const $t = i18n.global.t;
     const mapStore = useMapStore();
     const userStore = useUserStore();
-    const { role } = userStore.getUser
+    const { role } = userStore.getUser;
     const locationSearchRef = ref(null);
-    const locationSearch = ref(_isEmpty(mapStore.getLocation) ? "" : mapStore.getLocation.name);
+    const locationSearch = ref(
+      _isEmpty(mapStore.getLocation) ? "" : mapStore.getLocation.name
+    );
     const LocationOptions = ref([]);
     const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
@@ -147,9 +152,10 @@ export default defineComponent({
         });
       }
     };
-    const location = ref(_isEmpty(mapStore.getLocation) ? null : mapStore.getLocation);
-    const onClearSearch = () => {
-    };
+    const location = ref(
+      _isEmpty(mapStore.getLocation) ? null : mapStore.getLocation
+    );
+    const onClearSearch = () => { };
     const locationSetModel = async (val) => {
       if (val) {
         location.value = await getLocation({ id: val.id });
@@ -159,7 +165,9 @@ export default defineComponent({
       unref(locationSearchRef).blur();
     };
 
-    const dataLayers = ref(_isEmpty(mapStore.getLocation) ? [] : mapStore.getLocation.mapLayers);
+    const dataLayers = ref(
+      _isEmpty(mapStore.getLocation) ? [] : mapStore.getLocation.mapLayers
+    );
     const layerRadio = ref(null);
     const fetchLayers = async (val = 1) => {
       const response = await getLayerByLocation({
@@ -167,14 +175,16 @@ export default defineComponent({
         per_page: unref(layerPagination).rowsPerPage,
         page: val,
         search: unref(layerFilter),
-      })
+      });
       if (response) {
         dataLayers.value = response.data;
-        layerPagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
+        layerPagination.value.rowsNumber = parseInt(
+          Math.ceil(response.count / response.per_page)
+        );
         layerPagination.value.page = response.page;
         layerPagination.value.rowsPerPage = response.per_page;
       }
-    }
+    };
 
     const fetchFeatures = _debounce(async (val = 1) => {
       const response = await getFeaturesByLayer({
@@ -182,16 +192,18 @@ export default defineComponent({
         per_page: unref(featurePagination).rowsPerPage,
         page: val,
         search: unref(featureFilter),
-      })
+      });
       if (response) {
         featureRows.value = response.data;
-        featurePagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
+        featurePagination.value.rowsNumber = parseInt(
+          Math.ceil(response.count / response.per_page)
+        );
         featurePagination.value.page = response.page;
         featurePagination.value.rowsPerPage = response.per_page;
       }
-    }, 10)
+    }, 10);
     onMounted(() => {
-      const query = {}
+      const query = {};
       getAllLocation(query).then((response) => {
         defaultOptions.value = response.data;
       });
@@ -202,69 +214,73 @@ export default defineComponent({
     const featureColumns = computed(() => [
       {
         required: true,
-        name: 'id',
-        label: 'Id',
-        field: 'id',
+        name: "id",
+        label: "Id",
+        field: "id",
         align: "center",
         style: "min-width: 90px; width: 90px;",
       },
-      { name: 'name', align: 'center', label: $t('Feature name'), field: 'name' },
-      { name: 'action', align: 'center', label: '' },
-    ])
-    const featureRows = ref([])
+      {
+        name: "name",
+        align: "center",
+        label: $t("Feature name"),
+        field: "name",
+      },
+      { name: "action", align: "center", label: "" },
+    ]);
+    const featureRows = ref([]);
     const layerPagination = ref({
       page: 1,
       rowsPerPage: 20,
       rowsNumber: 21,
       count: 21,
-    })
+    });
     const featurePagination = ref({
       page: 1,
       rowsPerPage: 20,
       rowsNumber: 0,
-    })
+    });
     const setPagination = (val) => {
-      console.log(val)
-    }
-    const scrollable = ref(true)
-    const onScroll = _debounce(
-      async (detail) => {
-        const layersLength = unref(dataLayers).length
-        if (
-          detail.direction === 'increase' &&
-          detail.index >= layersLength - 5 &&
-          layersLength < layerPagination.value.rowsNumber &&
-          (detail.to + 1) % layersLength === 0
-        )
-        {
-          layerPagination.value.page = unref(layerPagination).page + 1
-          const response = await getLayerByLocation({
-            locationId: unref(location).id,
-            per_page: unref(layerPagination).rowsPerPage,
-            page: unref(layerPagination).page,
-            search: unref(layerFilter),
-          })
-          if (response) {
-            dataLayers.value.push(...response.data);
-            layerPagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
-            layerPagination.value.rowsPerPage = response.per_page;
-          }
+      console.log(val);
+    };
+    const scrollable = ref(true);
+    const onScroll = _debounce(async (detail) => {
+      const layersLength = unref(dataLayers).length;
+      if (
+        detail.direction === "increase" &&
+        detail.index >= layersLength - 5 &&
+        layersLength < layerPagination.value.rowsNumber &&
+        (detail.to + 1) % layersLength === 0
+      ) {
+        layerPagination.value.page = unref(layerPagination).page + 1;
+        const response = await getLayerByLocation({
+          locationId: unref(location).id,
+          per_page: unref(layerPagination).rowsPerPage,
+          page: unref(layerPagination).page,
+          search: unref(layerFilter),
+        });
+        if (response) {
+          dataLayers.value.push(...response.data);
+          layerPagination.value.rowsNumber = parseInt(
+            Math.ceil(response.count / response.per_page)
+          );
+          layerPagination.value.rowsPerPage = response.per_page;
         }
-      },
-      300)
+      }
+    }, 300);
 
     // table
     const onSave = async () => {
       const feature = {
-        properties: JSON.stringify(props.content || null)
-      }
-      console.log(props.content)
-      console.log(unref(layerRadio))
+        properties: JSON.stringify(props.content || null),
+      };
+      console.log(props.content);
+      console.log(unref(layerRadio));
       const response = await createFeature({
         features: [feature],
-        layerId: unref(layerRadio).id
-      })
-    }
+        layerId: unref(layerRadio).id,
+      });
+    };
     return {
       vm,
       role,
@@ -292,6 +308,7 @@ export default defineComponent({
       setPagination,
       //table
       onSave,
+      SCROLL_STYLE,
     };
   },
 });
@@ -314,7 +331,6 @@ body {
   // max-height: 90vh;
 }
 
-
 .tableClass {
   max-height: 406px;
   // width: 390px;
@@ -323,16 +339,14 @@ body {
   // max-width: 98%;
 }
 
-
 .captionClass {
   font-weight: 600;
 }
 
-
 .layerClass {
   border-top-left-radius: 1px;
   border-top-right-radius: 1px;
-  // height: 100vh;
+  height: 390px;
   max-height: 390px;
   max-width: 400px;
 
