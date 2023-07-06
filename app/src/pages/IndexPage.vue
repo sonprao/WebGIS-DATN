@@ -19,6 +19,7 @@
 <script>
 import "ol/ol.css";
 import { Map, View, Overlay } from "ol";
+import { createEmpty, extend } from "ol/extent";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
 
@@ -27,10 +28,10 @@ import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform, Projection } from "ol/proj";
-import { register } from 'ol/proj/proj4';
+import { register } from "ol/proj/proj4";
 import { useLocationStore } from "stores/location";
-import proj4 from 'proj4';
-proj4.defs('EPSG:32648', '+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs');
+import proj4 from "proj4";
+proj4.defs("EPSG:32648", "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs");
 register(proj4);
 
 import {
@@ -42,7 +43,8 @@ import {
   getCurrentInstance,
   provide,
 } from "vue";
-import _debounce from 'lodash/debounce';
+import _debounce from "lodash/debounce";
+import _isEmpty from "lodash/isEmpty";
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
@@ -50,10 +52,7 @@ import FloatSearch from "src/components/floatSearch/index.vue";
 import FloatDetail from "src/components/floatDetail/index.vue";
 import FloatControl from "src/components/floatControl/index.vue";
 import FloatZoom from "src/components/floatZoom.vue";
-import {
-  FeatureUtils,
-  distanceBetweenPoints,
-} from "src/utils/openLayers";
+import { FeatureUtils, distanceBetweenPoints } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { LAYER_TYPE } from "src/constants/enum";
@@ -72,7 +71,7 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
     //
-    const locationStore = useLocationStore()
+    const locationStore = useLocationStore();
     const showDetail = ref(false);
     const floatDetailProps = ref({
       title: null,
@@ -81,24 +80,31 @@ export default defineComponent({
       type: LAYER_TYPE[0],
       id: null,
       coordinate: null,
-    })
+    });
     const onShowDetail = (option) => {
-      const { content, image, title, type = LAYER_TYPE[0], coordinate } = option
+      const {
+        content,
+        image,
+        title,
+        type = LAYER_TYPE[0],
+        coordinate,
+      } = option;
       showDetail.value = true;
       if (title) {
-        floatDetailProps.value.title = title
+        floatDetailProps.value.title = title;
       }
       if (image) {
-        floatDetailProps.value.image = image
+        floatDetailProps.value.image = image;
       }
       if (content) {
-        floatDetailProps.value.content = typeof content === 'string' ? JSON.parse(content) : content;
+        floatDetailProps.value.content =
+          typeof content === "string" ? JSON.parse(content) : content;
       }
       if (coordinate) {
-        floatDetailProps.value.coordinate = coordinate
+        floatDetailProps.value.coordinate = coordinate;
       }
       if (type !== LAYER_TYPE[0]) {
-        floatDetailProps.value.type = type
+        floatDetailProps.value.type = type;
       }
     };
     $bus.on("on-show-detail", onShowDetail);
@@ -107,6 +113,7 @@ export default defineComponent({
     const popupContent = ref(null);
     const popupCloser = ref(null);
     const popupEvent = ref(null);
+    const selectedObject = ref({});
     const overlay = ref(null);
     const addOverlay = () => {
       overlay.value = new Overlay({
@@ -121,97 +128,177 @@ export default defineComponent({
 
     const closePopup = (state) => {
       if (state === true) {
-        let lastFeature = unref(popupEvent).lastFeature;
-        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        unref(popupEvent).lastFeature = null;
-        // unByKey(unref(popupEvent));
-        // unref(overlay).setPosition(undefined); obsolete
+        const lastFeature = unref(selectedObject).lastFeature;
+        const lastLayer = unref(selectedObject).lastLayer;
+        if (lastFeature) lastFeature.originStyle = false;
+        if (lastLayer) lastLayer?.changed?.();
+        unref(selectedObject).lastFeature = null;
+        unByKey(unref(popupEvent));
+        unref(overlay).setPosition(undefined); //obsolete
+      } else if (_isEmpty(unref(popupEvent))) {
+        initPopupEvent()
       }
     };
     $bus.on("close-popup", closePopup);
-    $bus.on("close-float-detail", closePopup);
     const actionClosePopup = () => {
-      let lastFeature = unref(popupEvent).lastFeature;
-      lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+      const lastFeature = unref(selectedObject).lastFeature;
+      const lastLayer = unref(selectedObject).lastLayer;
+      if (lastFeature) lastFeature.originStyle = false;
+      if (lastLayer) lastLayer?.changed?.();
+      unref(selectedObject).lastFeature = null;
       unref(overlay).setPosition(undefined);
     };
+    $bus.on("close-float-detail", actionClosePopup);
 
     const getFeatureAPI = _debounce((featureId) => {
       getFeature({ name: featureId })
         .then((response) => {
-          floatDetailProps.value.id = response.id
+          floatDetailProps.value.id = response.id;
           onShowDetail({
-            content: JSON.parse(response?.properties || false)
-          })
-        }).catch((e) => console.log(e))
-    }, 200)
+            content: JSON.parse(response?.properties || false),
+          });
+        })
+        .catch((e) => console.log(e));
+    }, 200);
 
     const styleChangeListener = function (feature) {
-      feature.on('change', function (event) {
+      feature.on("change", function (event) {
         setTimeout(() => {
-            captureScreenshot().then((response) => {
-              floatDetailProps.value.image = response
-            });
-          }, 1000);
+          captureScreenshot().then((response) => {
+            floatDetailProps.value.image = response;
+          });
+        }, 1000);
       });
     };
 
     const initPopupEvent = () => {
       const highLightFeature = function (feature, layer) {
-        let lastFeature = unref(popupEvent).lastFeature;
-        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        unref(popupEvent).lastFeature = null;
-        feature.originStyle = feature.getStyle();
-        if (!feature.originStyle) return
-        styleChangeListener(feature)
-        let selectedStyle = FeatureUtils.getSelectedStyle(feature.originStyle);
-        if (feature !== lastFeature) {
-          const a = feature.setStyle(selectedStyle);
-          unref(popupEvent).lastFeature = feature;
+        let lastFeature = unref(selectedObject).lastFeature;
+        let lastLayer = unref(selectedObject).lastLayer;
+        if (lastFeature !== feature) {
+          if (lastFeature) lastFeature.originStyle = false;
+          feature.originStyle = true;
+          unref(selectedObject).lastFeature = feature;
+          lastLayer?.changed?.();
+          unref(selectedObject).lastLayer = layer;
           return true;
         } else {
+          feature.originStyle = false;
+          unref(selectedObject).lastFeature = null;
           return false;
         }
       };
+
+      const highLightUploadedFeature = function (feature, layer) {
+        let lastFeature = unref(selectedObject).lastFeature;
+        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
+        unref(selectedObject).lastFeature = null;
+        feature.originStyle = layer.getStyle()();
+        if (!feature.originStyle) return;
+        let selectedStyle = FeatureUtils.getSelectedStyle(feature.originStyle);
+        if (feature !== lastFeature) {
+          unref(selectedObject).lastFeature = feature;
+        } else {
+          selectedStyle = new Style({
+            fill: new Fill({
+              color: "rgb(0,128,128, 0.4)",
+            }),
+            stroke: new Stroke({
+              color: "#008080",
+              width: 2,
+            }),
+          });
+        }
+        feature.setStyle(selectedStyle);
+      };
+
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
-        location = transform(location, "EPSG:3857", (unref(map).getView().getProjection()))
-        floatDetailProps.value.distance = distanceBetweenPoints(location, evt.coordinate);
+        location = transform(
+          location,
+          "EPSG:3857",
+          unref(map).getView().getProjection()
+        );
+        floatDetailProps.value.distance = distanceBetweenPoints(
+          location,
+          evt.coordinate
+        );
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          if (layer instanceof VectorLayer) return
-          const isHighLight = highLightFeature(feature, layer);
-          if (isHighLight === true) {
-            const featureId = feature.getId();
-            unref(map).getView().fit(feature.getGeometry().getExtent(), {
-              padding: [250, 250, 250, 250],
-              duration: 500,
+          if (!layer || layer instanceof VectorLayer) return;
+          layer.getFeatures(evt.pixel).then((response) => {
+            const _extent = createEmpty();
+            extend(_extent, feature);
+            response.forEach((r) => {
+              const f = r
+                .get("features")
+                .find((f) => {
+                  extend(_extent, f.getGeometry().getExtent())
+                  return f.getGeometry().intersectsCoordinate(evt.coordinate)
+                }
+                );
+              if (!f) {
+                unref(map)
+                  .getView()
+                  .fit(_extent, {
+                    duration: 500,
+                    padding: [2000, 2000, 2000, 2000],
+                    maxZoom: 15,
+                  });
+                return
+              }
+              const isHighLight = highLightFeature(f, layer);
+              layer.changed();
+              if (isHighLight) {
+                extend(_extent, f.getGeometry().getExtent());
+                unref(map)
+                  .getView()
+                  .fit(f.getGeometry().getExtent(), {
+                    duration: 500,
+                    padding: [50, 50, 50, 50],
+                  });
+                  const featureId = f.getId();
+                  const dataFeature = FeatureUtils.getDataOfFeature(
+                    f,
+                    layer
+                  );
+                  const coordinate = evt.coordinate;
+                  dataFeature.setLocation(coordinate);
+                  // set float detail
+                  getFeatureAPI(featureId);
+                // screenshot
+                  floatDetailProps.value.title = dataFeature.name;
+                  floatDetailProps.value.coordinate = toStringHDMS(
+                    transform(
+                      coordinate,
+                      unref(map).getView().getProjection().getCode(),
+                      "EPSG:4326"
+                    )
+                  ).replace("N ", "N\n");
+                  setTimeout(() => {
+                    captureScreenshot().then((response) => {
+                      floatDetailProps.value.image = response;
+                    });
+                  }, 800);
+                  // set float detail
+              } else {
+                 showDetail.value = false;
+                 actionClosePopup();
+               }
             });
-            const dataFeature = FeatureUtils.getDataOfFeature(feature, layer);
-            const coordinate = evt.coordinate;
-            dataFeature.setLocation(coordinate);
-            // unref(popupContent).innerHTML = dataFeature.getDisplayHtml();
-            // unref(overlay).setPosition(coordinate); obsolete
-            // set float detail
-            getFeatureAPI(featureId);
-            // screenshot
-            floatDetailProps.value.title = dataFeature.name;
-            floatDetailProps.value.coordinate =
-              toStringHDMS(
-                transform(
-                  coordinate,
-                  unref(map).getView().getProjection().getCode(),
-                  'EPSG:4326'
-                )
-              ).replace('N ', 'N\n');
-            // set float detail
-          } else {
-            showDetail.value = false;
-            closePopup(true);
+          });
+          if (layer instanceof VectorLayer) return feature;
+          if (layer.get("id-upload")) {
+            highLightUploadedFeature(feature, layer);
+            return feature;
           }
           return feature;
-        }
-        );
+        });
       });
+      unref(map).on("pointermove", _debounce(function (e) {
+        // const pixel = unref(map).getEventPixel(e.originalEvent);
+        const hit = unref(map).hasFeatureAtPixel(e.pixel);
+        unref(map).getViewport().style.cursor = hit ? "pointer" : "";
+      }), 300);
     };
     // popup
 
@@ -292,7 +379,6 @@ body {
 .stickyClass {
   z-index: 1;
 }
-
 
 .ol-popup {
   position: absolute;

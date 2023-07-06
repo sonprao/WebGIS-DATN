@@ -1,7 +1,7 @@
 <template>
-  <div style="display: flex; flex-direction: row; gap: 10px; max-height: 56px;">
+  <div style="display: flex; flex-direction: row; gap: 10px; max-height: 56px">
     <q-btn class="bg-secondary text-white" rounded icon="public" @click="backToWorldMap">
-      <q-tooltip>{{$t("Back to world map")}}</q-tooltip>
+      <q-tooltip>{{ $t("Back to world map") }}</q-tooltip>
     </q-btn>
     <q-select class="searchClass shadow-10" ref="locationSearchRef" v-model="searchLocation" rounded outlined
       bg-color="white" color="teal" use-input hide-dropdown-icon input-debounce="400" label="Select location"
@@ -95,7 +95,6 @@ export default defineComponent({
         if (unref(location).view.projection) {
           const { name: projectionName, definition: projectionDef } =
             unref(location).view.projection;
-          const oldProjection = unref(map).getView().getProjection();
           proj4.defs(projectionName, projectionDef);
           register(proj4);
           const center = transformProjection({
@@ -110,22 +109,7 @@ export default defineComponent({
             zoom,
             maxZoom,
           });
-          unref(map)
-            .getLayers()
-            .getArray()
-            .forEach((layer) => {
-              if (layer instanceof VectorLayer) {
-                layer
-                  .getSource()
-                  .getFeatures()
-                  .forEach(function (feature) {
-                    const geometry = feature.getGeometry();
-                    geometry.transform(oldProjection, newView.getProjection());
-                  });
-              } else if (layer instanceof VectorImageLayer) {
-                unref(map).removeLayer(layer);
-              }
-            });
+          mapRemoveLayer(newView);
           unref(map).setView(newView);
         }
       }
@@ -138,7 +122,27 @@ export default defineComponent({
         maxZoom: 12,
         // projection: "EPSG:4326"
       });
-      unref(map).setView(newView)
+      mapRemoveLayer(newView);
+      unref(map).setView(newView);
+    }
+    const mapRemoveLayer = (newView) => {
+      const oldProjection = unref(map).getView().getProjection();
+      unref(map)
+        .getLayers()
+        .getArray()
+        .forEach((layer) => {
+          if (layer instanceof VectorLayer) {
+            layer
+              .getSource()
+              .getFeatures()
+              .forEach(function (feature) {
+                const geometry = feature.getGeometry();
+                geometry.transform(oldProjection, newView.getProjection());
+              });
+          } else if (layer instanceof VectorImageLayer) {
+            unref(map).removeLayer(layer);
+          }
+        });
     }
     onMounted(() => {
       const query = {

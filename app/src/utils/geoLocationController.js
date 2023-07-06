@@ -93,7 +93,8 @@ class GeoLocationController {
   zoomToLocation(coordinates) {
     this.view.fit(coordinates.concat(coordinates), {
       padding: [250, 250, 250, 250],
-      duration: 1000
+      duration: 1000,
+      maxZoom: 15,
     });
   }
 

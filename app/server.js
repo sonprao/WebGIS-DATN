@@ -74,6 +74,7 @@ app.delete('/api/locations/:id', locationAPI.delete)
 // projection
 app.get('/api/projections', projectionAPI.getAll)
 app.get('/api/projections/:id',projectionAPI.get)
+app.get('/api/projections/name/:name',projectionAPI.getbyName)
 app.post('/api/projections', projectionAPI.create)
 app.put('/api/projections/:id', projectionAPI.update)
 // workspace
