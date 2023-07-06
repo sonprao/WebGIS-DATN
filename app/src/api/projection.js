@@ -7,6 +7,11 @@ import {
 const $t = i18n.global.t;
 
 
+export const getProjectionByName = async (params) => {
+  const response = await api.get(`projections/name/${params.name}`, params)
+  return response.data
+}
+
 export const getProjection = async (params) => {
   const response = await api.get(`projections/${params.id}`, params)
   return response.data

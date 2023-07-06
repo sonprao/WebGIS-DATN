@@ -6,25 +6,25 @@
       <template v-slot:header="scope">
         <div class="row no-wrap items-center q-pa-sm q-gutter-xs">
           <q-btn v-if="scope.queuedFiles.length > 0" icon="clear_all" @click="scope.removeQueuedFiles" round dense flat>
-            <q-tooltip>Clear All</q-tooltip>
+            <q-tooltip>{{ $t("Clear all") }}</q-tooltip>
           </q-btn>
           <q-btn v-if="scope.uploadedFiles.length > 0" icon="done_all" @click="scope.removeUploadedFiles" round dense
             flat>
-            <q-tooltip>Remove Uploaded Files</q-tooltip>
+            <q-tooltip>{{ $t("Remove Uploaded Files") }}</q-tooltip>
           </q-btn>
           <q-spinner v-if="scope.isUploading" class="q-uploader__spinner" />
           <div class="col">
-            <div class="q-uploader__title">Upload GeoJSON here</div>
+            <div class="q-uploader__title">{{ $t("Import file here") }}</div>
             <div class="q-uploader__subtitle">
               {{ scope.uploadSizeLabel }} / {{ scope.uploadProgressLabel }}
             </div>
           </div>
           <q-btn v-if="scope.canAddFiles" type="a" icon="add_box" @click="scope.pickFiles" round dense flat>
             <q-uploader-add-trigger />
-            <q-tooltip>Pick Files</q-tooltip>
+            <q-tooltip>{{ $t("Pick Files") }}</q-tooltip>
           </q-btn>
           <q-btn v-if="scope.isUploading" icon="clear" @click="scope.abort" round dense flat>
-            <q-tooltip>Abort Upload</q-tooltip>
+            <q-tooltip>{{ $t("Abort Upload") }}</q-tooltip>
           </q-btn>
         </div>
       </template>
@@ -36,7 +36,7 @@
                 {{ file.name }}
               </q-item-label>
 
-              <q-item-label caption> Status: {{ file.__status }} </q-item-label>
+              <q-item-label caption> {{ $t("Status") }}: {{ file.__status }} </q-item-label>
 
               <q-item-label caption>
                 {{ file.__sizeLabel }} / {{ file.__progressLabel }}
@@ -93,15 +93,15 @@ import _isEmpty from "lodash/isEmpty";
 import { i18n } from "boot/i18n.js";
 import { $bus } from "boot/bus.js";
 import { Map, View } from "ol";
+import { createEmpty, extend } from "ol/extent";
 import { containsExtent } from "ol/extent";
 import { transform } from "ol/proj";
 import {
-  Fill as sFill,
-  Stroke as sStroke,
-  Style as sStyle,
-  RegularShape as sRegularShape,
-  Circle as sCircle,
-  Text as sText,
+  Fill as Fill,
+  Stroke as Stroke,
+  Style as Style,
+  Circle as CircleStyle,
+  Text as Text,
 } from "ol/style";
 
 import { toStringHDMS } from "ol/coordinate";
@@ -112,16 +112,18 @@ import { Vector } from "ol/layer";
 import {
   Vector as VectorLayer,
   VectorImage as VectorImageLayer,
+  Image as ImageLayer,
 } from "ol/layer";
+import { transformExtent, get as getProj } from "ol/proj";
 import Overlay from "ol/Overlay";
 import VectorSource from "ol/source/Vector";
+import { Cluster as VectorCluster } from "ol/source";
 import GeoJSON from "ol/format/GeoJSON";
 import { LineString, Polygon, Point, MultiPolygon } from "ol/geom";
 import { fromExtent } from "ol/geom/Polygon";
 
-import { writeGeoJSON } from "src/utils/openLayers";
+import { writeGeoJSON, geometryFunction } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
-import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 import { MAP_LAYERS } from "src/constants/layer.js";
 import {
   actionAddLayerGeoJSON,
@@ -131,7 +133,8 @@ import {
 import { LAYER_TYPE } from "src/constants/enum";
 
 import { useMapStore } from "stores/map";
-import { useQuasar } from "quasar";
+import { useQuasar, Loading } from "quasar";
+import { getProjectionByName } from "src/api/projection";
 
 export default defineComponent({
   name: "TabUpload",
@@ -144,10 +147,11 @@ export default defineComponent({
     const map = inject("map", {});
     const mapStore = useMapStore();
     const location = computed(() => mapStore.getLocation);
-
+    const projections = computed(() => mapStore.getProjections);
     const uploadSource = ref(null);
+    const uploadCluster = ref(null);
     const uploadVector = ref(null);
-
+    const styleCache = {}
     const uploadList = ref([]);
 
     const checkFileType = (files) => {
@@ -163,35 +167,12 @@ export default defineComponent({
       });
     };
 
-    const preAddEvent = async ({ scope, event }) => {
-      return await $q.dialog({
-        icon: 'delete',
-        class: 'deleteWarningClass',
-        title: $t('Warning'),
-        message: `${$t('Select projection')}?`,
-        ok: {
-          push: true
-        },
-        cancel: {
-          push: true,
-          color: 'negative'
-        },
-        persistent: true
-      }).onOk(async () => {
-        debugger
-        console.log(scope)
-        console.log(event)
-      }).onCancel(() => {
-        files.forEach((file) => {
-          unref(uploaderRef)?.removeFile(file);
-        })
-      }).onDismiss(() => {
-      })
-    }
-
     const addEvent = async (files) => {
       const mapProjection = unref(map).getView().getProjection().getCode();
       const mapExtent = JSON.parse(unref(location)?.view?.extent || null) || unref(map).getView().calculateExtent();
+      $q.loading.show({
+        message: 'Some important process  is in progress. Hang on...'
+      })
       files.forEach(async (file) => {
         const defaultProjection = unref(map).getView().getProjection().getCode()
         const obj = await parseJsonFile(file);
@@ -200,17 +181,28 @@ export default defineComponent({
           let dataProjection = "EPSG:3857"
           if (crsName) {
             dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-            proj4.defs(dataProjection, "+proj=tmerc +lat_0=0 +lon_0=107.75 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.904,-39.303,-111.450,0.00928836,0.01975479,-0.00427372,0.25290627854559 +units=m +no_defs")
-            register(proj4)
-          } 
+            if (!unref(projections).hasOwnProperty(dataProjection)) {
+              const response = await getProjectionByName({ name: dataProjection })
+              if (response?.definition) {
+                proj4.defs(dataProjection, response.definition)
+                register(proj4)
+                mapStore.setProjection({
+                  projection: {
+                    [dataProjection]: response.definition,
+                  }
+                });
+              }
+            }
+          }
           const listGeojsonFormat = new GeoJSON().readFeatures(obj)
           // check if feature in bound extent of the map
           for (const geojsonFormat of listGeojsonFormat) {
             if (!geojsonFormat.getGeometry()) {
               $q.notify({
                 type: "negative",
-                message: "This file is not a valid data!",
+                message: $t("This file is not a valid data!"),
               });
+              $q.loading.hide();
               return;
             }
             geojsonFormat.getGeometry().transform(dataProjection, defaultProjection)
@@ -220,8 +212,9 @@ export default defineComponent({
                 unref(uploaderRef)?.removeFile(file);
                 $q.notify({
                   type: "negative",
-                  message: "This feature not in bound of current view!",
+                  message: $t("This feature not in bound of current view!"),
                 });
+                $q.loading.hide();
                 return;
               }
             }
@@ -231,17 +224,30 @@ export default defineComponent({
           uploadList.value.push({
             id: time,
             file: file,
+            projection: dataProjection,
           });
           if (!unref(uploadVector)) {
             if (!unref(uploadSource)) {
               uploadSource.value = new VectorSource({ wrapX: false, zIndex: 10 });
             }
+            if (!unref(uploadCluster)) {
+              uploadCluster.value = new VectorCluster({
+                distance: 20,
+                minDistance: 10,
+                source: unref(uploadSource),
+                geometryFunction: geometryFunction,
+              })
+            }
             uploadVector.value = new VectorImageLayer({
-              id: time,
-              source: unref(uploadSource),
-              style: featureStyleFunction,
+              source: unref(uploadCluster),
+              style: clusterStyleFunction,
             });
+            unref(uploadVector).set('id-upload', time);
             unref(map).addLayer(unref(uploadVector));
+            unref(uploadVector).on('postrender', () => {
+              $q.loading.hide()
+            });
+
           }
           unref(uploadSource).addFeatures(listGeojsonFormat);
           uploadSource.value = null;
@@ -249,112 +255,125 @@ export default defineComponent({
         }
       });
     };
-    
-    const featureStyleFunction = (feature, resolution) => {
-      if (resolution < 20) return zoomedStyle20
-      else if (resolution >= 20 && resolution < 150) return zoomedStyle150
-      else return zoomedOutStyle
-    }
+
+    const clusterStyleFunction = function (feature, resolution) {
+      const size = feature?.get?.("features")?.length || 2;
+      let style = styleCache[size];
+      if (size > 5 && resolution > 30) {
+        style = [
+          style = new Style({
+            image: new CircleStyle({
+              radius: 5,
+              stroke: new Stroke({
+                color: "#008080",
+              }),
+              fill: new Fill({
+                color: 'rgb(0,128,128, 0.4)'
+              }),
+            }),
+          }),
+        ];
+        styleCache[size] = style;
+      } else if (size > 5 && resolution > 11) {
+        style = new Style({
+          image: new CircleStyle({
+            radius: 5,
+            stroke: new Stroke({
+              color: "#008080",
+            }),
+            fill: new Fill({
+              color: 'rgb(0,128,128, 0.4)'
+            }),
+          }),
+        });
+        styleCache[size] = style;
+      } else {
+        style = []
+        const features = feature?.get?.("features") || [new Feature()]
+        features.forEach((f) => {
+          const colorFill = 'rgb(0,128,128, 0.4)'
+          const colorStroke = f.originStyle ? "BLUE" : "#008080"
+          let widthStroke = f.originStyle ? 3 : 0.25
+          if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
+          const defaultStyle = new Style({
+            stroke: new Stroke({
+              color: colorStroke,
+              width: widthStroke,
+            }),
+            fill: new Fill({
+              color: colorFill,
+            }),
+            geometry: f.getGeometry()
+          });
+          style.push(defaultStyle)
+        })
+      }
+      return style;
+    };
 
     const styleDefault = {
-      fill: new sFill({
+      fill: new Fill({
         color: 'rgb(0,128,128, 0.4)'
       }),
-      stroke: new sStroke({
+      stroke: new Stroke({
         color: '#008080',
         width: 2,
       }),
     }
-    const zoomedStyle20 = new sStyle({
+    const zoomedStyle20 = new Style({
       ...styleDefault
     });
 
-    const zoomedStyle150 = new sStyle({
+    const zoomedStyle150 = new Style({
       ...styleDefault,
-      image: new sCircle({
-        radius: 7,
-        fill: new sFill({
-          color: '#008080'
+      image: new CircleStyle({
+        radius: 10,
+        fill: new Fill({
+          color: 'rgb(0,128,128, 0.4)'
+        }),
+        stroke: new Stroke({
+          color: '#008080',
+          width: 2,
         }),
       }),
       geometry: function (feature) {
-        const type = feature.getGeometry().getType()
-        if (type === "Polygon") return feature.getGeometry();
-        else if(type === "MultiPolygon") return feature.getGeometry().getInteriorPoints();
-        else if (type === "MultiPoint") return feature.getGeometry().getPoint(0);
-        else if (type === "Point") return feature.getGeometry();
+        const geom = feature.getGeometry()
+        const type = geom.getType()
+        if (type === "Polygon") return geom;
+        else if (type === "MultiPolygon") return geom.getInteriorPoints();
+        else if (type === "MultiPoint") return geom.getPoint(0);
+        else if (type === "Point") return geom;
       }
     });
 
-    const zoomedOutStyle = new sStyle({
+    const zoomedOutStyle = new Style({
       ...styleDefault,
-      image: new sCircle({
+      image: new CircleStyle({
         radius: 7,
-        fill: new sFill({
+        fill: new Fill({
           color: '#008080'
         }),
       }),
       geometry: function (feature) {
-        const type = feature.getGeometry().getType()
-        if (type === "Polygon") return feature.getGeometry();
-        else if(type === "MultiPolygon") return feature.getGeometry().getInteriorPoints().getPoint(0);
-        else if (type === "MultiPoint") return feature.getGeometry().getPoint(0);
-        else if (type === "Point") return feature.getGeometry();
+        const geom = feature.getGeometry()
+        const type = geom.getType()
+        if (type === "Polygon") return geom;
+        else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
+        else if (type === "MultiPoint") return geom.getPoint(0);
+        else if (type === "Point") return geom;
       }
     });
 
     const removeEvent = async (files) => {
-      if (files.length === unref(uploadList).length) {
-        unref(uploadSource).clear();
-        uploadList.value = [];
-        document
-          .querySelectorAll("div.ol-tooltip.ol-tooltip-upload")
-          .forEach((d) => {
-            d.remove();
-          });
-        return;
-      }
       files.forEach(async (file) => {
-        const featureIndex = unref(uploadList).findIndex(
+        const layerIndex = unref(uploadList).findIndex(
           (u) => u.file === file
         );
-        const feature = unref(uploadSource)?.getFeatureById(
-          unref(uploadList)[featureIndex].id
-        );
-        if (feature) {
-          unref(uploadSource).removeFeature(feature);
-          uploadList.value.splice(featureIndex, 1);
-          document
-            .querySelectorAll("div.ol-tooltip.ol-tooltip-upload")
-          [featureIndex].remove();
+        if (layerIndex !== -1) {
+          const layer = unref(map).getLayers().getArray().find((l) => l.get('id-upload') === unref(uploadList)[layerIndex].id)
+          unref(map).removeLayer(layer)
         }
       });
-    };
-
-    // measureToolTip
-    const measureTooltipElement = ref(null);
-    const measureTooltip = ref(null);
-
-    const createMeasureTooltip = () => {
-      if (unref(measureTooltipElement)) {
-        unref(measureTooltipElement)?.parentNode?.removeChild?.(
-          unref(measureTooltipElement)
-        );
-      }
-      measureTooltipElement.value = document.createElement("div");
-      measureTooltipElement.value.className = "ol-tooltip ol-tooltip-upload";
-      measureTooltipElement.value.setAttribute(
-        "data-html2canvas-ignore",
-        "true"
-      );
-      measureTooltip.value = new Overlay({
-        element: unref(measureTooltipElement),
-        offset: [0, -15],
-        positioning: "bottom-center",
-        stopEvent: false,
-        insertFirst: false,
-      });
-      unref(map).addOverlay(unref(measureTooltip));
     };
 
     const onRejected = (rejectedEntries) => {
@@ -362,13 +381,13 @@ export default defineComponent({
         case "duplicate":
           $q.notify({
             type: "negative",
-            message: "This file already imported!",
+            message: $t("This file already imported!"),
           });
           break;
         case "accept":
           $q.notify({
             type: "negative",
-            message: "*.json file only!",
+            message: $t("*.json file only!"),
           });
           break;
         default:
@@ -378,13 +397,19 @@ export default defineComponent({
 
     const detailFile = async (index) => {
       const layer = unref(map).getLayers().getArray().find((l) => {
-        if (l instanceof VectorImageLayer && l.get('id') === unref(uploadList)[index].id)
+        if (l instanceof VectorImageLayer && l.get('id-upload') === unref(uploadList)[index].id)
           return l
       })
       if (layer) {
+        // const _extent = createEmpty();
+        // layer.getSource().getSource().getFeatures().forEach((f) => {
+        //   extend(_extent, f.getGeometry().getExtent())
+        // });
+        // const extent = transformExtent(_extent, unref(uploadList)[index].projection, unref(map).getView().getProjection().getCode())
         unref(map).getView().fit(layer.getSource().getExtent(), {
-          duration: 500,
-          padding: [100, 100, 100, 100]
+          duration: 1000,
+          padding: [250, 250, 250, 250],
+          maxZoom: 12,
         })
       }
       // const feature = unref(uploadSource).getFeatureById(
@@ -433,7 +458,6 @@ export default defineComponent({
       map,
       location,
       checkFileType,
-      preAddEvent,
       addEvent,
       removeEvent,
       onRejected,

@@ -254,6 +254,7 @@ export default defineComponent({
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
+        console.log(val)
         $bus.emit("close-popup", true);
         unref(geoLocation).getCurrentLocation();
         clearControl();

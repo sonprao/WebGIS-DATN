@@ -20,6 +20,7 @@ export default {
   'Basic information': 'Basic information',
   'Communicate information': 'Communicate information',
   Profile: 'Profile',
+  Email: "Email",
   Username: 'Username',
   Password: 'Password',
   "Enter a valid email": "Enter a valid email",
@@ -28,6 +29,8 @@ export default {
   Logout: 'Logout',
   //map
   'Back to world map': 'Back to world map',
+  "Street map": "Street map",
+  "Imagery map": "Imagery map",
   'Zoom in': 'Zoom in',
   'Zoom out': 'Zoom out',
   Map: 'Map',
@@ -105,4 +108,12 @@ export default {
   "Projection": "Projection",
   "Layer type": "Layer type",
   "Type": "Type",
+  // tab upload
+  "Import file here": "Import file here",
+  "Pick Files": "Pick Files",
+  "Clear all": "Clear all",
+  "This file is not a valid data!": "This file is not a valid data!",
+  "This feature not in bound of current view!": "This feature not in bound of current view!",
+  "This file already imported!": "This file already imported!",
+  "*.json file only!": "*.json file only!",
 }

@@ -96,12 +96,12 @@ export default defineComponent({
       {
         icon: "img:icons/Maps-Street.png",
         type: "groupOSM",
-        tooltip: "Street view",
+        tooltip: $t("Street map"),
       },
       {
         icon: "img:icons/Maps-Satellite.png",
         type: "groupImagery",
-        tooltip: "Imagery view",
+        tooltip: $t("Imagery map"),
       },
     ])
     const wmsSource = new ImageWMS({

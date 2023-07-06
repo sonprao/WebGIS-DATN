@@ -60,6 +60,16 @@ module.exports = {
     });
     res.json(response);
   },
+
+  getbyName: async (req, res) => {
+    const { name } = req.params;
+    const response = await prisma.projection.findUnique({
+      where: {
+        name,
+      },
+    });
+    res.json(response);
+  },
   /**
    * @swagger
    * /api/projections/{name}:

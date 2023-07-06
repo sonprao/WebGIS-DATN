@@ -86,12 +86,11 @@ export default defineComponent({
       const response = await getLayerByLocation({
         locationId: unref(location).id,
         per_page: unref(layerPagination).rowsPerPage,
-        page: val,
-        search: unref(layerFilter),
+        page: 1,
+        search: unref(searchLayer),
       })
       if (response) {
         dataLayers.value = response.data;
-        layerPagination.value.rowsNumber = parseInt(Math.ceil(response.count / response.per_page));
         layerPagination.value.page = response.page;
         layerPagination.value.rowsPerPage = response.per_page;
       }
@@ -169,14 +168,14 @@ export default defineComponent({
                 (l) => layer.id === l.id
               );
               if (currentLayer.vectorLayer) {
-                layer.vectorLayer?.setVisible?.(true);
+                unref(map).addLayer(currentLayer.vectorLayer)
+                // layer.vectorLayer?.setVisible?.(true);
               } else {
                 currentLayer.vectorLayer = actionAddLayerGeoJSON({
                   layer,
                   workspace,
                   map,
                 });
-                // currentLayer.vectorLayer = actionAddLayerWMS({ layer, workspace, map })
               }
             });
           } else {
@@ -184,7 +183,8 @@ export default defineComponent({
             const { workspace } = unref(location);
             diff.forEach((layer) => {
               if (layer.vectorLayer) {
-                layer.vectorLayer?.setVisible?.(false);
+                unref(map).removeLayer(layer.vectorLayer)
+                // layer.vectorLayer?.setVisible?.(false);
               }
             });
           }
