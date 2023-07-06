@@ -41,12 +41,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // user
 app.get('/api/users/:id',  userAPI.findUser)
+app.get('/api/users/findByEmail/:email',  userAPI.findUserByEmail)
 app.delete('/api/users', userAPI.delete)
 app.get('/api/users',  userAPI.getAll)
 app.post('/api/users', userAPI.updateOrCreateUser)
 app.put('/api/users/:id', userAPI.activateUser)
 app.post('/api/login', userAPI.login)
 app.post('/api/login-google', userAPI.loginGoogle)
+app.post('/api/register', userAPI.register)
 // profile
 app.get('/api/profile',  userAPI.getAll)
 app.put('/api/profile/:id',  profileAPI.update)

@@ -62,7 +62,7 @@ model User {
 
 model Profile {
   id          String    @id @default(uuid())
-  sub         String
+  sub         String?
   email       String    @unique
   name        String?
   given_name  String?
@@ -70,7 +70,7 @@ model Profile {
   birthday    DateTime?
   gender      Gender?
   address     String?
-  picture     String    @db.LongText
+  picture     String?    @db.LongText
   user        User      @relation(fields: [userId], references: [id])
   userId      String    @unique
 

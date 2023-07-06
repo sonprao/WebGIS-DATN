@@ -24,8 +24,9 @@ module.exports = {
    */
   register: async (req, res) => {
     const { email, password, profile } = req.body;
+    try {
     const user = await prisma.user.create({
-      create: {
+      data: {
         email,
         password: password || undefined,
         profile: {
@@ -39,8 +40,15 @@ module.exports = {
           },
         },
       },
-    });
+      include: {
+        profile: true,
+      },
+    })
     res.json(user);
+    } catch (e) {
+      res.status(404);
+      res.json({ error: "There is some errors!" });
+    }
   },
   /**
    * @swagger
@@ -246,6 +254,16 @@ module.exports = {
     const user = await prisma.user.findUnique({
       where: {
         id,
+      },
+    });
+    res.json(user);
+  },
+
+  findUserByEmail: async (req, res) => {
+    const email = req.params.email;
+    const user = await prisma.user.findUnique({
+      where: {
+        email : email,
       },
     });
     res.json(user);
