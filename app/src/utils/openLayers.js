@@ -1,8 +1,9 @@
-import { Map } from 'ol';
-
+import { Map, Feature } from "ol";
+import _isFunction from "lodash/isFunction";
+import _isArray from "lodash/isArray";
 import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
 import { ScaleLine } from "ol/control";
-import { ImageWMS, TileWMS } from "ol/source";
+import { ImageWMS, TileWMS, Cluster } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import {
   Vector as VectorLayer,
@@ -14,17 +15,44 @@ import GeoJSON from "ol/format/GeoJSON";
 import { Draw, Modify, Snap } from "ol/interaction";
 // geolocation
 import Geolocation from "ol/Geolocation";
-import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 
 // vue
-import { ref, unref } from "vue";
+import { ref, unref, computed } from "vue";
+import { useMapStore } from "stores/map";
+
+import { Loading } from "quasar";
+
 import {
   CityLandDataFeature,
-  BaseDataFeature, SOIL_TYPE_ID, ForestLandDataFeature, RoadDataFeature,
+  BaseDataFeature,
+  SOIL_TYPE_ID,
+  ForestLandDataFeature,
+  RoadDataFeature,
 } from "src/feature/FeatureData.js";
 import { getExternalFeaturesByLayer } from "src/api/feature";
+import { getProjectionByName } from "src/api/projection";
+const mapStore = useMapStore();
+const projections = computed(() => mapStore.getProjections);
+const hiddenStyle = new Style({
+  fill: new Fill({
+    color: "rgb(0,0,0,0)",
+  }),
+  stroke: new Stroke({
+    color: "rgb(0,0,0,0)",
+  }),
+  image: null,
+});
 
+const defaultStyle = new Style({
+  stroke: new Stroke({
+    color: "RED",
+    width: 0.25,
+  }),
+  fill: new Fill({
+    color: "WHITE",
+  }),
+});
 
 const getText = function (feature, resolution, dom) {
   const type = "wrap";
@@ -124,18 +152,19 @@ export const FeatureUtils = {
      */
     let featureData;
     switch (layer.get("name")) {
-      case "Đất Đà Nẵng": {
-        switch (feature.get("SoilTypeId")) {
-          case SOIL_TYPE_ID.DAT_DON_VI_O:
-            featureData = new CityLandDataFeature();
-            break;
-          case SOIL_TYPE_ID.RUNG_DAC_DUNG:
-            featureData = new ForestLandDataFeature();
-            break;
-          default:
-            featureData = new CityLandDataFeature();
+      case "Đất Đà Nẵng":
+        {
+          switch (feature.get("SoilTypeId")) {
+            case SOIL_TYPE_ID.DAT_DON_VI_O:
+              featureData = new CityLandDataFeature();
+              break;
+            case SOIL_TYPE_ID.RUNG_DAC_DUNG:
+              featureData = new ForestLandDataFeature();
+              break;
+            default:
+              featureData = new CityLandDataFeature();
+          }
         }
-      }
         break;
       case "Giao Thông":
         featureData = new RoadDataFeature();
@@ -162,13 +191,13 @@ export const FeatureUtils = {
         width: 3,
       }),
       fill: style?.getFill?.(),
-    })
+    });
   },
 
   /**
    *
    * @param feature {Feature}
-     * @param
+   * @param
    */
   setStyleBySoilType: function (feature) {
     let soilTypeId = feature.get("SoilTypeId");
@@ -198,8 +227,11 @@ export const FeatureUtils = {
       default:
         color = "WHITE";
     }
-    let style = feature.getStyle();
-    style.getFill().setColor(color);
+    return color;
+    // let style = feature.getStyle();
+    // if (_isArray(style)) style[0].getFill().setColor(color);
+    // else if (_isFunction(style)) style().getFill().setColor(color);
+    // else style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
@@ -209,7 +241,7 @@ export const FeatureUtils = {
 import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
-import {LineString} from "ol/geom";
+import { LineString, Polygon } from "ol/geom";
 
 export const transformProjection = (option) => {
   const {
@@ -233,9 +265,8 @@ export const transformProjection = (option) => {
 export const getGeoJsonUrl = function (workspace, urlName) {
   return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
 };
-export const randomColor = function () {
-  return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-};
+
+const styleCache = {};
 export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   const currentLayer = unref(map)
     .getLayers()
@@ -245,54 +276,161 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     currentLayer.setVisible(true);
     return;
   }
-  const color = randomColor();
-  const polygonStyleFunction = function (feature, resolution) {
-    return new Style({
-      stroke: new Stroke({
-        color: "RED",
-        width: 0.25,
+  const clusterStyleFunction = function (feature, resolution) {
+    const size = feature?.get?.("features")?.length || 2;
+    let style = styleCache[size];
+    if (size > 10 && resolution > 30) {
+      style = [
+        new Style({
+        image: new CircleStyle({
+          radius: 20,
+          // stroke: new Stroke({
+          //   color: "rgb(232, 232, 232)",
+          // }),
+          fill: new Fill({
+            color: "rgb(255,0,0, 0.1)",
+          }),
+        }),
       }),
-      fill: new Fill({
-        color,
-      }),
-    });
+        new Style({
+        image: new CircleStyle({
+          radius: 10,
+          // stroke: new Stroke({
+          //   color: "rgb(255,0,0, 0.5)",
+          // }),
+          fill: new Fill({
+            color: "#fff",
+          }),
+        }),
+        }),
+      ];
+      styleCache[size] = style;
+    } else if (size > 20 && resolution > 11) {
+      style = new Style({
+        image: new CircleStyle({
+          radius: 5,
+          stroke: new Stroke({
+            color: "rgb(255,0,0, 0.5)",
+          }),
+          fill: new Fill({
+            color: "#fff",
+          }),
+        }),
+      });
+      styleCache[size] = style;
+    } else {
+      style = []
+      const features = feature?.get?.("features") || [new Feature()]
+      features.forEach((f) => {
+        const colorFill = FeatureUtils.setStyleBySoilType(f)
+        const colorStroke = f.originStyle ? "BLUE" : "RED"
+        let widthStroke = f.originStyle ? 3 : 0.25
+        if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
+        const defaultStyle = new Style({
+          stroke: new Stroke({
+            color: colorStroke,
+            width: widthStroke,
+          }),
+          fill: new Fill({
+            color: colorFill,
+          }),
+          geometry: f.getGeometry()
+        });
+        // f.setStyle(defaultStyle);
+        style.push(defaultStyle)
+      })
+    }
+    return style;
   };
+  const source = new VectorSource({
+    format: new GeoJSON(),
+    url: getGeoJsonUrl(workspace, layer.url),
+  });
+
+  const clusterSource = new Cluster({
+    distance: 20,
+    minDistance: 10,
+    source: source,
+    geometryFunction: _geometryFunction,
+  });
+
   const vectorLayer = new VectorImageLayer({
-    id: layer.id,
+    id: `cluster_${layer.id}`,
     name: layer.name,
-    source: new VectorSource({
-      format: new GeoJSON(),
-      url: getGeoJsonUrl(workspace, layer.url),
-    }),
-    style: polygonStyleFunction,
+    source: clusterSource,
+    style: clusterStyleFunction,
     zindex: 1,
   });
-  let vectorSource = vectorLayer.getSource();
+  let vectorSource = vectorLayer.getSource().getSource();
   unref(map).addLayer(vectorLayer);
+  Loading.show({
+    message: 'Some important process  is in progress. Hang on...'
+  })
+  vectorLayer.on("postrender", () => {
+    Loading.hide()
+  })
   getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
-    response.forEach((res) => {
-      const jsonData = JSON.parse(res.properties)
-      const feature = new GeoJSON().readFeature(jsonData);
-      feature.setId(res.name)
-      vectorSource.addFeature(feature)
-    })
+    const defaultProjection = unref(map).getView().getProjection().getCode()
+    response.forEach(async (res) => {
+      const jsonData = JSON.parse(res.properties);
+      const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
+      let dataProjection = "EPSG:3857"
+      if (crsName) {
+        dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
+        if (!unref(projections).hasOwnProperty(dataProjection)) {
+          const response = await getProjectionByName({ name: dataProjection })
+          if (response?.definition) {
+            proj4.defs(dataProjection, response.definition)
+            register(proj4)
+            mapStore.setProjection({
+              projection: {
+                [dataProjection]: response.definition,
+              }
+            });
+          }
+        }
+      }
+      if (jsonData?.hasOwnProperty('features')) {
+        const feature = new GeoJSON().readFeatures(jsonData);
+        console.log(feature)
+        feature.forEach((f) => {
+          f.getGeometry().transform(dataProjection, defaultProjection)
+          f.setId(res.name);
+        })
+        // vectorClusterLayer.getSource().addFeature(feature);
+        source.addFeatures(feature);
+      } else {
+        const feature = new GeoJSON().readFeature(jsonData);
+        feature.set('id', res.name);
+        source.addFeatures([feature]);
+      }
+    });
     // console.log(response)
     // change
-    vectorSource.once('change', () => {
-      vectorSource.getFeatures().forEach((feature) => {
-        feature.setStyle(vectorLayer.getStyle()());
-        FeatureUtils.setStyleBySoilType(feature);
-      })
-    });
-  })
+    // vectorSource.once("change", () => {
+    //   if (vectorSource instanceof Cluster) {
+    //     vectorSource.getSource().getFeatures().forEach((feature) => {
+    //     const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
+    //     feature.setStyle(style);
+    //     FeatureUtils.setStyleBySoilType(feature);
+    //   });
+    //   } else if (vectorSource instanceof VectorSource) {
+    //     vectorSource.getFeatures().forEach((feature) => {
+    //       const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
+    //       feature.setStyle(style);
+    //       FeatureUtils.setStyleBySoilType(feature);
+    //     });
+    //   }
+    // });
+  });
   return vectorLayer;
 };
 
-  /**
-   *
-   * @param {{ map: Map}} params
-   * @returns {Style}
-   */
+/**
+ *
+ * @param {{ map: Map}} params
+ * @returns {Style}
+ */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   const wmsSource = new TileWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
@@ -304,12 +442,12 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   });
 
   // Create a new Image layer
-  const imageLayer= new TileLayer({
+  const imageLayer = new TileLayer({
     source: wmsSource,
-    extent: transformExtent()
+    extent: transformExtent(),
   });
   unref(map).addLayer(imageLayer);
-  return imageLayer
+  return imageLayer;
 };
 
 export const writeGeoJSON = (option) => {
@@ -325,16 +463,28 @@ export const writeGeoJSON = (option) => {
   return JSON.stringify({
     ...geoJsonFormat.writeFeaturesObject([transformedFeature]),
     crs: {
-      type: 'name',
+      type: "name",
       properties: {
-        name: 'urn:ogc:def:crs:EPSG::3857'
-      }
-    }
+        name: "urn:ogc:def:crs:EPSG::3857",
+      },
+    },
   });
 };
-
 
 export const distanceBetweenPoints = (latlng1, latlng2) => {
   const line = new LineString([latlng1, latlng2]);
   return Math.round(line.getLength() * 100) / 100;
-}
+};
+
+const _geometryFunction = (feature) => {
+  const geom = feature.getGeometry();
+  const type = geom.getType();
+  if (type === "Polygon") return geom.getInteriorPoint();
+  else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
+  else if (type === "LineString") return  new Point(geom.getFirstCoordinate());
+  else if (type === "MultiLineString") return new Point(geom.getLineString(0).getFirstCoordinate());
+  else if (type === "MultiPoint") return geom.getPoints(0);
+  else if (type === "Point") return geom;
+};
+
+export const geometryFunction = (feature) => _geometryFunction(feature);
