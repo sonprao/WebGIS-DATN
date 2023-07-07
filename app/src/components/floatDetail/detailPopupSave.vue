@@ -26,6 +26,11 @@
           <template v-slot:append>
             <q-icon name="search" />
           </template>
+          <template v-slot:after>
+            <q-btn round dense flat icon="add">
+              <q-tooltip>{{ $t("Create new layer") }}</q-tooltip>
+            </q-btn>
+          </template>
         </q-input>
         <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
           <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"

@@ -126,6 +126,7 @@ import {
   ref,
   unref,
   onMounted,
+  onUnmounted,
   defineComponent,
   getCurrentInstance,
   computed,
@@ -149,7 +150,6 @@ import GeoLocationController from "src/utils/geoLocationController";
 import { writeGeoJSON } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
-import { transformProjection } from "src/utils/openLayers.js";
 import { LAYER_TYPE } from "src/constants/enum";
 
 export default defineComponent({
@@ -254,7 +254,6 @@ export default defineComponent({
         addInteraction(val);
         unref(geoLocation).removeCurrentLocation();
       } else {
-        console.log(val)
         $bus.emit("close-popup", true);
         unref(geoLocation).getCurrentLocation();
         clearControl();
@@ -390,7 +389,7 @@ export default defineComponent({
         drawList.value = [];
       }
     };
-
+    $bus.on("on-delete-draw", deleteDraw);
     const detailDraw = async (index = -1) => {
       if (index !== -1) {
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
@@ -499,6 +498,10 @@ export default defineComponent({
         });
       });
     });
+
+    onUnmounted(() => {
+      $bus.off("on-delete-draw");
+    })
     return {
       vm,
       map,

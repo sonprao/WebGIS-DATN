@@ -90,6 +90,9 @@ export default defineComponent({
       {
         label: $t('Location'),
         component: 'tab-location',
+        props: {
+          tab: tabModel,
+        },
       },
     ])
 

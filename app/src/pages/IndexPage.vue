@@ -1,12 +1,14 @@
 <template>
   <div ref="mapRoot" class="mapView">
     <q-page-sticky class="stickyClass" position="top-left" :offset="[10, 10]">
+      <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
+    </q-page-sticky>
+    <q-page-sticky class="stickyClass" position="top-left" :offset="[stickCenterX, 10]">
       <div style="display: flex; flex-direction: row; gap: 10px">
-        <FloatControl data-html2canvas-ignore v-bind="{ map: map, view: view }" @closePopup="closePopup" />
         <FloatSearch data-html2canvas-ignore />
         <FloatZoom data-html2canvas-ignore />
       </div>
-    </q-page-sticky>
+      </q-page-sticky>
     <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps"
       @update:model-content="floatDetailProps.content = $event" />
   </div>
@@ -22,24 +24,28 @@ import { Map, View, Overlay } from "ol";
 import { createEmpty, extend } from "ol/extent";
 import { toStringHDMS } from "ol/coordinate";
 import { Fill, Stroke, Style } from "ol/style";
-
+import { writeGeoJSON } from "src/utils/openLayers";
+import GeoJSON from "ol/format/GeoJSON";
 import { OSM } from "ol/source";
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
+import { Point } from "ol/geom";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
 import { transform, Projection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import { useLocationStore } from "stores/location";
 import proj4 from "proj4";
-proj4.defs("EPSG:32648", "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs");
+// proj4.defs("EPSG:32648", "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs");
 register(proj4);
 
 import {
   defineComponent,
+  computed,
   ref,
   unref,
   onMounted,
   onUnmounted,
+  onUpdated,
   getCurrentInstance,
   provide,
 } from "vue";
@@ -99,6 +105,9 @@ export default defineComponent({
       if (content) {
         floatDetailProps.value.content =
           typeof content === "string" ? JSON.parse(content) : content;
+        if (floatDetailProps.value?.content?.RefName) {
+          floatDetailProps.value.title = floatDetailProps.value?.content?.RefName;
+        }
       }
       if (coordinate) {
         floatDetailProps.value.coordinate = coordinate;
@@ -113,6 +122,7 @@ export default defineComponent({
     const popupContent = ref(null);
     const popupCloser = ref(null);
     const popupEvent = ref(null);
+    const pointermoveEvent = ref(null);
     const selectedObject = ref({});
     const overlay = ref(null);
     const addOverlay = () => {
@@ -134,6 +144,7 @@ export default defineComponent({
         if (lastLayer) lastLayer?.changed?.();
         unref(selectedObject).lastFeature = null;
         unByKey(unref(popupEvent));
+        unByKey(unref(pointermoveEvent));
         unref(overlay).setPosition(undefined); //obsolete
       } else if (_isEmpty(unref(popupEvent))) {
         initPopupEvent()
@@ -154,12 +165,31 @@ export default defineComponent({
       getFeature({ name: featureId })
         .then((response) => {
           floatDetailProps.value.id = response.id;
+          // floatDetailProps.value.title = featureId;
           onShowDetail({
             content: JSON.parse(response?.properties || false),
           });
         })
         .catch((e) => console.log(e));
     }, 200);
+
+    const getFeatureUpload = (feature) => {
+      const objData = JSON.parse(writeGeoJSON({feature, map: unref(map)}))
+      // const objData = feature?.getProperties()
+      // let properties = {}
+      // if (objData?.hasOwnProperty('properties')) {
+      //   properties = objData?.properties
+      //   delete objData['properties']
+      // }
+      // if (objData?.hasOwnProperty('geometry')) {
+      //   Object.assign(properties, { ...properties, geometry: objData.geometry?.getType?.() || '' })
+      //   delete objData['geometry']
+      // }
+      // Object.assign(properties, {...objData, ...properties})
+      onShowDetail({
+        content: objData,
+      });
+      }
 
     const styleChangeListener = function (feature) {
       feature.on("change", function (event) {
@@ -189,29 +219,6 @@ export default defineComponent({
         }
       };
 
-      const highLightUploadedFeature = function (feature, layer) {
-        let lastFeature = unref(selectedObject).lastFeature;
-        lastFeature && lastFeature.setStyle(lastFeature.originStyle);
-        unref(selectedObject).lastFeature = null;
-        feature.originStyle = layer.getStyle()();
-        if (!feature.originStyle) return;
-        let selectedStyle = FeatureUtils.getSelectedStyle(feature.originStyle);
-        if (feature !== lastFeature) {
-          unref(selectedObject).lastFeature = feature;
-        } else {
-          selectedStyle = new Style({
-            fill: new Fill({
-              color: "rgb(0,128,128, 0.4)",
-            }),
-            stroke: new Stroke({
-              color: "#008080",
-              width: 2,
-            }),
-          });
-        }
-        feature.setStyle(selectedStyle);
-      };
-
       popupEvent.value = unref(map).on("singleclick", function (evt) {
         let location = locationStore.getStartLocation;
         location = transform(
@@ -224,7 +231,7 @@ export default defineComponent({
           evt.coordinate
         );
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-          if (!layer || layer instanceof VectorLayer) return;
+          if (!layer || layer instanceof VectorLayer) return feature;
           layer.getFeatures(evt.pixel).then((response) => {
             const _extent = createEmpty();
             extend(_extent, feature);
@@ -240,7 +247,7 @@ export default defineComponent({
                 unref(map)
                   .getView()
                   .fit(_extent, {
-                    duration: 500,
+                    duration: 1000,
                     padding: [2000, 2000, 2000, 2000],
                     maxZoom: 15,
                   });
@@ -264,8 +271,9 @@ export default defineComponent({
                   const coordinate = evt.coordinate;
                   dataFeature.setLocation(coordinate);
                   // set float detail
-                  getFeatureAPI(featureId);
-                // screenshot
+                  if (featureId) getFeatureAPI(featureId);
+                  else getFeatureUpload(f);
+                  // screenshot
                   floatDetailProps.value.title = dataFeature.name;
                   floatDetailProps.value.coordinate = toStringHDMS(
                     transform(
@@ -286,19 +294,13 @@ export default defineComponent({
                }
             });
           });
-          if (layer instanceof VectorLayer) return feature;
-          if (layer.get("id-upload")) {
-            highLightUploadedFeature(feature, layer);
-            return feature;
-          }
-          return feature;
         });
       });
-      unref(map).on("pointermove", _debounce(function (e) {
+      pointermoveEvent.value = unref(map).on("pointermove", (function (e) {
         // const pixel = unref(map).getEventPixel(e.originalEvent);
         const hit = unref(map).hasFeatureAtPixel(e.pixel);
         unref(map).getViewport().style.cursor = hit ? "pointer" : "";
-      }), 300);
+      }));
     };
     // popup
 
@@ -317,6 +319,7 @@ export default defineComponent({
       new View({
         zoom: 0,
         center: [0, 0],
+        extent: [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
       })
     );
     onMounted(() => {
@@ -340,6 +343,8 @@ export default defineComponent({
       $bus.off("close-float-detail");
       $bus.off("on-show-detail");
     });
+    const stickCenterX = ref(window.outerWidth / 10 * 2.2)
+
     return {
       map,
       view,
@@ -350,6 +355,7 @@ export default defineComponent({
       actionClosePopup,
       popupContent,
       closePopup,
+      stickCenterX,
     };
   },
 });
