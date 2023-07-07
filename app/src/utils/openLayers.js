@@ -271,6 +271,52 @@ export const getGeoJsonUrl = function (workspace, urlName) {
 };
 
 const styleCache = {};
+const style1 = new Style({
+    image: new CircleStyle({
+      radius: 20,
+      // stroke: new Stroke({
+      //   color: "rgb(232, 232, 232)",
+      // }),
+      fill: new Fill({
+        color: "rgb(255,0,0, 0.1)",
+      }),
+    }),
+  });
+
+const style2 = new Style({
+  image: new CircleStyle({
+    radius: 10,
+    // stroke: new Stroke({
+    //   color: "rgb(255,0,0, 0.5)",
+    // }),
+    fill: new Fill({
+      color: "#fff",
+    }),
+  }),
+});
+
+const styleDefault = new Style({
+  stroke: new Stroke({
+    color: "WHITE",
+    width: 0.25,
+  }),
+  fill: new Fill({
+    color: "WHITE",
+  }),
+});
+
+const style3 = new Style({
+  image: new CircleStyle({
+    radius: 5,
+    stroke: new Stroke({
+      color: "rgb(255,0,0, 0.5)",
+    }),
+    fill: new Fill({
+      color: "#fff",
+    }),
+  }),
+})
+
 export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   const currentLayer = unref(map)
     .getLayers()
@@ -280,47 +326,18 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     currentLayer.setVisible(true);
     return;
   }
+
   const clusterStyleFunction = function (feature, resolution) {
     const size = feature?.get?.("features")?.length || 2;
     let style = styleCache[size];
     if (size > 10 && resolution > 30) {
       style = [
-        new Style({
-        image: new CircleStyle({
-          radius: 20,
-          // stroke: new Stroke({
-          //   color: "rgb(232, 232, 232)",
-          // }),
-          fill: new Fill({
-            color: "rgb(255,0,0, 0.1)",
-          }),
-        }),
-      }),
-        new Style({
-        image: new CircleStyle({
-          radius: 10,
-          // stroke: new Stroke({
-          //   color: "rgb(255,0,0, 0.5)",
-          // }),
-          fill: new Fill({
-            color: "#fff",
-          }),
-        }),
-        }),
+        style1,
+        style2,
       ];
       styleCache[size] = style;
     } else if (size > 20 && resolution > 11) {
-      style = new Style({
-        image: new CircleStyle({
-          radius: 5,
-          stroke: new Stroke({
-            color: "rgb(255,0,0, 0.5)",
-          }),
-          fill: new Fill({
-            color: "#fff",
-          }),
-        }),
-      });
+      style = style3;
       styleCache[size] = style;
     } else {
       style = []
