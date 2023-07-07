@@ -240,26 +240,30 @@ export const FeatureUtils = {
 // control
 import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
-import { register } from "ol/proj/proj4";
+import { register, fromEPSGCode } from "ol/proj/proj4";
 import { LineString, Polygon } from "ol/geom";
 
-export const transformProjection = (option) => {
+export const transformProjection = async (option) => {
   const {
     from = "EPSG:4326",
     to = "EPSG:4326",
     definition = "",
     coordinates = [0, 0],
   } = option;
+  const projections = mapStore.getProjections;
+  let response = null;
   if (from !== "EPSG:4326") {
-    if (definition) proj4.defs(from, definition);
-    else proj4.defs(from);
+    // if (definition) proj4.defs(from, definition);
+    // else proj4.defs(from);
+    response = await fromEPSGCode(from)
+    return transform(coordinates, response, to);
   } else if (to !== "EPSG:4326") {
-    if (definition) proj4.defs(to, definition);
-    else proj4.defs(to);
+    // if (definition) proj4.defs(to, definition);
+    // else proj4.defs(to);
+    response = await fromEPSGCode(to)
+    return transform(coordinates, from, response);
   }
-  register(proj4);
-
-  return transform(coordinates, from, to);
+  
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
@@ -323,8 +327,8 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       const features = feature?.get?.("features") || [new Feature()]
       features.forEach((f) => {
         const colorFill = FeatureUtils.setStyleBySoilType(f)
-        const colorStroke = f.originStyle ? "BLUE" : "RED"
-        let widthStroke = f.originStyle ? 3 : 0.25
+        const colorStroke = f?.originStyle ? "BLUE" : "RED"
+        let widthStroke = f?.originStyle ? 3 : 0.25
         if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
         const defaultStyle = new Style({
           stroke: new Stroke({
@@ -346,6 +350,9 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     format: new GeoJSON(),
     url: getGeoJsonUrl(workspace, layer.url),
   });
+  source.once('change', (evt) => {
+    console.log(evt)
+  })
 
   const clusterSource = new Cluster({
     distance: 20,
@@ -366,29 +373,16 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   Loading.show({
     message: 'Some important process  is in progress. Hang on...'
   })
-  vectorLayer.on("postrender", () => {
-    Loading.hide()
-  })
   getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
     const defaultProjection = unref(map).getView().getProjection().getCode()
+    const listExternalFeatures = []
     response.forEach(async (res) => {
       const jsonData = JSON.parse(res.properties);
       const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
       let dataProjection = "EPSG:3857"
       if (crsName) {
         dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-        if (!unref(projections).hasOwnProperty(dataProjection)) {
-          const response = await getProjectionByName({ name: dataProjection })
-          if (response?.definition) {
-            proj4.defs(dataProjection, response.definition)
-            register(proj4)
-            mapStore.setProjection({
-              projection: {
-                [dataProjection]: response.definition,
-              }
-            });
-          }
-        }
+        await fromEPSGCode(dataProjection)
       }
       if (jsonData?.hasOwnProperty('features')) {
         const feature = new GeoJSON().readFeatures(jsonData);
@@ -397,14 +391,21 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
           f.getGeometry().transform(dataProjection, defaultProjection)
           f.setId(res.name);
         })
-        // vectorClusterLayer.getSource().addFeature(feature);
-        source.addFeatures(feature);
+        // source.addFeatures(feature);
+        // source.addFeatures(feature);
+        listExternalFeatures.push([...feature]);
       } else {
         const feature = new GeoJSON().readFeature(jsonData);
         feature.set('id', res.name);
-        source.addFeatures([feature]);
+        // source.addFeatures([feature]);
+        listExternalFeatures.push(feature);
       }
     });
+    vectorLayer.on("postrender", () => {
+    source.addFeatures(listExternalFeatures.flat());
+    Loading.hide()
+  })
+
     // console.log(response)
     // change
     // vectorSource.once("change", () => {
@@ -482,7 +483,7 @@ const _geometryFunction = (feature) => {
   if (type === "Polygon") return geom.getInteriorPoint();
   else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
   else if (type === "LineString") return  new Point(geom.getFirstCoordinate());
-  else if (type === "MultiLineString") return new Point(geom.getLineString(0).getFirstCoordinate());
+  else if (type === "MultiLineString") return new Point(geom.getLineString().getFirstCoordinate());
   else if (type === "MultiPoint") return geom.getPoints(0);
   else if (type === "Point") return geom;
 };

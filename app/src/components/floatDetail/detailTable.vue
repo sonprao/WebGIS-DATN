@@ -122,6 +122,7 @@ export default defineComponent({
     const saveEdit = () => {
       isEditting.value = false
       const content = unref(rows).reduce((acc, item) => {
+        if (!item.name) return acc
         try {
           acc[item.name] = JSON.parse(item.value)
         } catch {

@@ -64,7 +64,6 @@ import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
-  transformProjection,
 } from "src/utils/openLayers.js";
 import { getLayerByLocation } from "src/api/mapLayer";
 export default defineComponent({

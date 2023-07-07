@@ -23,6 +23,9 @@
             <q-uploader-add-trigger />
             <q-tooltip>{{ $t("Pick Files") }}</q-tooltip>
           </q-btn>
+          <q-btn v-if="scope.canUpload && checkboxList.length > 0" icon="cloud_upload" @click="saveFile" round dense flat>
+            <q-tooltip>{{ ("Upload") }}</q-tooltip>
+          </q-btn>
           <q-btn v-if="scope.isUploading" icon="clear" @click="scope.abort" round dense flat>
             <q-tooltip>{{ $t("Abort Upload") }}</q-tooltip>
           </q-btn>
@@ -31,6 +34,9 @@
       <template v-slot:list="scope">
         <q-list separator>
           <q-item v-for="(file, index) of scope.files" :key="file.__key">
+            <q-item-section side top>
+              <q-checkbox v-model="checkboxList" :val="file.__key" color="secondary" />
+            </q-item-section>
             <q-item-section>
               <q-item-label class="full-width ellipsis">
                 {{ file.name }}
@@ -107,7 +113,7 @@ import {
 import { toStringHDMS } from "ol/coordinate";
 
 import proj4 from "proj4";
-import { register } from "ol/proj/proj4";
+import { register, fromEPSGCode } from "ol/proj/proj4";
 import { Vector } from "ol/layer";
 import {
   Vector as VectorLayer,
@@ -128,7 +134,6 @@ import { MAP_LAYERS } from "src/constants/layer.js";
 import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
-  transformProjection,
 } from "src/utils/openLayers.js";
 import { LAYER_TYPE } from "src/constants/enum";
 
@@ -153,6 +158,7 @@ export default defineComponent({
     const uploadVector = ref(null);
     const styleCache = {}
     const uploadList = ref([]);
+    const checkboxList = ref([]);
 
     const checkFileType = (files) => {
       return files.filter((file) => file.type === "application/json");
@@ -168,92 +174,88 @@ export default defineComponent({
     };
 
     const addEvent = async (files) => {
-      const mapProjection = unref(map).getView().getProjection().getCode();
-      const mapExtent = JSON.parse(unref(location)?.view?.extent || null) || unref(map).getView().calculateExtent();
-      $q.loading.show({
-        message: 'Some important process  is in progress. Hang on...'
-      })
-      files.forEach(async (file) => {
-        const defaultProjection = unref(map).getView().getProjection().getCode()
-        const obj = await parseJsonFile(file);
-        if (obj) {
-          const crsName = obj?.crs?.properties?.name?.replace?.("::", ":") || null
-          let dataProjection = "EPSG:3857"
-          if (crsName) {
-            dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-            if (!unref(projections).hasOwnProperty(dataProjection)) {
-              const response = await getProjectionByName({ name: dataProjection })
-              if (response?.definition) {
-                proj4.defs(dataProjection, response.definition)
-                register(proj4)
-                mapStore.setProjection({
-                  projection: {
-                    [dataProjection]: response.definition,
-                  }
-                });
-              }
+      try {
+        const mapProjection = unref(map).getView().getProjection().getCode();
+        // const mapExtent = JSON.parse(unref(location)?.view?.extent || null) || unref(map).getView().calculateExtent();
+        const mapExtent = unref(map).getView().calculateExtent();
+        $q.loading.show({
+          message: 'Some important process  is in progress. Hang on...'
+        })
+        files.forEach(async (file) => {
+          const defaultProjection = unref(map).getView().getProjection().getCode()
+          const obj = await parseJsonFile(file);
+          if (obj) {
+            const crsName = obj?.crs?.properties?.name?.replace?.("::", ":") || null
+            let dataProjection = "EPSG:3857"
+            if (crsName) {
+              dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
+              await fromEPSGCode(dataProjection)
             }
-          }
-          const listGeojsonFormat = new GeoJSON().readFeatures(obj)
-          // check if feature in bound extent of the map
-          for (const geojsonFormat of listGeojsonFormat) {
-            if (!geojsonFormat.getGeometry()) {
-              $q.notify({
-                type: "negative",
-                message: $t("This file is not a valid data!"),
-              });
-              $q.loading.hide();
-              return;
-            }
-            geojsonFormat.getGeometry().transform(dataProjection, defaultProjection)
-            const geomExtent = geojsonFormat?.getGeometry?.()?.getExtent?.();
-            if (geomExtent) {
-              if (!containsExtent(mapExtent, geomExtent)) {
-                unref(uploaderRef)?.removeFile(file);
+            const listGeojsonFormat = new GeoJSON().readFeatures(obj)
+            // check if feature in bound extent of the map
+            for (const geojsonFormat of listGeojsonFormat) {
+              if (!geojsonFormat.getGeometry()) {
                 $q.notify({
                   type: "negative",
-                  message: $t("This feature not in bound of current view!"),
+                  message: $t("This file is not a valid data!"),
                 });
                 $q.loading.hide();
                 return;
               }
+              geojsonFormat.getGeometry().transform(dataProjection, defaultProjection)
+              const geomExtent = geojsonFormat?.getGeometry?.()?.getExtent?.();
+              if (geomExtent) {
+                if (!containsExtent(mapExtent, geomExtent)) {
+                  unref(uploaderRef)?.removeFile(file);
+                  $q.notify({
+                    type: "negative",
+                    message: $t("This feature not in bound of current view!"),
+                  });
+                  $q.loading.hide();
+                  return;
+                }
+              }
             }
-          }
 
-          const time = new Date().toLocaleString();
-          uploadList.value.push({
-            id: time,
-            file: file,
-            projection: dataProjection,
-          });
-          if (!unref(uploadVector)) {
-            if (!unref(uploadSource)) {
-              uploadSource.value = new VectorSource({ wrapX: false, zIndex: 10 });
-            }
-            if (!unref(uploadCluster)) {
-              uploadCluster.value = new VectorCluster({
-                distance: 20,
-                minDistance: 10,
-                source: unref(uploadSource),
-                geometryFunction: geometryFunction,
-              })
-            }
-            uploadVector.value = new VectorImageLayer({
-              source: unref(uploadCluster),
-              style: clusterStyleFunction,
+            const time = new Date().toLocaleString();
+            uploadList.value.push({
+              id: time,
+              file: file,
+              projection: dataProjection,
             });
-            unref(uploadVector).set('id-upload', time);
-            unref(map).addLayer(unref(uploadVector));
-            unref(uploadVector).on('postrender', () => {
-              $q.loading.hide()
-            });
+            if (!unref(uploadVector)) {
+              if (!unref(uploadSource)) {
+                uploadSource.value = new VectorSource({ wrapX: false, zIndex: 10 });
+              }
+              if (!unref(uploadCluster)) {
+                uploadCluster.value = new VectorCluster({
+                  distance: 30,
+                  minDistance: 30,
+                  source: unref(uploadSource),
+                  geometryFunction: geometryFunction,
+                })
+              }
+              uploadVector.value = new VectorImageLayer({
+                source: unref(uploadCluster),
+                style: clusterStyleFunction,
+              });
+              unref(uploadVector).set('id-upload', time);
+              unref(map).addLayer(unref(uploadVector));
+              unref(uploadVector).on('postrender', () => {
+                $q.loading.hide()
+              });
 
+            }
+            unref(uploadSource).addFeatures(listGeojsonFormat);
+            uploadVector.value = null;
+            uploadSource.value = null;
+            uploadCluster.value = null;
           }
-          unref(uploadSource).addFeatures(listGeojsonFormat);
-          uploadSource.value = null;
-          uploadVector.value = null;
-        }
-      });
+        });
+      } catch (e) {
+        console.log(e)
+        $q.loading.hide()
+      }
     };
 
     const clusterStyleFunction = function (feature, resolution) {
@@ -263,12 +265,12 @@ export default defineComponent({
         style = [
           style = new Style({
             image: new CircleStyle({
-              radius: 5,
+              radius: 10,
               stroke: new Stroke({
                 color: "#008080",
               }),
               fill: new Fill({
-                color: 'rgb(0,128,128, 0.4)'
+                color: '#008080'
               }),
             }),
           }),
@@ -289,11 +291,11 @@ export default defineComponent({
         styleCache[size] = style;
       } else {
         style = []
-        const features = feature?.get?.("features") || [new Feature()]
+        const features = feature?.get?.("features") || [feature]
         features.forEach((f) => {
           const colorFill = 'rgb(0,128,128, 0.4)'
-          const colorStroke = f.originStyle ? "BLUE" : "#008080"
-          let widthStroke = f.originStyle ? 3 : 0.25
+          const colorStroke = f?.originStyle ? "BLUE" : "#008080"
+          let widthStroke = f?.originStyle ? 3 : 2
           if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
           const defaultStyle = new Style({
             stroke: new Stroke({
@@ -367,14 +369,20 @@ export default defineComponent({
     const removeEvent = async (files) => {
       files.forEach(async (file) => {
         const layerIndex = unref(uploadList).findIndex(
-          (u) => u.file === file
+          (u) => u.file.__key === file.__key
         );
         if (layerIndex !== -1) {
           const layer = unref(map).getLayers().getArray().find((l) => l.get('id-upload') === unref(uploadList)[layerIndex].id)
           unref(map).removeLayer(layer)
+          unref(uploadList).splice(layerIndex, 1)
         }
       });
     };
+
+    const removeAllFiles = () => {
+      unref(uploaderRef)?.removeQueuedFiles();
+    }
+    $bus.on('remove-all-files', removeAllFiles)
 
     const onRejected = (rejectedEntries) => {
       switch (rejectedEntries[0].failedPropValidation) {
@@ -395,66 +403,42 @@ export default defineComponent({
       }
     };
 
+    const saveFile = async () => {
+      const selectedFiles = unref(uploadList).filter((up) => unref(checkboxList).includes(up.file.__key))
+      console.log(selectedFiles)
+    }
+
     const detailFile = async (index) => {
       const layer = unref(map).getLayers().getArray().find((l) => {
         if (l instanceof VectorImageLayer && l.get('id-upload') === unref(uploadList)[index].id)
           return l
       })
       if (layer) {
-        // const _extent = createEmpty();
-        // layer.getSource().getSource().getFeatures().forEach((f) => {
-        //   extend(_extent, f.getGeometry().getExtent())
-        // });
-        // const extent = transformExtent(_extent, unref(uploadList)[index].projection, unref(map).getView().getProjection().getCode())
-        unref(map).getView().fit(layer.getSource().getExtent(), {
+        let _extent = createEmpty();
+        const features = layer.getSource().getSource().getFeatures()
+        if (features.length > 1)
+          _extent = layer.getSource().getExtent()
+        else {
+          features.forEach((f) => {
+            extend(_extent, f.getGeometry().getExtent())
+          });
+          _extent = transformExtent(_extent, unref(uploadList)[index].projection, unref(map).getView().getProjection().getCode())
+        }
+        unref(map).getView().fit(_extent, {
           duration: 1000,
-          padding: [250, 250, 250, 250],
-          maxZoom: 12,
+          padding: [100, 100, 100, 100],
         })
       }
-      // const feature = unref(uploadSource).getFeatureById(
-      //   unref(uploadList)[index].id
-      // );
-      // if (feature) {
-      //   const coordinate = feature.getGeometry().getLastCoordinate();
-      //   const extent = feature.getGeometry().getExtent();
-      //   const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
-      //   unref(map)
-      //     .getView()
-      //     .fit(extent, {
-      //       padding: [100, 100, 200, 300],
-      //       duration: 100,
-      //     });
-      //   setTimeout(() => {
-      //     const coordinateText = toStringHDMS(
-      //       transform(
-      //         coordinate,
-      //         unref(map).getView().getProjection().getCode(),
-      //         "EPSG:3857"
-      //       )
-      //     );
-      //     captureScreenshot().then((response) => {
-      //       $bus.emit("on-show-detail", {
-      //         title: unref(uploadList)[index].file.name,
-      //         type: LAYER_TYPE[1],
-      //         content: geoJsonData,
-      //         image: response,
-      //         coordinate: coordinateText,
-      //       });
-      //       unref(map)
-      //         .getView()
-      //         .fit(extent, {
-      //           padding: [100, 100, 100, 100],
-      //           duration: 500,
-      //         });
-      //     });
-      //     $bus.emit("on-show-detail", { content: geoJsonData });
-      //   }, 150);
-      // }
     };
+
+    onUnmounted(() => {
+      $bus.off('remove-all-files')
+    })
 
     return {
       uploaderRef,
+      uploadList,
+      checkboxList,
       map,
       location,
       checkFileType,
@@ -462,6 +446,7 @@ export default defineComponent({
       removeEvent,
       onRejected,
       detailFile,
+      saveFile,
     };
   },
 });

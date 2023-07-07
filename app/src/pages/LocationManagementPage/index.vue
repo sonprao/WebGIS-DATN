@@ -290,8 +290,8 @@ export default defineComponent({
     const locationRows = ref([]);
     const projections = ref([]);
     const workspaces = ref([]);
-    onMounted(async () => {
-      await getAll();
+    onMounted(() => {
+      getAll();
       getAllProjection()
         .then((response) => {
           projections.value = response.data;
@@ -301,6 +301,8 @@ export default defineComponent({
         });
       getWorkspace().then((response) => {
         workspaces.value = response?.workspaces?.workspace || response?.workspace || response?.workspaces
+      }).catch(() => {
+        workspaces.value = [];
       })
     });
 
