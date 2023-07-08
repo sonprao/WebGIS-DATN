@@ -150,7 +150,7 @@ export default defineComponent({
       } else {
         update(async () => {
           const query = {
-            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
+            search: val,
           };
           const response = await getAllLocation(query);
           LocationOptions.value = response.data;
@@ -279,8 +279,6 @@ export default defineComponent({
       const feature = {
         properties: JSON.stringify(props.content || null),
       };
-      console.log(props.content);
-      console.log(unref(layerRadio));
       const response = await createFeature({
         features: [feature],
         layerId: unref(layerRadio).id,

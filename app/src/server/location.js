@@ -118,11 +118,6 @@ module.exports = {
           OR: [
             {
               name: {
-                search: search,
-              },
-            },
-            {
-              name: {
                 contains: search,
               },
             },
@@ -134,6 +129,11 @@ module.exports = {
             {
               name: {
                 equals: search || undefined,
+              },
+            },
+            {
+              name: {
+                search: search,
               },
             },
           ],
