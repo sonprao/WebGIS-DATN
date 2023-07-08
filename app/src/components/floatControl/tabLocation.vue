@@ -24,7 +24,9 @@
               <q-separator />
             </template>
             <q-card style="margin:0 10px">
-              <q-input bottom-slots v-model="dataLayers.search" label="filter feature">
+              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  label="Properties filter" />
+              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable label="Select operator" option-label="name" option-value="function"/>
+              <q-input  v-model="item.search" clearable bottom-slots label="Feature filter">
                 <template v-slot:after>
                   <q-btn round dense flat icon="search" @click="searchCQL(index)"/>
                 </template>
@@ -62,7 +64,8 @@ import { register } from "ol/proj/proj4";
 import _difference from "lodash/difference";
 import _debounce from "lodash/debounce";
 import _isEmpty from "lodash/isEmpty";
-import { MAP_LAYERS } from "src/constants/layer.js";
+import _isFunction from "lodash/isFunction";
+import { MAP_LAYERS, CQL_OPERATORS } from "src/constants/layer.js";
 import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 import {
   actionAddLayerGeoJSON,
@@ -174,9 +177,20 @@ export default defineComponent({
         });
     };
 
+    const updateCQL = (val, index) => {
+      dataLayers.value[index].search = val
+    }
     const searchCQL = (index) => {
       const a = unref(dataLayers)[index]
-      console.log(a)
+      if (_isFunction(a?.operator?.function) && a?.propertiesCQL) {
+        a.vectorLayer.getSource().updateParams({
+          "CQL_FILTER": a.operator.function(a.propertiesCQL, a.search)
+        })
+      } else {
+        a.vectorLayer.getSource().updateParams({
+          "CQL_FILTER": null,
+        })
+      } 
     }
 
     onMounted(() => {
@@ -202,6 +216,12 @@ export default defineComponent({
                   workspace,
                   map,
                 });
+                fetch(
+                  `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
+                ).then((response) => response.json()).then((response) => {
+                  const fetchColumn = response?.features?.[0]?.properties || {}
+                  currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
+                })                
               }
             });
           } else {
@@ -239,8 +259,10 @@ export default defineComponent({
       selectAll,
       actionFocusLayer,
       onScroll,
+      updateCQL,
       searchCQL,
       SCROLL_STYLE,
+      CQL_OPERATORS: CQL_OPERATORS,
     };
   },
 });
