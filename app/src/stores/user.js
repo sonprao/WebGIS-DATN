@@ -67,7 +67,6 @@ export const useUserStore = defineStore('user', {
           profile: userData,
         })
         this.user = responseData
-        console.log("SONDXM", this.user);
         this.isLogin = true
         return responseData
       } catch {

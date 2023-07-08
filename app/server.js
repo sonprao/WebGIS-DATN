@@ -81,6 +81,7 @@ app.post('/api/projections', projectionAPI.create)
 app.put('/api/projections/:id', projectionAPI.update)
 // workspace
 app.get('/api/workspaces', workspaceAPI.getWorkspace)
+app.post('/api/workspaces/sync', workspaceAPI.syncWorkspace)
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server started on port ${process.env.PORT || 3000}`)
 })

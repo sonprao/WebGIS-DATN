@@ -85,13 +85,11 @@ class GeoLocationController {
     if (!geolocation?.getPosition()) {
       geolocation.setTracking(true);
       geolocation.on("change:accuracyGeometry", function () {
-        console.log('acc')
         accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
       });
       geolocation.on(
         "change:position",
         function () {
-        console.log('pos')
           const coordinates = geolocation.getPosition();
           positionFeature.setGeometry(
             coordinates ? new Point(coordinates) : null

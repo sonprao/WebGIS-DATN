@@ -72,7 +72,7 @@ export default defineComponent({
       } else {
         update(async () => {
           const query = {
-            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
+            search: val,
           };
           const response = await getAllLocation(query);
           options.value = response.data;

@@ -81,17 +81,35 @@ export default defineComponent({
       rowsNumber: 21,
       count: 21,
     })
-    const onSearch = async () => {
-      const response = await getLayerByLocation({
-        locationId: unref(location).id,
-        per_page: unref(layerPagination).rowsPerPage,
-        page: 1,
-        search: unref(searchLayer),
-      })
-      if (response) {
-        dataLayers.value = response.data;
-        layerPagination.value.page = response.page;
-        layerPagination.value.rowsPerPage = response.per_page;
+    const onSearch = async (val) => {
+      if (!val) {
+        dataLayers.value = unref(defaultOptions)
+        layerPagination.value = {
+          page: 1,
+          rowsPerPage: 20,
+          rowsNumber: 21,
+          count: 21,
+        }
+        return
+      }
+      const _val = val.toLowerCase()
+      const _tempData = unref(defaultOptions).filter(
+        (opt) => opt.name.toLowerCase().includes(_val))
+      if (_tempData.length) {
+        dataLayers.value = _tempData
+      } else {
+        const response = await getLayerByLocation({
+          locationId: unref(location).id,
+          per_page: unref(layerPagination).rowsPerPage,
+          page: 1,
+          search: unref(searchLayer),
+        })
+        if (response) {
+          dataLayers.value = response.data;
+          layerPagination.value.rowsNumber = 21;
+          layerPagination.value.page = 1;
+          layerPagination.value.rowsPerPage = response.per_page;
+        }
       }
     }
     const onScroll = _debounce(
@@ -170,7 +188,7 @@ export default defineComponent({
                 unref(map).addLayer(currentLayer.vectorLayer)
                 // layer.vectorLayer?.setVisible?.(true);
               } else {
-                currentLayer.vectorLayer = actionAddLayerGeoJSON({
+                currentLayer.vectorLayer = actionAddLayerWMS({
                   layer,
                   workspace,
                   map,

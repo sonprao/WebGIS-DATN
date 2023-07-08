@@ -8,7 +8,10 @@
         <FloatSearch data-html2canvas-ignore />
         <FloatZoom data-html2canvas-ignore />
       </div>
-      </q-page-sticky>
+    </q-page-sticky>
+    <q-page-sticky class="stickyClass" position="bottom" :offset="[10, 10]">
+      <div v-html="imageHTML" />
+    </q-page-sticky>
     <FloatDetail v-if="showDetail" data-html2canvas-ignore v-model="showDetail" v-bind="floatDetailProps"
       @update:model-content="floatDetailProps.content = $event" />
   </div>
@@ -27,7 +30,13 @@ import { Fill, Stroke, Style } from "ol/style";
 import { writeGeoJSON } from "src/utils/openLayers";
 import GeoJSON from "ol/format/GeoJSON";
 import { OSM } from "ol/source";
-import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
+import {
+  Tile as TileLayer,
+  Vector as VectorLayer,
+  Image as ImageLayer,
+  VectorImage as VectorImageLayer
+} from "ol/layer";
+import VectorSource from "ol/source/Vector";
 import { Point } from "ol/geom";
 import { unByKey } from "ol/Observable";
 import { scaleControl } from "src/utils/openLayers";
@@ -62,6 +71,7 @@ import { FeatureUtils, distanceBetweenPoints } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { LAYER_TYPE } from "src/constants/enum";
+// import fetch from "node-fetch";
 
 export default defineComponent({
   name: "IndexPage",
@@ -87,6 +97,19 @@ export default defineComponent({
       id: null,
       coordinate: null,
     });
+    const imageHTML = ref(null);
+    const layerForImage = ref(new VectorLayer({
+      source: new VectorSource(),
+      style: new Style({
+        stroke: new Stroke({
+          color: "BLUE",
+          width: 3,
+        }),
+      }),
+      zIndex: 2,
+    }
+    ));
+    unref(layerForImage).set("id", "selected-layer")
     const onShowDetail = (option) => {
       const {
         content,
@@ -144,7 +167,7 @@ export default defineComponent({
         if (lastLayer) lastLayer?.changed?.();
         unref(selectedObject).lastFeature = null;
         unByKey(unref(popupEvent));
-        unByKey(unref(pointermoveEvent));
+        popupEvent.value = false;
         unref(overlay).setPosition(undefined); //obsolete
       } else if (_isEmpty(unref(popupEvent))) {
         initPopupEvent()
@@ -152,6 +175,14 @@ export default defineComponent({
     };
     $bus.on("close-popup", closePopup);
     const actionClosePopup = () => {
+      floatDetailProps.value = {
+        title: null,
+        image: "images/No-image-available.png",
+        content: {},
+        type: LAYER_TYPE[0],
+        id: null,
+        coordinate: null,
+      };
       const lastFeature = unref(selectedObject).lastFeature;
       const lastLayer = unref(selectedObject).lastLayer;
       if (lastFeature) lastFeature.originStyle = false;
@@ -174,7 +205,7 @@ export default defineComponent({
     }, 200);
 
     const getFeatureUpload = (feature) => {
-      const objData = JSON.parse(writeGeoJSON({feature, map: unref(map)}))
+      const objData = JSON.parse(writeGeoJSON({ feature, map: unref(map) }))
       // const objData = feature?.getProperties()
       // let properties = {}
       // if (objData?.hasOwnProperty('properties')) {
@@ -189,7 +220,7 @@ export default defineComponent({
       onShowDetail({
         content: objData,
       });
-      }
+    }
 
     const styleChangeListener = function (feature) {
       feature.on("change", function (event) {
@@ -232,6 +263,9 @@ export default defineComponent({
         );
         unref(map).forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
           if (!layer || layer instanceof VectorLayer) return feature;
+          if (layer.get("id-upload")) {
+            floatDetailProps.value.type = LAYER_TYPE[1]
+          }
           layer.getFeatures(evt.pixel).then((response) => {
             const _extent = createEmpty();
             extend(_extent, feature);
@@ -263,44 +297,82 @@ export default defineComponent({
                     duration: 500,
                     padding: [50, 50, 50, 50],
                   });
-                  const featureId = f.getId();
-                  const dataFeature = FeatureUtils.getDataOfFeature(
-                    f,
-                    layer
-                  );
-                  const coordinate = evt.coordinate;
-                  dataFeature.setLocation(coordinate);
-                  // set float detail
-                  if (featureId) getFeatureAPI(featureId);
-                  else getFeatureUpload(f);
-                  // screenshot
-                  floatDetailProps.value.title = dataFeature.name;
-                  floatDetailProps.value.coordinate = toStringHDMS(
-                    transform(
-                      coordinate,
-                      unref(map).getView().getProjection().getCode(),
-                      "EPSG:4326"
-                    )
-                  ).replace("N ", "N\n");
-                  setTimeout(() => {
-                    captureScreenshot().then((response) => {
-                      floatDetailProps.value.image = response;
-                    });
-                  }, 800);
-                  // set float detail
+                const featureId = f.getId();
+                const dataFeature = FeatureUtils.getDataOfFeature(
+                  f,
+                  layer
+                );
+                const coordinate = evt.coordinate;
+                dataFeature.setLocation(coordinate);
+                // set float detail
+                if (featureId) getFeatureAPI(featureId);
+                else getFeatureUpload(f);
+                // screenshot
+                floatDetailProps.value.title = dataFeature.name;
+                floatDetailProps.value.coordinate = toStringHDMS(
+                  transform(
+                    coordinate,
+                    unref(map).getView().getProjection().getCode(),
+                    "EPSG:4326"
+                  )
+                ).replace("N ", "N\n");
+                setTimeout(() => {
+                  captureScreenshot().then((response) => {
+                    floatDetailProps.value.image = response;
+                  });
+                }, 800);
+                // set float detail
               } else {
-                 showDetail.value = false;
-                 actionClosePopup();
-               }
+                showDetail.value = false;
+                actionClosePopup();
+              }
             });
           });
         });
+        unref(map).getLayers().getArray().forEach((layer) => {
+          if (layer instanceof ImageLayer) {
+            const url = layer.getSource().getFeatureInfoUrl(
+              evt.coordinate,
+              unref(map).getView().getResolution(),
+              'EPSG:5899',
+              { 'INFO_FORMAT': 'application/json' }
+            )
+            if (url) {
+              fetch(url)
+                .then((response) => response.text())
+                .then((html) => {
+                  const features = new GeoJSON().readFeatures(html)
+                  if (features.length) {
+                    unref(layerForImage).getSource().clear()
+                    const isSelected = unref(layerForImage).getSource().getFeatures()
+                    if (isSelected.some((f) => f?.getId?.() === features[0].getId?.()))
+                      return
+                    unref(layerForImage).getSource().addFeatures(features)
+                    unref(map).getView().fit(
+                      features[0].getGeometry().getExtent(),
+                      {
+                        duration: 800,
+                        padding: [100, 100, 100, 100],
+                      }
+                    )
+                    // const props = features[0].getProperties()
+                    // delete props.geometry
+                    if (features[0].getId?.()) getFeatureAPI(features[0].getId?.());
+                    setTimeout(() => {
+                      captureScreenshot().then((response) => {
+                        floatDetailProps.value.image = response;
+                      });
+                    }, 1500);
+                    // onShowDetail({
+                    //   content: props,
+                    // });
+                  }
+                  // imageHTML.value = html;
+                });
+            }
+          }
+        })
       });
-      pointermoveEvent.value = unref(map).on("pointermove", (function (e) {
-        // const pixel = unref(map).getEventPixel(e.originalEvent);
-        const hit = unref(map).hasFeatureAtPixel(e.pixel);
-        unref(map).getViewport().style.cursor = hit ? "pointer" : "";
-      }));
     };
     // popup
 
@@ -310,11 +382,6 @@ export default defineComponent({
      */
     const map = ref(null);
     provide("map", map);
-    // const projection = new Projection({
-    //   code: 'EPSG:4326',
-    //   // extent: [-180, -90, 180, 90],
-    //   units: 'degrees',
-    // });
     const view = ref(
       new View({
         zoom: 0,
@@ -330,13 +397,13 @@ export default defineComponent({
         overlays: [unref(overlay)],
         layers: [
           new TileLayer({
-            source: new OSM(), // tiles are served by OpenStreetMap
+            source: new OSM(),
           }),
         ],
-        // the map view will initially show the whole world
         view: unref(view),
       });
       initPopupEvent();
+      unref(map).addLayer(unref(layerForImage))
     });
     onUnmounted(() => {
       $bus.off("close-popup");
@@ -350,8 +417,10 @@ export default defineComponent({
       view,
       showDetail,
       floatDetailProps,
+      imageHTML,
       popupRef,
       popupCloser,
+      popupEvent,
       actionClosePopup,
       popupContent,
       closePopup,

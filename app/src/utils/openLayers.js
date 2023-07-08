@@ -66,10 +66,6 @@ const getText = function (feature, resolution, dom) {
   } else if (type == "shorten") {
     text = text.trunc(12);
   }
-  // else if (type == 'wrap') {
-  //   text = stringDivider(text, 16, '\n');
-  // }
-
   return text;
 };
 
@@ -77,7 +73,6 @@ export const createTextStyle = function (feature, resolution, dom) {
   const size = "12px";
   const height = 1;
   const weight = "bold";
-  // const maxAngle = dom.maxangle ? parseFloat(dom.maxangle.value) : undefined;
   const overflow = "true";
   // if (dom.font.value == "'Open Sans'" && !openSansAdded) {
   //   const openSans = document.createElement('link');
@@ -367,9 +362,6 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     format: new GeoJSON(),
     url: getGeoJsonUrl(workspace, layer.url),
   });
-  source.once('change', (evt) => {
-    console.log(evt)
-  })
 
   const clusterSource = new Cluster({
     distance: 20,
@@ -403,18 +395,14 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       }
       if (jsonData?.hasOwnProperty('features')) {
         const feature = new GeoJSON().readFeatures(jsonData);
-        console.log(feature)
         feature.forEach((f) => {
           f.getGeometry().transform(dataProjection, defaultProjection)
           f.setId(res.name);
         })
-        // source.addFeatures(feature);
-        // source.addFeatures(feature);
         listExternalFeatures.push([...feature]);
       } else {
         const feature = new GeoJSON().readFeature(jsonData);
         feature.set('id', res.name);
-        // source.addFeatures([feature]);
         listExternalFeatures.push(feature);
       }
     });
@@ -422,24 +410,6 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     source.addFeatures(listExternalFeatures.flat());
     Loading.hide()
   })
-
-    // console.log(response)
-    // change
-    // vectorSource.once("change", () => {
-    //   if (vectorSource instanceof Cluster) {
-    //     vectorSource.getSource().getFeatures().forEach((feature) => {
-    //     const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
-    //     feature.setStyle(style);
-    //     FeatureUtils.setStyleBySoilType(feature);
-    //   });
-    //   } else if (vectorSource instanceof VectorSource) {
-    //     vectorSource.getFeatures().forEach((feature) => {
-    //       const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
-    //       feature.setStyle(style);
-    //       FeatureUtils.setStyleBySoilType(feature);
-    //     });
-    //   }
-    // });
   });
   return vectorLayer;
 };
@@ -450,22 +420,23 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const wmsSource = new TileWMS({
+  const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
       FORMAT: "image/png",
+      // CQL_FILTER: "SoilTypeId=0"
     },
+    crossOrigin: "anonymous",
     serverType: "geoserver",
   });
 
   // Create a new Image layer
-  const imageLayer = new TileLayer({
+  const imageLayer= new Image({
     source: wmsSource,
-    extent: transformExtent(),
   });
   unref(map).addLayer(imageLayer);
-  return imageLayer;
+  return imageLayer
 };
 
 export const writeGeoJSON = (option) => {

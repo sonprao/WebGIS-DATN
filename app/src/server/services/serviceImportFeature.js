@@ -1,8 +1,15 @@
 const dotenv = require('dotenv').config();
-const { PrismaClient } = require("@prisma/client");
 const fetch = require("node-fetch");
-const prisma = new PrismaClient();
 const baseUrl = dotenv.parsed.GEO_SERVER_URL;
+const username = dotenv.parsed.GEO_SERVER_ADMIN;
+const password = dotenv.parsed.GEO_SERVER_PASSWORD;
+// const relativeUrl = '/rest/workspaces.json';
+// const url = `${baseUrl}${relativeUrl}`
+const encodedCredentials = Buffer.from(`${username}:${password}`).toString(
+  "base64"
+);
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 module.exports = {
   updateFeature: async (req, res) => {
@@ -21,6 +28,7 @@ module.exports = {
           method: "GET",
           headers: {
             Accept: "application/json",
+            "Authorization": `Basic ${encodedCredentials}`,
           },
         }
       )

@@ -259,12 +259,12 @@ export default defineComponent({
     };
     const style1 = new Style({
       image: new CircleStyle({
-        radius: 20,
-        // stroke: new Stroke({
-        //   color: "rgb(232, 232, 232)",
-        // }),
+        radius: 10,
+        stroke: new Stroke({
+          color: "#008080",
+        }),
         fill: new Fill({
-          color: "rgb(255,0,0, 0.1)",
+          color: "#008080",
         }),
       }),
     });
@@ -272,26 +272,15 @@ export default defineComponent({
     const style2 = new Style({
       image: new CircleStyle({
         radius: 10,
-        // stroke: new Stroke({
-        //   color: "rgb(255,0,0, 0.5)",
-        // }),
+        stroke: new Stroke({
+          color: "#008080",
+        }),
         fill: new Fill({
-          color: "#fff",
+          color: 'rgb(0,128,128, 0.4)',
         }),
       }),
     });
 
-    const style3 = new Style({
-      image: new CircleStyle({
-        radius: 5,
-        stroke: new Stroke({
-          color: "rgb(255,0,0, 0.5)",
-        }),
-        fill: new Fill({
-          color: "#fff",
-        }),
-      }),
-    })
     const clusterStyleFunction = function (feature, resolution) {
       const size = feature?.get?.("features")?.length || 2;
       let style = styleCache[size];
@@ -326,59 +315,6 @@ export default defineComponent({
       }
       return style;
     };
-
-    const styleDefault = {
-      fill: new Fill({
-        color: 'rgb(0,128,128, 0.4)'
-      }),
-      stroke: new Stroke({
-        color: '#008080',
-        width: 2,
-      }),
-    }
-    const zoomedStyle20 = new Style({
-      ...styleDefault
-    });
-
-    const zoomedStyle150 = new Style({
-      ...styleDefault,
-      image: new CircleStyle({
-        radius: 10,
-        fill: new Fill({
-          color: 'rgb(0,128,128, 0.4)'
-        }),
-        stroke: new Stroke({
-          color: '#008080',
-          width: 2,
-        }),
-      }),
-      geometry: function (feature) {
-        const geom = feature.getGeometry()
-        const type = geom.getType()
-        if (type === "Polygon") return geom;
-        else if (type === "MultiPolygon") return geom.getInteriorPoints();
-        else if (type === "MultiPoint") return geom.getPoint(0);
-        else if (type === "Point") return geom;
-      }
-    });
-
-    const zoomedOutStyle = new Style({
-      ...styleDefault,
-      image: new CircleStyle({
-        radius: 7,
-        fill: new Fill({
-          color: '#008080'
-        }),
-      }),
-      geometry: function (feature) {
-        const geom = feature.getGeometry()
-        const type = geom.getType()
-        if (type === "Polygon") return geom;
-        else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
-        else if (type === "MultiPoint") return geom.getPoint(0);
-        else if (type === "Point") return geom;
-      }
-    });
 
     const removeEvent = async (files) => {
       files.forEach(async (file) => {
@@ -419,7 +355,6 @@ export default defineComponent({
 
     const saveFile = async () => {
       const selectedFiles = unref(uploadList).filter((up) => unref(checkboxList).includes(up.file.__key))
-      console.log(selectedFiles)
     }
 
     const detailFile = async (index) => {

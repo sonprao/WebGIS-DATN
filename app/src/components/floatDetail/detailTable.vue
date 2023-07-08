@@ -93,7 +93,7 @@ export default defineComponent({
         }
         return {
           name: i[0],
-          value,
+          value: decodeURIComponent(escape(value)),
         }
       })
     );
@@ -151,9 +151,9 @@ export default defineComponent({
               let value = ''
               if (i[1]) {
                 if (typeof i[1] === 'string') {
-                  value = i[1]
+                  value = decodeURIComponent(escape(i[1]))
                 } else {
-                  value = JSON.stringify(i[1])
+                  value = decodeURIComponent(escape(JSON.stringify(i[1])))
                   type = 'object'
                 }
               }

@@ -72,7 +72,6 @@ export default defineComponent({
       }
     };
     const updateModel = (val) => {
-      console.log(val);
     };
 
     return {
