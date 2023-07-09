@@ -161,6 +161,7 @@ export default defineComponent({
 
     const closePopup = (state) => {
       if (state === true) {
+        unref(layerForImage).getSource().clear();
         const lastFeature = unref(selectedObject).lastFeature;
         const lastLayer = unref(selectedObject).lastLayer;
         if (lastFeature) lastFeature.originStyle = false;
@@ -175,6 +176,9 @@ export default defineComponent({
     };
     $bus.on("close-popup", closePopup);
     const actionClosePopup = () => {
+      // when close popup, clear the vectorforImage
+      unref(layerForImage).getSource().clear();
+      showDetail.value = false;
       floatDetailProps.value = {
         title: null,
         image: "images/No-image-available.png",
@@ -323,13 +327,11 @@ export default defineComponent({
                 }, 800);
                 // set float detail
               } else {
-                showDetail.value = false;
                 actionClosePopup();
               }
             });
           });
         });
-        unref(layerForImage).getSource().clear()
         unref(map).getLayers().getArray().forEach((layer) => {
           if (layer instanceof ImageLayer) {
             const url = layer.getSource().getFeatureInfoUrl(
@@ -344,10 +346,12 @@ export default defineComponent({
                 .then((html) => {
                   const features = new GeoJSON().readFeatures(html)
                   if (features.length) {
-                    unref(layerForImage).getSource().clear()
                     const isSelected = unref(layerForImage).getSource().getFeatures()
-                    if (isSelected.some((f) => f?.getId?.() === features[0].getId?.()))
-                      return
+                    console.log(unref(layerForImage), features)
+                    if (isSelected.some((f) => f?.getId?.() === features[0].getId?.())) {
+                      actionClosePopup();
+                      return;
+                    }
                     unref(layerForImage).getSource().addFeatures(features)
                     unref(map).getView().fit(
                       features[0].getGeometry().getExtent(),
