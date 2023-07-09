@@ -65,6 +65,7 @@ export default defineComponent({
     const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
       if (val.length < 2) {
+        // abort();
         update(async () => {
           options.value = unref(defaultOptions);
         });
@@ -134,6 +135,7 @@ export default defineComponent({
       mapStore.setLocation({
         location: {},
       });
+      $bus.emit("on-update-geolocation");
       $bus.emit("on-delete-draw");
       $bus.emit("remove-all-files");
     }
@@ -214,4 +216,11 @@ body {
   }
 }
 
+// .q-field__native .q-placeholder {
+//   color: black;
+
+//   &:focus {
+//     color: black;
+//   }
+// }
 </style>

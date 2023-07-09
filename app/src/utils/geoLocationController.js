@@ -10,7 +10,6 @@ import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
 import { useLocationStore } from "stores/location";
-
 class GeoLocationController {
   constructor(option = {}) {
     this.map = option.map;
