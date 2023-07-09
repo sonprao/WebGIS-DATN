@@ -416,11 +416,6 @@ export default defineComponent({
                 image: response,
                 coordinate: coordinate,
               });
-              // zoomToDraw(
-              //   unref(drawList)[index].position,
-              //   1000,
-              //   [100, 100, 100, 100]
-              // );
             });
             $bus.emit("on-show-detail", { content: geoJsonData });
           }, 500);

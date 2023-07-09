@@ -5,7 +5,7 @@
     </q-card-section>
     <q-card-section>
       <q-select class="searchClass" ref="locationSearchRef" v-model="locationSearch" outlined bg-color="white"
-        color="teal" use-input hide-dropdown-icon input-debounce="400" label="Select location" option-label="name"
+        color="teal" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')" option-label="name"
         option-value="name" :options="LocationOptions" @filter="filterFn" @update:model-value="locationSetModel">
         <template v-slot:append>
           <q-icon name="search" color="teal" />
@@ -143,7 +143,6 @@ export default defineComponent({
     const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
       if (val.length < 2) {
-        // abort();
         update(async () => {
           LocationOptions.value = unref(defaultOptions);
         });
@@ -331,15 +330,10 @@ body {
 .popupCardClass {
   min-width: 50vh;
   max-width: fit-content;
-  // max-height: 90vh;
 }
 
 .tableClass {
   max-height: 406px;
-  // width: 390px;
-  // max-width: 390px;
-  // width: 98%;
-  // max-width: 98%;
 }
 
 .captionClass {
@@ -353,10 +347,7 @@ body {
   max-height: 390px;
   max-width: 400px;
 
-  .q-scrollarea__content.absolute {
-    // display: flex;
-    // flex-direction: column-reverse;
-  }
+  // .q-scrollarea__content.absolute {  }
 }
 
 ::-webkit-scrollbar {

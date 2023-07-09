@@ -23,13 +23,17 @@ module.exports = {
    *         description: Invalid request
    */
   create: async (req, res) => {
-    const response = await prisma.projection.create({
-      data: {
-        name: req.body.name || "",
-        definition: req.body.description || "",
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.projection.create({
+        data: {
+          name: req.body.name || "",
+          definition: req.body.description || "",
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Propjection create attemp failed!"})
+    }
   },
   /**
    * @swagger
@@ -53,22 +57,30 @@ module.exports = {
    */
   get: async (req, res) => {
     const { id } = req.params;
-    const response = await prisma.projection.findUnique({
-      where: {
-        id: parseInt(id),
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.projection.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Cannot find the projection!"})
+    }
   },
 
   getbyName: async (req, res) => {
     const { name } = req.params;
-    const response = await prisma.projection.findUnique({
-      where: {
-        name,
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.projection.findUnique({
+        where: {
+          name,
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Cannot find the projection!"})
+    }
   },
   /**
    * @swagger
@@ -98,16 +110,20 @@ module.exports = {
    */
   update: async (req, res) => {
     const { id } = req.params;
-    const response = await prisma.projection.update({
-      where: {
-        id: parseInt(id),
-      },
-      data: {
-        name: req.body.name || undefined,
-        definition: req.body.definition || undefined,
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.projection.update({
+        where: {
+          id: parseInt(id),
+        },
+        data: {
+          name: req.body.name || undefined,
+          definition: req.body.definition || undefined,
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Projection update attempt failed!"})
+    }
   },
 
   /**
@@ -140,62 +156,66 @@ module.exports = {
   getAll: async (req, res) => {
     const { page = 1, per_page: _per_page, search = "" } = req.query;
     let per_page = 10;
-    if (!_per_page) per_page = await prisma.projection.count()
-    const [count, data] = await prisma.$transaction([
-      prisma.projection.count({
-        where: {
-          OR: [
-            {
-              name: {
-                contains: search,
+    try {
+      if (!_per_page) per_page = await prisma.projection.count()
+      const [count, data] = await prisma.$transaction([
+        prisma.projection.count({
+          where: {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                },
               },
-            },
-            {
-              name: {
-                in: search || undefined,
+              {
+                name: {
+                  in: search || undefined,
+                },
               },
-            },
-            {
-              name: {
-                equals: search || undefined,
+              {
+                name: {
+                  equals: search || undefined,
+                },
               },
-            },
-          ],
-        },
-      }),
-      prisma.projection.findMany({
-        skip: (parseInt(page) - 1) * parseInt(per_page),
-        take: parseInt(per_page),
-        where: {
-          OR: [
-            {
-              name: {
-                contains: search,
+            ],
+          },
+        }),
+        prisma.projection.findMany({
+          skip: (parseInt(page) - 1) * parseInt(per_page),
+          take: parseInt(per_page),
+          where: {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                },
               },
-            },
-            {
-              name: {
-                in: search || undefined,
+              {
+                name: {
+                  in: search || undefined,
+                },
               },
-            },
-            {
-              name: {
-                equals: search || undefined,
+              {
+                name: {
+                  equals: search || undefined,
+                },
               },
-            },
-          ],
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-      }),
-    ]);
-    res.json({
-      count,
-      data,
-      per_page: parseInt(per_page),
-      page: parseInt(page),
-    });
+            ],
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        }),
+      ]);
+      res.json({
+        count,
+        data,
+        per_page: parseInt(per_page),
+        page: parseInt(page),
+      });
+    } catch {
+      res.status(400).json({message: "Cannot find any projections!"})
+    }
   },
 
   /**
@@ -213,11 +233,15 @@ module.exports = {
    */
   delete: async (req, res) => {
     const { name } = req.params;
-    const response = await prisma.projection.delete({
-      where: {
-        name,
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.projection.delete({
+        where: {
+          name,
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Projection delete attempt failed!"})
+    }
   },
 };

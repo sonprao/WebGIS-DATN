@@ -2,7 +2,7 @@
   <div>
     <q-input v-if="defaultOptions.length > 0" debounce="300" class="searchClass" :label="$t('Search layer')"
       v-model="searchLayer" @update:model-value="onSearch" />
-    <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" label="Select All"
+    <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" :label="$t('Select All')"
       @update:model-value="selectAll" />
     <q-list overlay>
       <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
@@ -24,16 +24,15 @@
               <q-separator />
             </template>
             <q-card style="margin:0 10px">
-              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  label="Properties filter" />
-              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable label="Select operator" option-label="name" option-value="function"/>
-              <q-input  v-model="item.search" clearable bottom-slots label="Feature filter">
+              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  :label="$t('Properties filter')" />
+              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable :label="$t('Select operator')" option-label="name" option-value="function"/>
+              <q-input  v-model="item.search" clearable bottom-slots :label="$t('Feature filter')">
                 <template v-slot:after>
                   <q-btn round dense flat icon="search" @click="searchCQL(index)"/>
                 </template>
               </q-input>
             </q-card>
           </q-expansion-item>
-          <!-- </q-scroll-area> -->
         </q-virtual-scroll>
       </q-scroll-area>
     </q-list>
@@ -209,7 +208,6 @@ export default defineComponent({
               );
               if (currentLayer.vectorLayer) {
                 unref(map).addLayer(currentLayer.vectorLayer)
-                // layer.vectorLayer?.setVisible?.(true);
               } else {
                 currentLayer.vectorLayer = actionAddLayerWMS({
                   layer,
@@ -230,7 +228,6 @@ export default defineComponent({
             diff.forEach((layer) => {
               if (layer.vectorLayer) {
                 unref(map).removeLayer(layer.vectorLayer)
-                // layer.vectorLayer?.setVisible?.(false);
               }
             });
           }
@@ -278,10 +275,8 @@ export default defineComponent({
   max-height: 55vh;
   max-width: 300px;
 
-  .q-scrollarea__content.absolute {
-    // display: flex;
-    // flex-direction: column-reverse;
-  }
+  // .q-scrollarea__content.absolute {
+  // }
 }
 
 ::-webkit-scrollbar {

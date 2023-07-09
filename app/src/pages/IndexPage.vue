@@ -44,7 +44,6 @@ import { transform, Projection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import { useLocationStore } from "stores/location";
 import proj4 from "proj4";
-// proj4.defs("EPSG:32648", "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs");
 register(proj4);
 
 import {
@@ -70,8 +69,7 @@ import FloatZoom from "src/components/floatZoom.vue";
 import { FeatureUtils, distanceBetweenPoints } from "src/utils/openLayers";
 import { getFeature } from "src/api/feature";
 import { captureScreenshot } from "src/utils/html2Canvas";
-import { LAYER_TYPE } from "src/constants/enum";
-// import fetch from "node-fetch";
+import { LAYER_TYPE, FEATURE_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "IndexPage",
@@ -86,7 +84,6 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
-    //
     const locationStore = useLocationStore();
     const showDetail = ref(false);
     const floatDetailProps = ref({
@@ -117,6 +114,7 @@ export default defineComponent({
         title,
         type = LAYER_TYPE[0],
         coordinate,
+        feature_type = FEATURE_TYPE[0]
       } = option;
       showDetail.value = true;
       if (title) {
@@ -137,6 +135,9 @@ export default defineComponent({
       }
       if (type !== LAYER_TYPE[0]) {
         floatDetailProps.value.type = type;
+      }
+      if (feature_type !== FEATURE_TYPE[0]) {
+        floatDetailProps.value.feature_type = feature_type;
       }
     };
     $bus.on("on-show-detail", onShowDetail);
@@ -184,6 +185,7 @@ export default defineComponent({
         image: "images/No-image-available.png",
         content: {},
         type: LAYER_TYPE[0],
+        feature_type: FEATURE_TYPE[0],
         id: null,
         coordinate: null,
       };
@@ -192,6 +194,7 @@ export default defineComponent({
       if (lastFeature) lastFeature.originStyle = false;
       if (lastLayer) lastLayer?.changed?.();
       unref(selectedObject).lastFeature = null;
+      unref(layerForImage).getSource().clear();
       unref(overlay).setPosition(undefined);
     };
     $bus.on("close-float-detail", actionClosePopup);
@@ -199,8 +202,10 @@ export default defineComponent({
     const getFeatureAPI = _debounce((featureId) => {
       getFeature({ name: featureId })
         .then((response) => {
+          if (FEATURE_TYPE[1] === response.type) {
+            floatDetailProps.value.feature_type = response.type;
+          }
           floatDetailProps.value.id = response.id;
-          // floatDetailProps.value.title = featureId;
           onShowDetail({
             content: JSON.parse(response?.properties || false),
           });
@@ -210,17 +215,6 @@ export default defineComponent({
 
     const getFeatureUpload = (feature) => {
       const objData = JSON.parse(writeGeoJSON({ feature, map: unref(map) }))
-      // const objData = feature?.getProperties()
-      // let properties = {}
-      // if (objData?.hasOwnProperty('properties')) {
-      //   properties = objData?.properties
-      //   delete objData['properties']
-      // }
-      // if (objData?.hasOwnProperty('geometry')) {
-      //   Object.assign(properties, { ...properties, geometry: objData.geometry?.getType?.() || '' })
-      //   delete objData['geometry']
-      // }
-      // Object.assign(properties, {...objData, ...properties})
       onShowDetail({
         content: objData,
       });
@@ -356,23 +350,17 @@ export default defineComponent({
                     unref(map).getView().fit(
                       features[0].getGeometry().getExtent(),
                       {
-                        duration: 800,
+                        duration: 600,
                         padding: [100, 100, 100, 100],
                       }
                     )
-                    // const props = features[0].getProperties()
-                    // delete props.geometry
                     if (features[0].getId?.()) getFeatureAPI(features[0].getId?.());
                     setTimeout(() => {
                       captureScreenshot().then((response) => {
                         floatDetailProps.value.image = response;
                       });
                     }, 1500);
-                    // onShowDetail({
-                    //   content: props,
-                    // });
                   }
-                  // imageHTML.value = html;
                 });
             }
           }
@@ -449,11 +437,6 @@ body {
   :global(.ol-scale-bar.ol-unselectable) {
     margin-left: 50px !important;
   }
-
-  // :global(.ol-scale-line) {
-  //   right: 8px !important;
-  //   left: auto;
-  // }
 }
 
 .stickyClass {

@@ -4,7 +4,7 @@
       <q-tooltip>{{ $t("Back to world map") }}</q-tooltip>
     </q-btn>
     <q-select class="searchClass shadow-10" ref="locationSearchRef" v-model="searchLocation" rounded outlined
-      bg-color="white" color="teal" use-input hide-dropdown-icon input-debounce="400" label="Select location"
+      bg-color="white" color="teal" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')"
       option-label="name" option-value="name" :options="options" @filter="filterFn" @update:model-value="setModel">
       <template v-slot:append>
         <q-icon name="search" color="teal" />
@@ -65,7 +65,6 @@ export default defineComponent({
     const defaultOptions = ref([]);
     const filterFn = (val, update, abort) => {
       if (val.length < 2) {
-        // abort();
         update(async () => {
           options.value = unref(defaultOptions);
         });
@@ -129,7 +128,6 @@ export default defineComponent({
       const newView = new View({
         zoom: 0,
         center: [0, 0],
-        // projection: "EPSG:4326"
       });
       mapRemoveLayer(newView);
       unref(map).setView(newView);
@@ -216,11 +214,4 @@ body {
   }
 }
 
-// .q-field__native .q-placeholder {
-//   color: black;
-
-//   &:focus {
-//     color: black;
-//   }
-// }
 </style>

@@ -28,7 +28,7 @@ export default {
   Login: "Đăng nhập",
   Logout: "Đăng xuất",
   //map
-  "Back to world map": "Back to world map",
+  "Back to world map": "Quay lại bản đồ thế giới",
   "Street map": "Bản đồ đường phố",
   "Imagery map": "Bản đồ vệ tinh",
   "Zoom in": "Phóng to",
@@ -115,4 +115,10 @@ export default {
   "This feature not in bound of current view!": "Dữ liệu không nằm trong vùng hiển thị bản đồ!",
   "This file already imported!": "Tệp đã được thêm!",
   "*.json file only!": "Chỉ định dạng *.json!",
+  "Select All": "Chọn tất cả",
+  "Select location": "Chọn địa điểm",
+  "Select operator": "Chọn cách tìm",
+  "Properties filter": "Lọc thuộc tính",
+  "Feature filter": "Tìm kiếm feature",
+
 };

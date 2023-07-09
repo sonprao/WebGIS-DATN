@@ -1,19 +1,33 @@
 <template>
   <div v-if="role === 'ADMIN'" class="adminClass">
     <q-btn v-if="ableToSave" class="gt-xs" size="12px" flat dense round icon="save" @click="dialog = true">
-      <q-tooltip anchor="top middle" self="center middle">{{ $t("Save to database") }}</q-tooltip>
+      <q-tooltip anchor="top middle" self="center middle">{{
+        $t("Save to database")
+      }}</q-tooltip>
       <q-dialog v-model="dialog">
         <detail-popup-save :content="content" />
       </q-dialog>
     </q-btn>
     <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="done" @click="saveEdit">
-      <q-tooltip anchor="top middle" self="center middle">{{ $t("Save") }}</q-tooltip>
+      <q-tooltip anchor="top middle" self="center middle">{{
+        $t("Save")
+      }}</q-tooltip>
     </q-btn>
     <q-btn v-else class="gt-xs" size="12px" flat dense round icon="edit" @click="isEditting = !isEditting">
-      <q-tooltip anchor="top middle" self="center middle">{{ $t("Edit") }}</q-tooltip>
+      <q-tooltip anchor="top middle" self="center middle">{{
+        $t("Edit")
+      }}</q-tooltip>
     </q-btn>
     <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="add" @click="addField">
-      <q-tooltip anchor="top left" self="center middle">{{ $t("Add field") }}</q-tooltip>
+      <q-tooltip anchor="top left" self="center middle">{{
+        $t("Add field")
+      }}</q-tooltip>
+    </q-btn>
+    <q-btn v-if="isEditting && ableToDelete" class="gt-xs" size="12px" flat dense round icon="delete"
+      @click="onDeleteFeature">
+      <q-tooltip anchor="top left" self="center middle">{{
+        $t("Delete feature")
+      }}</q-tooltip>
     </q-btn>
   </div>
   <q-scroll-area class="panelClass" v-bind="SCROLL_STYLE.SECONDARY">
@@ -52,23 +66,26 @@ import {
   inject,
   watch,
 } from "vue";
-import _isEqual from 'lodash/isEqual'
-import { useQuasar } from "quasar";
+import _isEqual from "lodash/isEqual";
+import { useQuasar, Dialog } from "quasar";
 import { i18n } from "boot/i18n.js";
-import { useUserStore } from 'src/stores/user';
+import { useUserStore } from "src/stores/user";
 import { useMapStore } from "stores/map";
-import detailPopupSave from 'src/components/floatDetail/detailPopupSave.vue'
-import { LAYER_TYPE } from "src/constants/enum";
+import detailPopupSave from "src/components/floatDetail/detailPopupSave.vue";
+import { LAYER_TYPE, FEATURE_TYPE } from "src/constants/enum";
 import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
+import { getFeaturesByLayer, deleteFeature } from "src/api/feature";
 
 export default defineComponent({
   name: "detailTable",
   props: {
+    id: String,
     content: Object,
     type: String,
+    feature_type: String,
   },
   components: {
-    'detail-popup-save': detailPopupSave,
+    "detail-popup-save": detailPopupSave,
   },
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
@@ -77,33 +94,38 @@ export default defineComponent({
     const userStore = useUserStore();
     const mapStore = useMapStore();
     const location = computed(() => mapStore.getLocation);
-    const { role } = userStore.getUser
+    const { role } = userStore.getUser;
 
     const isEditting = ref(false);
-    const ableToSave = computed(() => unref(isEditting) && props.type !== LAYER_TYPE[0])
+    const ableToSave = computed(
+      () => unref(isEditting) && props.type !== LAYER_TYPE[0]
+    );
+    const ableToDelete = computed(
+      () => unref(isEditting) && props.feature_type !== FEATURE_TYPE[0]
+    );
 
     const decodeStringGeoServer = (string) => {
       try {
         return decodeURIComponent(escape(string));
-      } catch (e){
+      } catch (e) {
         return string;
       }
-    }
-    
+    };
+
     const rows = ref(
       Object.entries(props.content).map((i) => {
-        let value = ''
+        let value = "";
         if (i[1]) {
-          if (typeof i[1] === 'string') {
-            value = i[1]
+          if (typeof i[1] === "string") {
+            value = i[1];
           } else {
-            value = JSON.stringify(i[1])
+            value = JSON.stringify(i[1]);
           }
         }
         return {
           name: i[0],
           value: decodeStringGeoServer(value),
-        }
+        };
       })
     );
     const columns = [
@@ -119,58 +141,82 @@ export default defineComponent({
         align: "center",
         label: "Value",
         field: "value",
-        style: 'min-width: 300px; width: 300px',
+        style: "min-width: 300px; width: 300px",
       },
-      // {
-      //   name: "action",
-      //   align: "center",
-      //   label: $t("Action"),
-      //   sortable: true,
-      // },
     ];
     const saveEdit = () => {
-      isEditting.value = false
+      isEditting.value = false;
       const content = unref(rows).reduce((acc, item) => {
-        if (!item.name) return acc
+        if (!item.name) return acc;
         try {
-          acc[item.name] = JSON.parse(item.value)
+          acc[item.name] = JSON.parse(item.value);
         } catch {
-          acc[item.name] = item.value
+          acc[item.name] = item.value;
         }
         return acc;
       }, {});
       emit("update:model-content", content);
     };
 
+    const onDeleteFeature = async () => {
+      if (props.id) {
+        $q.dialog({
+          icon: 'delete',
+          title: $t('Warning'),
+          message: `${$t('Delete feature')}?`,
+          ok: {
+            push: true
+          },
+          cancel: {
+            push: true,
+            color: 'negative'
+          },
+          persistent: true,
+        }).onOk(async () => {
+          try {
+            const response = await deleteFeature({ id: props.id });
+            cons.log(response)
+            if (response) {
+
+            }
+          } catch (e) {
+            cons.log(e)
+            //
+          }
+        }).onCancel(() => {
+        }).onDismiss(() => {
+        })
+      }
+    };
+
     const addField = () => {
       rows.value.splice(0, 0, {
-        name: '',
-        value: '',
-      })
-    }
+        name: "",
+        value: "",
+      });
+    };
 
     watch(
       () => unref(props.content),
       (newVal, oldVal) => {
         if (!_isEqual(newVal, oldVal)) {
-          rows.value =
-            Object.entries(props.content).map((i) => {
-              let type = 'string'
-              let value = ''
-              if (i[1]) {
-                if (typeof i[1] === 'string') {
-                  value = decodeStringGeoServer(i[1])
-                } else {
-                  value = decodeStringGeoServer(JSON.stringify(i[1]))
-                  type = 'object'
-                }
+          rows.value = Object.entries(props.content).map((i) => {
+            let type = "string";
+            let value = "";
+            if (i[1]) {
+              if (typeof i[1] === "string") {
+                value = decodeStringGeoServer(i[1]);
+              } else {
+                value = decodeStringGeoServer(JSON.stringify(i[1]));
+                type = "object";
               }
-              return {
-                name: i[0],
-                value,
-                type,
-              }
-            })
+            }
+            return {
+              name: i[0],
+              value,
+              type,
+            };
+          });
         }
       }
     );
@@ -181,9 +227,11 @@ export default defineComponent({
       rows,
       columns,
       saveEdit,
+      onDeleteFeature,
       addField,
       location,
       ableToSave,
+      ableToDelete,
       dialog: ref(false),
       SCROLL_STYLE,
     };
@@ -206,10 +254,6 @@ body {
   max-height: 200px;
   height: 200px;
   max-width: 398px;
-
-  // .q-table__middle .scroll {
-  //   overflow-x: hidden;
-  // }
 }
 
 .tableClass {
@@ -218,7 +262,6 @@ body {
   // width: 98%;
   // max-width: 98%;
 }
-
 
 .captionClass {
   font-weight: 600;
