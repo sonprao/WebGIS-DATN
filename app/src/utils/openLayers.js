@@ -258,7 +258,7 @@ export const transformProjection = async (option) => {
     response = await fromEPSGCode(to)
     return transform(coordinates, from, response);
   }
-  
+
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
@@ -430,6 +430,15 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
     crossOrigin: "anonymous",
     serverType: "geoserver",
   });
+
+  wmsSource.once("imageloadend", function (evt) {
+    const extent = evt.image.getExtent()
+    unref(map).getView().fit(extent, {
+      padding: [100, 100, 100 ,100],
+      duration: 1000,
+    })
+    console.log(unref(map), extent)
+  })
 
   // Create a new Image layer
   const imageLayer= new Image({
