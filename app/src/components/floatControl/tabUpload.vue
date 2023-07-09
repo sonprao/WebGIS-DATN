@@ -176,7 +176,6 @@ export default defineComponent({
     const addEvent = async (files) => {
       try {
         const mapProjection = unref(map).getView().getProjection().getCode();
-        // const mapExtent = JSON.parse(unref(location)?.view?.extent || null) || unref(map).getView().calculateExtent();
         const mapExtent = unref(map).getView().calculateExtent();
         $q.loading.show({
           message: 'Some important process  is in progress. Hang on...'

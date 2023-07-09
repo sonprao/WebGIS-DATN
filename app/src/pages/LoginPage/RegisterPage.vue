@@ -80,7 +80,6 @@
 
 <script>
 import { defineComponent, ref, unref } from "vue";
-// import { login } from 'src/api/user'
 import { useUserStore } from "stores/user";
 import { findByEmail } from "src/api/user";
 import { useRoute, useRouter } from "vue-router";

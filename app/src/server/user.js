@@ -113,46 +113,50 @@ module.exports = {
    */
   loginGoogle: async (req, res) => {
     const { email, password, role, profile } = req.body;
-    const user = await prisma.user.upsert({
-      where: {
-        email,
-      },
-      update: {
-        password: password || undefined,
-        profile: {
-          update: {
-            sub: profile.sub || undefined,
-            email: email || profile.email || undefined,
-            name: profile.name || undefined,
-            given_name: profile.given_name || undefined,
-            family_name: profile.family_name || undefined,
-            picture: profile.picture || undefined,
+    try {
+      const user = await prisma.user.upsert({
+        where: {
+          email,
+        },
+        update: {
+          password: password || undefined,
+          profile: {
+            update: {
+              sub: profile.sub || undefined,
+              email: email || profile.email || undefined,
+              name: profile.name || undefined,
+              given_name: profile.given_name || undefined,
+              family_name: profile.family_name || undefined,
+              picture: profile.picture || undefined,
+            },
           },
         },
-      },
-      create: {
-        email,
-        password: password || undefined,
-        profile: {
-          create: {
-            sub: profile.sub || undefined,
-            email: email || profile.email || undefined,
-            name: profile.name || undefined,
-            given_name: profile.given_name || undefined,
-            family_name: profile.family_name || undefined,
-            picture: profile.picture || undefined,
+        create: {
+          email,
+          password: password || undefined,
+          profile: {
+            create: {
+              sub: profile.sub || undefined,
+              email: email || profile.email || undefined,
+              name: profile.name || undefined,
+              given_name: profile.given_name || undefined,
+              family_name: profile.family_name || undefined,
+              picture: profile.picture || undefined,
+            },
           },
         },
-      },
-      include: {
-        profile: true,
-      },
-    });
-    delete user["password"];
-    if (!user["activate"]) {
-      res.status(400).json({ error: 'This account has been deactivated!' })
+        include: {
+          profile: true,
+        },
+      });
+      delete user["password"];
+      if (!user["activate"]) {
+        res.status(400).json({ error: 'This account has been deactivated!' })
+      }
+      res.json(user);
+    } catch (e) {
+      res.status(400).json({message: "Cannot login with google!"})
     }
-    res.json(user);
   },
   /**
    * @swagger
@@ -190,45 +194,49 @@ module.exports = {
    */
   updateOrCreateUser: async (req, res) => {
     const { email, password, role, profile } = req.body;
-    const upsertUser = await prisma.user.upsert({
-      where: {
-        email,
-      },
-      update: {
-        password,
-        role: role || Role.USER,
-        profile: {
-          update: {
-            sub: profile.sub || undefined,
-            email: email || profile.email || undefined,
-            name: profile.name || undefined,
-            given_name: profile.given_name || undefined,
-            family_name: profile.family_name || undefined,
-            picture: profile.picture || undefined,
-            gender: profile.gender || undefined,
-            address: profile.address || undefined,
-            birthday: profile.birthday || undefined,
+    try {
+      const upsertUser = await prisma.user.upsert({
+        where: {
+          email,
+        },
+        update: {
+          password,
+          role: role || Role.USER,
+          profile: {
+            update: {
+              sub: profile.sub || undefined,
+              email: email || profile.email || undefined,
+              name: profile.name || undefined,
+              given_name: profile.given_name || undefined,
+              family_name: profile.family_name || undefined,
+              picture: profile.picture || undefined,
+              gender: profile.gender || undefined,
+              address: profile.address || undefined,
+              birthday: profile.birthday || undefined,
+            },
           },
         },
-      },
-      create: {
-        email,
-        profile: {
-          create: {
-            sub: profile.sub || undefined,
-            email: email || profile.email || undefined,
-            name: profile.name || undefined,
-            given_name: profile.given_name || undefined,
-            family_name: profile.family_name || undefined,
-            picture: profile.picture || undefined,
-            gender: profile.gender || undefined,
-            address: profile.address || undefined,
-            birthday: profile.birthday || undefined,
+        create: {
+          email,
+          profile: {
+            create: {
+              sub: profile.sub || undefined,
+              email: email || profile.email || undefined,
+              name: profile.name || undefined,
+              given_name: profile.given_name || undefined,
+              family_name: profile.family_name || undefined,
+              picture: profile.picture || undefined,
+              gender: profile.gender || undefined,
+              address: profile.address || undefined,
+              birthday: profile.birthday || undefined,
+            },
           },
         },
-      },
-    });
-    res.json(upsertUser);
+      });
+      res.json(upsertUser);
+    } catch (e) {
+      res.status(400).json({message: "Unxepected errors!"})
+    }
   },
   /**
    * @swagger
@@ -251,22 +259,30 @@ module.exports = {
    */
   findUser: async (req, res) => {
     const id = req.params.id;
-    const user = await prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
-    res.json(user);
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id,
+        },
+      });
+      res.json(user);
+    } catch {
+      res.status(400).json({message: "Cannot find the user!"})
+    }
   },
 
   findUserByEmail: async (req, res) => {
     const email = req.params.email;
-    const user = await prisma.user.findUnique({
-      where: {
-        email : email,
-      },
-    });
-    res.json(user);
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          email : email,
+        },
+      });
+      res.json(user);
+    } catch {
+      res.status(400).json({message: "Cannot find the user!"})
+    }
   },
 
   /**
@@ -281,12 +297,16 @@ module.exports = {
    *         description: Successful operation
    */
   getAll: async (req, res) => {
-    const users = await prisma.user.findMany({
-      include: {
-        profile: true,
-      },
-    });
-    res.json(users);
+    try {
+      const users = await prisma.user.findMany({
+        include: {
+          profile: true,
+        },
+      });
+      res.json(users);
+    } catch {
+      res.status(400).json({message: "Cannot find any users!"})
+    }
   },
   /**
    * @swagger
@@ -311,13 +331,17 @@ module.exports = {
   activateUser: async (req, res) => {
     const id = req.params.id;
     const { activate } = req.body;
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        activate,
-      },
-    });
-    res.json(user);
+    try {
+      const user = await prisma.user.update({
+        where: { id },
+        data: {
+          activate,
+        },
+      });
+      res.json(user);
+    } catch {
+      res.status(400).json({message: "Cannot deactivate the user!"})
+    }
   },
   /**
    * @swagger
@@ -334,11 +358,15 @@ module.exports = {
    */
   delete: async (req, res) => {
     const { id } = req.query;
-    const deleteUser = await prisma.user.delete({
-      where: {
-        id: id,
-      },
-    });
-    res.json(deleteUser);
+    try {
+      const deleteUser = await prisma.user.delete({
+        where: {
+          id: id,
+        },
+      });
+      res.json(deleteUser);
+    } catch {
+      res.status(400).json({message: "User delete attempt failed!"})
+    }
   },
 };

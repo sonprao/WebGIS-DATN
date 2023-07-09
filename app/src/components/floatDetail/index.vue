@@ -43,7 +43,7 @@
         <div v-show="tabExpanded">
           <q-tab-panels v-model="detailTab" animated :keep-alive="true" class="shadow-10 rounded-borders">
             <q-tab-panel name="tab-fields" class="panelClass">
-                <detail-table :type="typeComputed" :content="content" @update:model-content="updateContent($event)" ></detail-table>
+                <detail-table :type="typeComputed" :id="id" :feature_type="feature_type" :content="content" @update:model-content="updateContent($event)" ></detail-table>
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -74,7 +74,7 @@ import _isEqual from 'lodash/isEqual'
 import { updateFeature } from "src/api/feature";
 
 import DetailTable from 'src/components/floatDetail/detailTable.vue'
-import { LAYER_TYPE } from "src/constants/enum";
+import { LAYER_TYPE, FEATURE_TYPE } from "src/constants/enum";
 
 export default defineComponent({
   name: "FloatDetail",
@@ -89,6 +89,10 @@ export default defineComponent({
     type: {
       type: String,
       default: LAYER_TYPE[0],
+    },
+    feature_type: {
+      type: String,
+      default: FEATURE_TYPE[0],
     },
     image: {
       type: String,
@@ -122,10 +126,6 @@ export default defineComponent({
         component: "tab-fields",
         content: props.content,
       },
-      // {
-      //   label: $t("Location"),
-      //   component: "tab-location",
-      // },
     ]);
     const closeCard = () => {
       $bus.emit("close-float-detail", true);

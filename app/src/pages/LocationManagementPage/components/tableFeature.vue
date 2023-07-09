@@ -121,7 +121,6 @@ export default defineComponent({
     };
     const onDeleteFeature = async (row) => {
       await deleteFeature(row)
-      // props.propsLayer.features.splice()
       const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
       const _tempFeatures = props?.propsLayer?.features || []
       _tempFeatures.splice(index, 1)
