@@ -12,7 +12,6 @@
         />
 
         <q-toolbar-title> GIS App </q-toolbar-title>
-        <!-- login component -->
         <q-avatar>
           <img v-if="profile?.picture" :src="profile?.picture">
           <img v-else src="~assets/account.jpg">
@@ -105,7 +104,6 @@ export default defineComponent({
         to: "/projection-management",
         show: role === 'ADMIN',
       },
-        // <q-icon name="img:icons/area.png" />
 
     ])
     const userIntecraction = computed(() => [

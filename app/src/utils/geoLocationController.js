@@ -10,7 +10,6 @@ import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
 import { useLocationStore } from "stores/location";
-
 class GeoLocationController {
   constructor(option = {}) {
     this.map = option.map;
@@ -51,7 +50,6 @@ class GeoLocationController {
     this.accuracyFeature = accuracyFeature;
     this.positionFeature = positionFeature;
     this.vectorLayer = null;
-
     // Add a change event listener to the map view's resolution
     this.view.on("change:resolution", this.updateGeolocation.bind(this));
 
@@ -60,28 +58,29 @@ class GeoLocationController {
   }
 
   updateGeolocation() {
-    const viewProjection = this.view.getProjection(); // View cu chua update
-    const newViewProj = this.map.getView().getProjection(); // View da update
-    this.view = this.map.getView()
-    const coordinates = this.geolocation.getPosition();
-    if (coordinates) {
-      const transformedCoordinates = transform(
-        coordinates,
-        viewProjection,
-        newViewProj
-      );
-
-      // Perform actions with the updated geolocation coordinates
-      this.positionFeature.setGeometry(
-        transformedCoordinates ? new Point(transformedCoordinates) : null
-      );
-    }
+    this.geolocation.setProjection(this.map.getView().getProjection());
+    // const viewProjection = this.view.getProjection(); // View cu chua update
+    // const newViewProj = this.map.getView().getProjection(); // View da update
+    // this.view = this.map.getView()
+    // const coordinates = this.geolocation.getPosition();
+    // if (coordinates) {
+    //   const transformedCoordinates = transform(
+    //     coordinates,
+    //     viewProjection,
+    //     newViewProj
+    //   );
+    //
+    //   // Perform actions with the updated geolocation coordinates
+    //   this.positionFeature.setGeometry(
+    //     transformedCoordinates ? new Point(transformedCoordinates) : null
+    //   );
   }
 
   getCurrentLocation() {
     const geolocation = this.geolocation;
     const accuracyFeature = this.accuracyFeature;
     const positionFeature = this.positionFeature;
+    this.view = this.map.getView();
     if (!geolocation?.getPosition()) {
       geolocation.setTracking(true);
       geolocation.on("change:accuracyGeometry", function () {

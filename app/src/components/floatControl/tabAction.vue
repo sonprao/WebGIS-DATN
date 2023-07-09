@@ -259,6 +259,10 @@ export default defineComponent({
         clearControl();
       }
     };
+    const updateGeolocation = () => {
+      unref(geoLocation).updateGeolocation();
+    }
+    $bus.on("on-update-geolocation", updateGeolocation)
     const clearControl = () => {
       // unbind event movePointer
       unByKey(unref(movePointer));
@@ -416,11 +420,6 @@ export default defineComponent({
                 image: response,
                 coordinate: coordinate,
               });
-              // zoomToDraw(
-              //   unref(drawList)[index].position,
-              //   1000,
-              //   [100, 100, 100, 100]
-              // );
             });
             $bus.emit("on-show-detail", { content: geoJsonData });
           }, 500);

@@ -258,7 +258,7 @@ export const transformProjection = async (option) => {
     response = await fromEPSGCode(to)
     return transform(coordinates, from, response);
   }
-  
+
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
@@ -267,16 +267,16 @@ export const getGeoJsonUrl = function (workspace, urlName) {
 
 const styleCache = {};
 const style1 = new Style({
-    image: new CircleStyle({
-      radius: 20,
-      // stroke: new Stroke({
-      //   color: "rgb(232, 232, 232)",
-      // }),
-      fill: new Fill({
-        color: "rgb(255,0,0, 0.1)",
-      }),
+  image: new CircleStyle({
+    radius: 20,
+    // stroke: new Stroke({
+    //   color: "rgb(232, 232, 232)",
+    // }),
+    fill: new Fill({
+      color: "rgb(255,0,0, 0.1)",
     }),
-  });
+  }),
+});
 
 const style2 = new Style({
   image: new CircleStyle({
@@ -312,7 +312,44 @@ const style3 = new Style({
   }),
 })
 
-export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
+const clusterStyleFunction = function (feature, resolution) {
+  const size = feature?.get?.("features")?.length || 2;
+  let style = styleCache[size];
+  if (size > 10 && resolution > 30) {
+    style = [
+      style1,
+      style2,
+    ];
+    styleCache[size] = style;
+  } else if (size > 20 && resolution > 11) {
+    style = style3;
+    styleCache[size] = style;
+  } else {
+    style = []
+    const features = feature?.get?.("features") || [new Feature()]
+    features.forEach((f) => {
+      const colorFill = FeatureUtils.setStyleBySoilType(f)
+      const colorStroke = f?.originStyle ? "BLUE" : "RED"
+      let widthStroke = f?.originStyle ? 3 : 0.25
+      if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
+      const defaultStyle = new Style({
+        stroke: new Stroke({
+          color: colorStroke,
+          width: widthStroke,
+        }),
+        fill: new Fill({
+          color: colorFill,
+        }),
+        geometry: f.getGeometry()
+      });
+      // f.setStyle(defaultStyle);
+      style.push(defaultStyle)
+    })
+  }
+  return style;
+};
+
+export const actionAddLayerGeoJSON = ({ layer, workspace, map}) => {
   const currentLayer = unref(map)
     .getLayers()
     .getArray()
@@ -322,42 +359,6 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     return;
   }
 
-  const clusterStyleFunction = function (feature, resolution) {
-    const size = feature?.get?.("features")?.length || 2;
-    let style = styleCache[size];
-    if (size > 10 && resolution > 30) {
-      style = [
-        style1,
-        style2,
-      ];
-      styleCache[size] = style;
-    } else if (size > 20 && resolution > 11) {
-      style = style3;
-      styleCache[size] = style;
-    } else {
-      style = []
-      const features = feature?.get?.("features") || [new Feature()]
-      features.forEach((f) => {
-        const colorFill = FeatureUtils.setStyleBySoilType(f)
-        const colorStroke = f?.originStyle ? "BLUE" : "RED"
-        let widthStroke = f?.originStyle ? 3 : 0.25
-        if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
-        const defaultStyle = new Style({
-          stroke: new Stroke({
-            color: colorStroke,
-            width: widthStroke,
-          }),
-          fill: new Fill({
-            color: colorFill,
-          }),
-          geometry: f.getGeometry()
-        });
-        // f.setStyle(defaultStyle);
-        style.push(defaultStyle)
-      })
-    }
-    return style;
-  };
   const source = new VectorSource({
     format: new GeoJSON(),
     url: getGeoJsonUrl(workspace, layer.url),
@@ -407,9 +408,9 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
       }
     });
     vectorLayer.on("postrender", () => {
-    source.addFeatures(listExternalFeatures.flat());
-    Loading.hide()
-  })
+      source.addFeatures(listExternalFeatures.flat());
+      Loading.hide()
+    })
   });
   return vectorLayer;
 };
@@ -420,21 +421,83 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
+  const source = new VectorSource({
+    wrapX: false,
+    zIndex: 2,
+  });
+
+  const clusterSource = new Cluster({
+    distance: 20,
+    minDistance: 10,
+    source: source,
+    geometryFunction: _geometryFunction,
+    zIndex: 2,
+  });
+
+  const vectorLayer = new VectorImageLayer({
+    id: `cluster_${layer.id}`,
+    name: layer.name,
+    source: clusterSource,
+    style: clusterStyleFunction,
+    zindex: 2,
+  });
   const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
       FORMAT: "image/png",
-      // CQL_FILTER: "SoilTypeId=0"
     },
     crossOrigin: "anonymous",
     serverType: "geoserver",
+    zIndex: 1,
   });
 
+  wmsSource.once("imageloadend", function (evt) {
+    const extent = evt.image.getExtent()
+    unref(map).getView().fit(extent, {
+      padding: [100, 100, 100 ,100],
+      duration: 1000,
+    })
+    console.log(unref(map), extent)
+  })
+
   // Create a new Image layer
-  const imageLayer= new Image({
+  const imageLayer = new Image({
+    id: `image_${layer.id}`,
     source: wmsSource,
+    zIndex: 1,
   });
+  getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
+    const defaultProjection = unref(map).getView().getProjection().getCode()
+    const listExternalFeatures = []
+    response.forEach(async (res) => {
+      const jsonData = JSON.parse(res.properties);
+      const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
+      let dataProjection = "EPSG:3857"
+      if (crsName) {
+        dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
+        await fromEPSGCode(dataProjection)
+      }
+      if (jsonData?.hasOwnProperty('features')) {
+        const feature = new GeoJSON().readFeatures(jsonData);
+        feature.forEach((f) => {
+          f.getGeometry().transform(dataProjection, defaultProjection)
+          f.setId(res.name);
+        })
+        listExternalFeatures.push([...feature]);
+      } else {
+        const feature = new GeoJSON().readFeature(jsonData);
+        feature.set('id', res.name);
+        listExternalFeatures.push(feature);
+      }
+    });
+    wmsSource.on("imageloadend", () => {
+      source.addFeatures(listExternalFeatures.flat());
+      vectorLayer.setZIndex(2);
+      unref(map).addLayer(vectorLayer);
+    })
+  });
+  imageLayer.url = layer.url;
   unref(map).addLayer(imageLayer);
   return imageLayer
 };
@@ -470,7 +533,7 @@ const _geometryFunction = (feature) => {
   const type = geom.getType();
   if (type === "Polygon") return geom.getInteriorPoint();
   else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
-  else if (type === "LineString") return  new Point(geom.getFirstCoordinate());
+  else if (type === "LineString") return new Point(geom.getFirstCoordinate());
   else if (type === "MultiLineString") return new Point(geom.getLineString().getFirstCoordinate());
   else if (type === "MultiPoint") return geom.getPoints(0);
   else if (type === "Point") return geom;

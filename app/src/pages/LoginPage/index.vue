@@ -2,11 +2,6 @@
   <img src="~assets/background.jpg" class="wave" alt="login-wave">
   <div class="row" style="height: 90vh">
     <div class="col-0 col-md-6 flex justify-center content-center">
-       <!-- <img
-          src="~assets/quasar-logo-vertical.svg"
-          alt="Quasar logo"
-          style="width: 90vh; height: 90vh"
-        /> -->
     </div>
     <div
       v-bind:class="{
@@ -86,20 +81,20 @@ import { login } from "src/api/user";
 import { useRoute, useRouter } from "vue-router";
 
 /*
-aud:"447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
-azp: "447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
-email: "nguyen20dang@gmail.com"
+aud:""
+azp: ""
+email: ""
 email_verified:true
-exp: 1683371336
-family_name: "Đặng"
-given_name: "Nguyên"
-iat: 1683367736
+exp:
+family_name: ""
+given_name: ""
+iat: 
 iss:"https://accounts.google.com"
-jti: "fbbad7fd9b345f9f7ee0e18d33c7a514467a3522"
-name:"Nguyên Đặng"
-nbf: 1683367436
-picture:"https://lh3.googleusercontent.com/a/AGNmyxYO44uEPwfQwfLQ9v6NiSnPFsGzilxjRf4x1Qox=s96-c"
-sub:"105643192884333657187" */
+jti: ""
+name:""
+nbf: 
+picture:""
+sub:"" */
 export default defineComponent({
   name: "LoginPage",
   setup() {

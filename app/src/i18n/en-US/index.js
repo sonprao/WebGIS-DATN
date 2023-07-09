@@ -116,4 +116,9 @@ export default {
   "This feature not in bound of current view!": "This feature not in bound of current view!",
   "This file already imported!": "This file already imported!",
   "*.json file only!": "*.json file only!",
+  "Select All": "Select All",
+  "Select location": "Select location",
+  "Select operator": "Select operator",
+  "Properties filter": "Properties filter",
+  "Feature filter": "Feature filter",
 }

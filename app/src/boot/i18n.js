@@ -4,8 +4,8 @@ let i18n = null
 export default ({ app }) => {
   // Create I18n instance
   i18n = createI18n({
-    locale: 'en-US',
-    // locale: 'vn-VN',
+    locale: 'vn-VN',
+    // locale: 'en-US',
     legacy: false,
     globalInjection: true,
     messages

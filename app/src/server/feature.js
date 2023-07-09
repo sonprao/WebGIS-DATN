@@ -22,21 +22,25 @@ module.exports = {
    */
   create: async (req, res) => {
     const { features, layerId } = req.body;
-    let count =
-      await prisma.$queryRaw`SELECT SUBSTRING_INDEX(f.name, '.', 1) as name , SUBSTRING_INDEX(f.name, '.', -1) as largest FROM Feature AS f
-        WHERE f.layerId = ${parseInt(layerId)}
-        ORDER BY CAST(SUBSTRING_INDEX(f.name, '.', -1) AS UNSIGNED) DESC LIMIT ${1}`;
-    count = count[0];
-    const featuresData = await prisma.feature.createMany({
-      data: features.map((item) => ({
-        name: `${count.name}.${++count.largest}`,
-        type: FeatureType.EXTERNAL,
-        ...item,
-        layerId: layerId,
-      })),
-      skipDuplicates: true, // Skip 'Bobo'
-    });
-    res.json(featuresData);
+    try {
+      let count =
+        await prisma.$queryRaw`SELECT SUBSTRING_INDEX(f.name, '.', 1) as name , SUBSTRING_INDEX(f.name, '.', -1) as largest FROM Feature AS f
+          WHERE f.layerId = ${parseInt(layerId)}
+          ORDER BY CAST(SUBSTRING_INDEX(f.name, '.', -1) AS UNSIGNED) DESC LIMIT ${1}`;
+      count = count[0];
+      const featuresData = await prisma.feature.createMany({
+        data: features.map((item) => ({
+          name: `${count.name}.${++count.largest}`,
+          type: FeatureType.EXTERNAL,
+          ...item,
+          layerId: layerId,
+        })),
+        skipDuplicates: true, // Skip 'Bobo'
+      });
+      res.json(featuresData);
+    } catch (e) {
+      res.status(400).json({message: "Feature create attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -67,15 +71,19 @@ module.exports = {
   update: async (req, res) => {
     const id = req.params.id;
     const { feature } = req.body;
-    const data = await prisma.feature.update({
-      where: {
-        id,
-      },
-      data: {
-        ...feature,
-      },
-    });
-    res.json(data);
+    try {
+      const data = await prisma.feature.update({
+        where: {
+          id,
+        },
+        data: {
+          ...feature,
+        },
+      });
+      res.json(data);
+    } catch {
+      res.status(400).json({message: "Feature update attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -129,26 +137,6 @@ module.exports = {
   getByLayer: async (req, res) => {
     const { layerId } = req.params;
     const { page = 1, per_page = 50, search = "" } = req.query;
-    // const data = await prisma.$transaction([
-    //   prisma.feature.count({
-    //     where: {
-    //       layerId: parseInt(layerId),
-    //     },
-    //   }),
-    //   prisma.feature.findMany({
-    //     skip: (parseInt(page) - 1) * parseInt(per_page),
-    //     take: parseInt(per_page),
-    //     where: {
-    //       layerId: parseInt(layerId),
-    //     },
-    //     orderBy: {
-    //       name: 'asc',
-    //     },
-    //   }),
-    // ]);
-    // SELECT * FROM feature WHERE feature.layerId = ${layerId}
-    //   ORDER BY CAST(SUBSTRING_INDEX(name, '.', -1) AS UNSIGNED) ASC
-    //   LIMIT ${per_page} OFFSET ${(page - 1) * per_page};
     const query = "%" + search + "%";
     const data =
       await prisma.$queryRaw`SELECT * FROM feature  WHERE feature.layerId = ${parseInt(
@@ -194,23 +182,28 @@ module.exports = {
 
   getByLayerExternal: async (req, res) => {
     const { layerId } = req.params;
-    const data = await prisma.feature.findMany({
-      where: {
-        AND: [
-          {
-            layerId: parseInt(layerId),
-          },
-          {
-            type: FeatureType.EXTERNAL,
-          },
-        ]
-      },
-      select: {
-        name: true,
-        properties: true,
-      }
-    });
-    res.json(data);
+    try {
+      const data = await prisma.feature.findMany({
+        where: {
+          AND: [
+            {
+              layerId: parseInt(layerId),
+            },
+            {
+              type: FeatureType.EXTERNAL,
+            },
+          ]
+        },
+        select: {
+          name: true,
+          properties: true,
+          type: true,
+        }
+      });
+      res.json(data);
+    } catch (e) {
+      res.status(400).json({message: "Cannot get features by given layerId!"})
+    }
   },
 
   /**
@@ -235,11 +228,15 @@ module.exports = {
    */
   delete: async (req, res) => {
     const id = req.params.id;
-    const response = await prisma.feature.delete({
-      where: {
-        id,
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.feature.delete({
+        where: {
+          id,
+        },
+      });
+      res.json(response);
+    } catch (e) {
+      res.status(400).json({message: "Feature delete attempt failed!"})
+    }
   },
 };

@@ -38,34 +38,6 @@
         </q-btn>
       </q-card-actions>
     </q-card>
-  <!-- <q-card>
-    <q-card-section>
-        <div class="text-h4">{{$t("Edit Profile")}}</div>
-      </q-card-section>
-    <q-form class="formClass">
-      <q-card-section>
-        <q-input type="text" label="Username" v-model="userProfile.username" />
-        <q-input type="email" label="Email" v-model="userProfile.email" />
-        <q-input type="email" label="Email" v-model="userProfile.email" />
-      </q-card-section>
-      <q-card-section>
-        <q-input type="text" label="Last Name" v-model="userProfile.family_name" />
-        <q-input type="text" label="First Name" v-model="userProfile.given_name" />
-      </q-card-section>
-      <q-card-section>
-        <q-input type="text" label="Address" v-model="userProfile.address" />
-      </q-card-section>
-      <q-card-section>
-        <q-input type="text" label="City" v-model="userProfile.city" />
-        <q-input type="text" label="Country" v-model="userProfile.country" />
-      </q-card-section>
-      <q-separator />
-      <q-card-actions class="justify-center">
-        <q-btn flat color="primary">{{$t("Change")}}</q-btn>
-        <q-btn flat>Action 2</q-btn>
-      </q-card-actions>
-    </q-form>
-  </q-card> -->
 </template>
 <script>
 import {
@@ -79,21 +51,6 @@ import { useUserStore } from "stores/user";
 import { updateProfile } from 'src/api/profile'
 import _isEqual from 'lodash/isEqual'
 import _cloneDeep from 'lodash/cloneDeep'
-/*
-aud:"447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
-azp: "447929018043-ms8imgr00m90hnun31pno4gm5psfacgi.apps.googleusercontent.com"
-email: "nguyen20dang@gmail.com"
-email_verified:true
-exp: 1683371336
-family_name: "Đặng"
-given_name: "Nguyên"
-iat: 1683367736
-iss:"https://accounts.google.com"
-jti: "fbbad7fd9b345f9f7ee0e18d33c7a514467a3522"
-name:"Nguyên Đặng"
-nbf: 1683367436
-picture:"https://lh3.googleusercontent.com/a/AGNmyxYO44uEPwfQwfLQ9v6NiSnPFsGzilxjRf4x1Qox=s96-c"
-sub:"105643192884333657187" */
 export default defineComponent({
   name: "EditProfileForm",
   setup() {
@@ -120,7 +77,6 @@ export default defineComponent({
 <style lang="scss" scoped>
 .inputClass {
   .q-card__section--horiz {
-    // display: flex;
     gap: 50px;
     margin-bottom: 5px;
   }

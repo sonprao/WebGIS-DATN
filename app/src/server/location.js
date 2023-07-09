@@ -24,22 +24,26 @@ module.exports = {
    *         description: Invalid request
    */
   create: async (req, res) => {
-    const updateLocation = await prisma.location.create({
-      data: {
-        name: req.body.name || "",
-        description: req.body.description || "",
-        workspace: req.body.workspace || "",
-        view: {
-          create: {
-            extent: req.body.view?.extent || "",
-            longitude: parseFloat(req.body.view?.longitude) || 0,
-            latitude: parseFloat(req.body.view?.latitude) || 0,
-            projectionId: req.body.view.projection.id || undefined,
+    try {
+      const updateLocation = await prisma.location.create({
+        data: {
+          name: req.body.name || "",
+          description: req.body.description || "",
+          workspace: req.body.workspace || "",
+          view: {
+            create: {
+              extent: req.body.view?.extent || "",
+              longitude: parseFloat(req.body.view?.longitude) || 0,
+              latitude: parseFloat(req.body.view?.latitude) || 0,
+              projectionId: req.body.view.projection.id || undefined,
+            },
           },
         },
-      },
-    });
-    res.json(updateLocation);
+      });
+      res.json(updateLocation);
+    } catch (e) {
+      res.status(400).json({message: "Location create attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -63,23 +67,27 @@ module.exports = {
    */
   get: async (req, res) => {
     const id = parseInt(req.params.id);
-    const location = await prisma.location.findUnique({
-      where: {
-        id: id,
-      },
-      include: {
-        mapLayers: {
-          skip: 0 * 20,
-          take: 20,
+    try {
+      const location = await prisma.location.findUnique({
+        where: {
+          id: id,
         },
-        view: {
-          include: {
-            projection: true,
+        include: {
+          mapLayers: {
+            skip: 0 * 20,
+            take: 20,
+          },
+          view: {
+            include: {
+              projection: true,
+            },
           },
         },
-      },
-    });
-    res.json(location);
+      });
+      res.json(location);
+    } catch {
+      res.status(400).json({message: "Cannot get the location!"})
+    }
   },
   /**
    * @swagger
@@ -111,79 +119,83 @@ module.exports = {
   getAll: async (req, res) => {
     const { page = 1, per_page: _per_page, search = "" } = req.query;
     let per_page = 10;
-    if (!_per_page) per_page = await prisma.location.count()
-    const [count, data] = await prisma.$transaction([
-      prisma.location.count({
-        where: {
-          OR: [
-            {
-              name: {
-                contains: search,
+    try {
+      if (!_per_page) per_page = await prisma.location.count()
+      const [count, data] = await prisma.$transaction([
+        prisma.location.count({
+          where: {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                },
               },
-            },
-            {
-              name: {
-                in: search || undefined,
+              {
+                name: {
+                  in: search || undefined,
+                },
               },
-            },
-            {
-              name: {
-                equals: search || undefined,
+              {
+                name: {
+                  equals: search || undefined,
+                },
               },
-            },
-            {
-              name: {
-                search: search,
+              {
+                name: {
+                  search: search,
+                },
               },
-            },
-          ],
-        },
-      }),
-      prisma.location.findMany({
-        skip: (parseInt(page) - 1) * parseInt(per_page),
-        take: parseInt(per_page),
-        where: {
-          OR: [
-            {
-              name: {
-                search: search,
+            ],
+          },
+        }),
+        prisma.location.findMany({
+          skip: (parseInt(page) - 1) * parseInt(per_page),
+          take: parseInt(per_page),
+          where: {
+            OR: [
+              {
+                name: {
+                  search: search,
+                },
               },
-            },
-            {
-              name: {
-                contains: search,
+              {
+                name: {
+                  contains: search,
+                },
               },
-            },
-            {
-              name: {
-                in: search || undefined,
+              {
+                name: {
+                  in: search || undefined,
+                },
               },
-            },
-            {
-              name: {
-                equals: search || undefined,
+              {
+                name: {
+                  equals: search || undefined,
+                },
               },
-            },
-          ],
-        },
-        include: {
-          view: {
-            include: {
-              projection: true,
+            ],
+          },
+          include: {
+            view: {
+              include: {
+                projection: true,
+              },
             },
           },
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-      }),
-    ]);
-    res.json({
-      count,
-      data,
-      per_page: parseInt(per_page),
-      page: parseInt(page),
-    });
+          orderBy: {
+            createdAt: "asc",
+          },
+        }),
+      ]);
+      res.json({
+        count,
+        data,
+        per_page: parseInt(per_page),
+        page: parseInt(page),
+      });
+    } catch {
+      res.status(400).json({message: "Cannot get locations!"})
+    }
   },
   /**
    * @swagger
@@ -213,31 +225,35 @@ module.exports = {
    */
   update: async (req, res) => {
     const id = parseInt(req.params.id);
-    const updateLocation = await prisma.location.update({
-      where: { id },
-      data: {
-        name: req.body.name || undefined,
-        description: req.body.description || undefined,
-        workspace: req.body.workspace || undefined,
-        view: {
-          update: {
-            extent: req.body.view?.extent || undefined,
-            longitude: parseFloat(req.body.view?.longitude) || 0,
-            latitude: parseFloat(req.body.view?.latitude) || 0,
-            projectionId: req.body.view?.projection?.id || undefined,
+    try {
+      const updateLocation = await prisma.location.update({
+        where: { id },
+        data: {
+          name: req.body.name || undefined,
+          description: req.body.description || undefined,
+          workspace: req.body.workspace || undefined,
+          view: {
+            update: {
+              extent: req.body.view?.extent || undefined,
+              longitude: parseFloat(req.body.view?.longitude) || 0,
+              latitude: parseFloat(req.body.view?.latitude) || 0,
+              projectionId: req.body.view?.projection?.id || undefined,
+            },
           },
         },
-      },
-      include: {
-        mapLayers: true, // Return all fields
-        view: {
-          include: {
-            projection: true,
+        include: {
+          mapLayers: true, // Return all fields
+          view: {
+            include: {
+              projection: true,
+            },
           },
         },
-      },
-    });
-    res.json(updateLocation);
+      });
+      res.json(updateLocation);
+    } catch (e) {
+      res.status(400).json({message: "Location update attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -254,11 +270,15 @@ module.exports = {
    */
   delete: async (req, res) => {
     const { id } = req.params;
-    const deleteLocation = await prisma.location.delete({
-      where: {
-        id: parseInt(id),
-      },
-    });
-    res.json(deleteLocation);
+    try {
+      const deleteLocation = await prisma.location.delete({
+        where: {
+          id: parseInt(id),
+        },
+      });
+      res.json(deleteLocation);
+    } catch {
+      res.status(400).json({message: "Location delete attempt failed!"})
+    }
   },
 };

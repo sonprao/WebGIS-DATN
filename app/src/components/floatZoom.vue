@@ -54,7 +54,6 @@
         >
         <q-tooltip>{{ group.tooltip }}</q-tooltip>
       </q-fab-action>
-        <!-- <q-fab-action square anchor="end" color="secondary" icon="alarm" /> -->
       </q-fab>
     </div>
   </div>

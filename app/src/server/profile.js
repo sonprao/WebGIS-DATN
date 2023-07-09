@@ -31,20 +31,24 @@ module.exports = {
    */
   create: async (req, res) => {
     const { profile } = req.body;
-    const data = await prisma.profile.create({
-      data: {
-        sub: profile.sub || undefined,
-        email: profile.email || undefined,
-        name: profile.name || undefined,
-        given_name: profile.given_name || undefined,
-        family_name: profile.family_name || undefined,
-        picture: profile.picture || undefined,
-        gender: profile.gender || undefined,
-        address: profile.address || undefined,
-        birthday: profile.birthday || undefined,
-      },
-    });
-    res.json(data);
+    try {
+      const data = await prisma.profile.create({
+        data: {
+          sub: profile.sub || undefined,
+          email: profile.email || undefined,
+          name: profile.name || undefined,
+          given_name: profile.given_name || undefined,
+          family_name: profile.family_name || undefined,
+          picture: profile.picture || undefined,
+          gender: profile.gender || undefined,
+          address: profile.address || undefined,
+          birthday: profile.birthday || undefined,
+        },
+      });
+      res.json(data);
+    } catch {
+      res.status(400).json({message: "Profile create attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -74,23 +78,27 @@ module.exports = {
    */
   update: async (req, res) => {
     const { profile } = req.body;
-    const data = await prisma.profile.update({
-      where: {
-        id: profile.id,
-      },
-      data: {
-        sub: profile.sub || undefined,
-        email: profile.email || undefined,
-        name: profile.name || undefined,
-        given_name: profile.given_name || undefined,
-        family_name: profile.family_name || undefined,
-        picture: profile.picture || undefined,
-        gender: profile.gender || undefined,
-        address: profile.address || undefined,
-        birthday: profile.birthday || undefined,
-      },
-    });
-    res.json(data);
+    try {
+      const data = await prisma.profile.update({
+        where: {
+          id: profile.id,
+        },
+        data: {
+          sub: profile.sub || undefined,
+          email: profile.email || undefined,
+          name: profile.name || undefined,
+          given_name: profile.given_name || undefined,
+          family_name: profile.family_name || undefined,
+          picture: profile.picture || undefined,
+          gender: profile.gender || undefined,
+          address: profile.address || undefined,
+          birthday: profile.birthday || undefined,
+        },
+      });
+      res.json(data);
+    } catch {
+      res.status(400).json({message: "Profile update attempt failed!"})
+    }
   },
   /**
    * @swagger
@@ -104,12 +112,16 @@ module.exports = {
    *         description: Successful operation
    */
   getAll: async (req, res) => {
-    const users = await prisma.user.findMany({
-      include: {
-        profile: true,
-      },
-    });
-    res.json(users);
+    try {
+      const users = await prisma.user.findMany({
+        include: {
+          profile: true,
+        },
+      });
+      res.json(users);
+    } catch {
+      res.status(400).json({message: "Cannot find any profiles!"})
+    }
   },
 
   /**
@@ -127,12 +139,16 @@ module.exports = {
    */
   delete: async (req, res) => {
     const { id } = req.params;
-    const response = await prisma.profile.delete({
-      where: {
-        id,
-      },
-    });
-    res.json(response);
+    try {
+      const response = await prisma.profile.delete({
+        where: {
+          id,
+        },
+      });
+      res.json(response);
+    } catch {
+      res.status(400).json({message: "Profile delete attempt failed!"})
+    }
   },
 
 };
