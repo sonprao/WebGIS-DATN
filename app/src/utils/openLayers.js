@@ -66,10 +66,6 @@ const getText = function (feature, resolution, dom) {
   } else if (type == "shorten") {
     text = text.trunc(12);
   }
-  // else if (type == 'wrap') {
-  //   text = stringDivider(text, 16, '\n');
-  // }
-
   return text;
 };
 
@@ -77,7 +73,6 @@ export const createTextStyle = function (feature, resolution, dom) {
   const size = "12px";
   const height = 1;
   const weight = "bold";
-  // const maxAngle = dom.maxangle ? parseFloat(dom.maxangle.value) : undefined;
   const overflow = "true";
   // if (dom.font.value == "'Open Sans'" && !openSansAdded) {
   //   const openSans = document.createElement('link');
@@ -240,26 +235,30 @@ export const FeatureUtils = {
 // control
 import { transform, transformExtent } from "ol/proj";
 import proj4 from "proj4";
-import { register } from "ol/proj/proj4";
+import { register, fromEPSGCode } from "ol/proj/proj4";
 import { LineString, Polygon } from "ol/geom";
 
-export const transformProjection = (option) => {
+export const transformProjection = async (option) => {
   const {
     from = "EPSG:4326",
     to = "EPSG:4326",
     definition = "",
     coordinates = [0, 0],
   } = option;
+  const projections = mapStore.getProjections;
+  let response = null;
   if (from !== "EPSG:4326") {
-    if (definition) proj4.defs(from, definition);
-    else proj4.defs(from);
+    // if (definition) proj4.defs(from, definition);
+    // else proj4.defs(from);
+    response = await fromEPSGCode(from)
+    return transform(coordinates, response, to);
   } else if (to !== "EPSG:4326") {
-    if (definition) proj4.defs(to, definition);
-    else proj4.defs(to);
+    // if (definition) proj4.defs(to, definition);
+    // else proj4.defs(to);
+    response = await fromEPSGCode(to)
+    return transform(coordinates, from, response);
   }
-  register(proj4);
-
-  return transform(coordinates, from, to);
+  
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
@@ -267,6 +266,52 @@ export const getGeoJsonUrl = function (workspace, urlName) {
 };
 
 const styleCache = {};
+const style1 = new Style({
+    image: new CircleStyle({
+      radius: 20,
+      // stroke: new Stroke({
+      //   color: "rgb(232, 232, 232)",
+      // }),
+      fill: new Fill({
+        color: "rgb(255,0,0, 0.1)",
+      }),
+    }),
+  });
+
+const style2 = new Style({
+  image: new CircleStyle({
+    radius: 10,
+    // stroke: new Stroke({
+    //   color: "rgb(255,0,0, 0.5)",
+    // }),
+    fill: new Fill({
+      color: "#fff",
+    }),
+  }),
+});
+
+const styleDefault = new Style({
+  stroke: new Stroke({
+    color: "WHITE",
+    width: 0.25,
+  }),
+  fill: new Fill({
+    color: "WHITE",
+  }),
+});
+
+const style3 = new Style({
+  image: new CircleStyle({
+    radius: 5,
+    stroke: new Stroke({
+      color: "rgb(255,0,0, 0.5)",
+    }),
+    fill: new Fill({
+      color: "#fff",
+    }),
+  }),
+})
+
 export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   const currentLayer = unref(map)
     .getLayers()
@@ -276,55 +321,26 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
     currentLayer.setVisible(true);
     return;
   }
+
   const clusterStyleFunction = function (feature, resolution) {
     const size = feature?.get?.("features")?.length || 2;
     let style = styleCache[size];
     if (size > 10 && resolution > 30) {
       style = [
-        new Style({
-        image: new CircleStyle({
-          radius: 20,
-          // stroke: new Stroke({
-          //   color: "rgb(232, 232, 232)",
-          // }),
-          fill: new Fill({
-            color: "rgb(255,0,0, 0.1)",
-          }),
-        }),
-      }),
-        new Style({
-        image: new CircleStyle({
-          radius: 10,
-          // stroke: new Stroke({
-          //   color: "rgb(255,0,0, 0.5)",
-          // }),
-          fill: new Fill({
-            color: "#fff",
-          }),
-        }),
-        }),
+        style1,
+        style2,
       ];
       styleCache[size] = style;
     } else if (size > 20 && resolution > 11) {
-      style = new Style({
-        image: new CircleStyle({
-          radius: 5,
-          stroke: new Stroke({
-            color: "rgb(255,0,0, 0.5)",
-          }),
-          fill: new Fill({
-            color: "#fff",
-          }),
-        }),
-      });
+      style = style3;
       styleCache[size] = style;
     } else {
       style = []
       const features = feature?.get?.("features") || [new Feature()]
       features.forEach((f) => {
         const colorFill = FeatureUtils.setStyleBySoilType(f)
-        const colorStroke = f.originStyle ? "BLUE" : "RED"
-        let widthStroke = f.originStyle ? 3 : 0.25
+        const colorStroke = f?.originStyle ? "BLUE" : "RED"
+        let widthStroke = f?.originStyle ? 3 : 0.25
         if (f.getGeometry().getType() === 'MultiLineString' || f.getGeometry().getType() === 'LineString') widthStroke = 3
         const defaultStyle = new Style({
           stroke: new Stroke({
@@ -366,62 +382,34 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
   Loading.show({
     message: 'Some important process  is in progress. Hang on...'
   })
-  vectorLayer.on("postrender", () => {
-    Loading.hide()
-  })
   getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
     const defaultProjection = unref(map).getView().getProjection().getCode()
+    const listExternalFeatures = []
     response.forEach(async (res) => {
       const jsonData = JSON.parse(res.properties);
       const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
       let dataProjection = "EPSG:3857"
       if (crsName) {
         dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-        if (!unref(projections).hasOwnProperty(dataProjection)) {
-          const response = await getProjectionByName({ name: dataProjection })
-          if (response?.definition) {
-            proj4.defs(dataProjection, response.definition)
-            register(proj4)
-            mapStore.setProjection({
-              projection: {
-                [dataProjection]: response.definition,
-              }
-            });
-          }
-        }
+        await fromEPSGCode(dataProjection)
       }
       if (jsonData?.hasOwnProperty('features')) {
         const feature = new GeoJSON().readFeatures(jsonData);
-        console.log(feature)
         feature.forEach((f) => {
           f.getGeometry().transform(dataProjection, defaultProjection)
           f.setId(res.name);
         })
-        // vectorClusterLayer.getSource().addFeature(feature);
-        source.addFeatures(feature);
+        listExternalFeatures.push([...feature]);
       } else {
         const feature = new GeoJSON().readFeature(jsonData);
         feature.set('id', res.name);
-        source.addFeatures([feature]);
+        listExternalFeatures.push(feature);
       }
     });
-    // console.log(response)
-    // change
-    // vectorSource.once("change", () => {
-    //   if (vectorSource instanceof Cluster) {
-    //     vectorSource.getSource().getFeatures().forEach((feature) => {
-    //     const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
-    //     feature.setStyle(style);
-    //     FeatureUtils.setStyleBySoilType(feature);
-    //   });
-    //   } else if (vectorSource instanceof VectorSource) {
-    //     vectorSource.getFeatures().forEach((feature) => {
-    //       const style = _isFunction(vectorLayer.getStyle()) ? vectorLayer.getStyle()() : vectorLayer.getStyle();
-    //       feature.setStyle(style);
-    //       FeatureUtils.setStyleBySoilType(feature);
-    //     });
-    //   }
-    // });
+    vectorLayer.on("postrender", () => {
+    source.addFeatures(listExternalFeatures.flat());
+    Loading.hide()
+  })
   });
   return vectorLayer;
 };
@@ -432,22 +420,23 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map }) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const wmsSource = new TileWMS({
+  const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
       FORMAT: "image/png",
+      // CQL_FILTER: "SoilTypeId=0"
     },
+    crossOrigin: "anonymous",
     serverType: "geoserver",
   });
 
   // Create a new Image layer
-  const imageLayer = new TileLayer({
+  const imageLayer= new Image({
     source: wmsSource,
-    extent: transformExtent(),
   });
   unref(map).addLayer(imageLayer);
-  return imageLayer;
+  return imageLayer
 };
 
 export const writeGeoJSON = (option) => {
@@ -482,7 +471,7 @@ const _geometryFunction = (feature) => {
   if (type === "Polygon") return geom.getInteriorPoint();
   else if (type === "MultiPolygon") return geom.getInteriorPoints().getPoint(0);
   else if (type === "LineString") return  new Point(geom.getFirstCoordinate());
-  else if (type === "MultiLineString") return new Point(geom.getLineString(0).getFirstCoordinate());
+  else if (type === "MultiLineString") return new Point(geom.getLineString().getFirstCoordinate());
   else if (type === "MultiPoint") return geom.getPoints(0);
   else if (type === "Point") return geom;
 };

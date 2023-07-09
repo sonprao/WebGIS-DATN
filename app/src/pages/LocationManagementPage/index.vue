@@ -37,6 +37,9 @@
           />
         </q-btn>
         <q-space />
+        <q-btn color="primary" icon="sync" @click="onSyncWorkspace">
+          <q-tooltip>{{ $t('synchronized data from geoserver') }}</q-tooltip>
+        </q-btn>
         <q-input :label="$t('Search for location')" debounce="300" color="primary" v-model="locationFilter" @update:model-value="getAll()">
           <template v-slot:append>
             <q-icon name="search" />
@@ -136,7 +139,7 @@ import {
   addLocaction,
 } from "src/api/location";
 import { getAllProjection } from "src/api/projection";
-import { getWorkspace } from "src/api/workspace";
+import { getWorkspace, syncWorkspace } from "src/api/workspace";
 import PopupLocation from "src/pages/LocationManagementPage/components/popupLocation.vue";
 import TableLayer from "src/pages/LocationManagementPage/components/tableLayer.vue";
 export default defineComponent({
@@ -149,6 +152,11 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    const onSyncWorkspace = async () => {
+      await syncWorkspace({
+        workspaces: unref(workspaces).map((sp) => sp.name)
+      })
+    }
     const actionButtonProps = {
       size: "sm",
       color: "primary",
@@ -290,8 +298,8 @@ export default defineComponent({
     const locationRows = ref([]);
     const projections = ref([]);
     const workspaces = ref([]);
-    onMounted(async () => {
-      await getAll();
+    onMounted(() => {
+      getAll();
       getAllProjection()
         .then((response) => {
           projections.value = response.data;
@@ -301,6 +309,8 @@ export default defineComponent({
         });
       getWorkspace().then((response) => {
         workspaces.value = response?.workspaces?.workspace || response?.workspace || response?.workspaces
+      }).catch(() => {
+        workspaces.value = [];
       })
     });
 
@@ -319,6 +329,7 @@ export default defineComponent({
       showPopup,
       projections,
       workspaces,
+      onSyncWorkspace,
     };
   },
 });

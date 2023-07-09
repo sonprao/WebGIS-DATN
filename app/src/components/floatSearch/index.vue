@@ -34,13 +34,15 @@ import {
   inject,
 } from "vue";
 import { useQuasar } from "quasar";
-// import { $bus } from "boot/bus.js";
+import { $bus } from "boot/bus.js";
 import { i18n } from "boot/i18n.js";
 import _difference from "lodash/difference";
 
 import { Map, View } from "ol";
 import proj4 from "proj4";
-import { register } from "ol/proj/proj4";
+import { register, fromEPSGCode } from "ol/proj/proj4";
+import { transformExtent } from "ol/proj";
+
 import { transformProjection } from "src/utils/openLayers.js";
 import {
   Vector as VectorLayer,
@@ -56,6 +58,7 @@ export default defineComponent({
     const $t = i18n.global.t;
     const map = inject("map", {});
     const mapStore = useMapStore();
+    const projections = computed(() => mapStore.getProjections);
     const locationSearchRef = ref(null);
     const searchLocation = ref("");
     const options = ref([]);
@@ -69,7 +72,7 @@ export default defineComponent({
       } else {
         update(async () => {
           const query = {
-            search: val.replace(/[^a-zA-Z0-9\s]/g, ""),
+            search: val,
           };
           const response = await getAllLocation(query);
           options.value = response.data;
@@ -88,20 +91,27 @@ export default defineComponent({
       }
       unref(locationSearchRef).blur();
     };
-    const setView = () => {
+    const setView =  async () => {
       if (unref(location).view) {
         const { longitude, latitude, extent, zoom, maxZoom } =
           unref(location).view;
         if (unref(location).view.projection) {
           const { name: projectionName, definition: projectionDef } =
             unref(location).view.projection;
-          proj4.defs(projectionName, projectionDef);
-          register(proj4);
-          const center = transformProjection({
+          if (!unref(projections).hasOwnProperty(projectionName)) {
+            await fromEPSGCode(projectionName)
+            mapStore.setProjection({
+              projection: {
+                [projectionName]: projectionDef,
+              }
+            });
+          }
+          const center = await transformProjection({
             to: projectionName,
             definition: projectionDef,
             coordinates: [longitude, latitude],
           });
+          const newExtent = transformExtent(JSON.parse(extent), 'EPSG:4326', projectionName)
           const newView = new View({
             projection: projectionName,
             center,
@@ -119,11 +129,15 @@ export default defineComponent({
       const newView = new View({
         zoom: 0,
         center: [0, 0],
-        maxZoom: 12,
         // projection: "EPSG:4326"
       });
       mapRemoveLayer(newView);
       unref(map).setView(newView);
+      mapStore.setLocation({
+        location: {},
+      });
+      $bus.emit("on-delete-draw");
+      $bus.emit("remove-all-files");
     }
     const mapRemoveLayer = (newView) => {
       const oldProjection = unref(map).getView().getProjection();

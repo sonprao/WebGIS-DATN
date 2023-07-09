@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import {login, loginGoogle} from 'src/api/user'
+import {login, loginGoogle, register} from 'src/api/user'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -57,6 +57,24 @@ export const useUserStore = defineStore('user', {
         return {}
       }
 
-    }
+    },
+
+    async registerUser(userData) {
+      try {
+        const responseData = await register({
+          email: userData.email,
+          password: userData.password,
+          profile: userData,
+        })
+        this.user = responseData
+        this.isLogin = true
+        return responseData
+      } catch {
+        this.user = {}
+        this.isLogin = false
+        return {}
+      }
+
+    },
   }
 })

@@ -1,3 +1,5 @@
+import _debounce from "lodash/debounce";
+
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import VectorSource from "ol/source/Vector";
 import { Vector as VectorLayer } from "ol/layer";
@@ -7,12 +9,20 @@ import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
-import {useLocationStore} from "stores/location";
+import { useLocationStore } from "stores/location";
 
 class GeoLocationController {
   constructor(option = {}) {
     this.map = option.map;
     this.view = option.view;
+    this.zoomToLocation = _debounce((coordinates) => {
+      const currentExtent = this.positionFeature.getGeometry().getExtent()
+      this.view.fit(currentExtent, {
+        padding: [250, 250, 250, 250],
+        duration: 1000,
+        maxZoom: 15,
+      });
+    }, 200);
     const geolocation = new Geolocation({
       // enableHighAccuracy must be set to true to have the heading value.
       trackingOptions: {
@@ -37,26 +47,34 @@ class GeoLocationController {
       })
     );
     this.geolocation = geolocation;
+    this.position = this.geolocation.getPosition();
     this.accuracyFeature = accuracyFeature;
     this.positionFeature = positionFeature;
     this.vectorLayer = null;
 
     // Add a change event listener to the map view's resolution
-    this.view.on('change:resolution', this.updateGeolocation.bind(this));
+    this.view.on("change:resolution", this.updateGeolocation.bind(this));
 
     // Add a change event listener to the map view's center
-    this.view.on('change:center', this.updateGeolocation.bind(this));
+    this.view.on("change:center", this.updateGeolocation.bind(this));
   }
 
   updateGeolocation() {
     const viewProjection = this.view.getProjection(); // View cu chua update
     const newViewProj = this.map.getView().getProjection(); // View da update
+    this.view = this.map.getView()
     const coordinates = this.geolocation.getPosition();
     if (coordinates) {
-      const transformedCoordinates = transform(coordinates, viewProjection, newViewProj);
+      const transformedCoordinates = transform(
+        coordinates,
+        viewProjection,
+        newViewProj
+      );
 
       // Perform actions with the updated geolocation coordinates
-      this.positionFeature.setGeometry(transformedCoordinates ? new Point(transformedCoordinates) : null);
+      this.positionFeature.setGeometry(
+        transformedCoordinates ? new Point(transformedCoordinates) : null
+      );
     }
   }
 
@@ -69,13 +87,17 @@ class GeoLocationController {
       geolocation.on("change:accuracyGeometry", function () {
         accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
       });
-      geolocation.on("change:position", function () {
-        const coordinates = geolocation.getPosition();
-        positionFeature.setGeometry(coordinates ? new Point(coordinates) : null);
-        this.zoomToLocation(this.geolocation.getPosition());
-        const locationStore = useLocationStore();
-        locationStore.setLocation(this.geolocation.getPosition());
-      }.bind(this));
+      geolocation.on(
+        "change:position",
+        function () {
+          const coordinates = geolocation.getPosition();
+          positionFeature.setGeometry(
+            coordinates ? new Point(coordinates) : null
+          );
+          const locationStore = useLocationStore();
+          locationStore.setLocation(this.geolocation.getPosition());
+        }.bind(this)
+      );
       this.vectorLayer = new VectorLayer({
         map: this.map,
         source: new VectorSource({
@@ -83,30 +105,23 @@ class GeoLocationController {
         }),
       });
     } else if (this.vectorLayer) {
-      this.vectorLayer.set('visible', true, false);
+      this.vectorLayer.set("visible", true, false);
       this.vectorLayer.changed();
       this.zoomToLocation(this.geolocation.getPosition());
     }
     this.updateGeolocation();
-  }
-
-  zoomToLocation(coordinates) {
-    this.view.fit(coordinates.concat(coordinates), {
-      padding: [250, 250, 250, 250],
-      duration: 1000,
-      maxZoom: 15,
-    });
+    this.zoomToLocation(this.geolocation.getPosition());
   }
 
   removeCurrentLocation() {
     if (this.vectorLayer) {
-      this.vectorLayer.set('visible', false, false);
+      this.vectorLayer.set("visible", false, false);
       this.vectorLayer.changed();
     }
   }
 
   isShowCurrentLocation() {
-    return this.vectorLayer?.get('visible') ?? false;
+    return this.vectorLayer?.get("visible") ?? false;
   }
 }
 

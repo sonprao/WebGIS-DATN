@@ -82,7 +82,7 @@
 import { defineComponent, ref, unref } from "vue";
 // import { login } from 'src/api/user'
 import { useUserStore } from "stores/user";
-import { login } from "src/api/user";
+import { findByEmail } from "src/api/user";
 import { useRoute, useRouter } from "vue-router";
 export default defineComponent({
   name: "RegisterPage",
@@ -110,10 +110,19 @@ export default defineComponent({
       ]
     };
     const onSubmit = async () => {
-      const response = await store.loginUser({
+      const responseFindUser = await findByEmail({
+        email: unref(username)
+      })
+      if (responseFindUser.data!== null) {
+        console.log("Already have user")
+        return;
+      }
+
+      const response = await store.registerUser({
         email: unref(username),
-        password: unref(password),
+        password: unref(password),    
       });
+
       if (response) {
         router.push({ name: "HomePage" });
       }

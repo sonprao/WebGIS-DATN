@@ -81,6 +81,15 @@ export default defineComponent({
 
     const isEditting = ref(false);
     const ableToSave = computed(() => unref(isEditting) && props.type !== LAYER_TYPE[0])
+
+    const decodeStringGeoServer = (string) => {
+      try {
+        return decodeURIComponent(escape(string));
+      } catch (e){
+        return string;
+      }
+    }
+    
     const rows = ref(
       Object.entries(props.content).map((i) => {
         let value = ''
@@ -93,7 +102,7 @@ export default defineComponent({
         }
         return {
           name: i[0],
-          value,
+          value: decodeStringGeoServer(value),
         }
       })
     );
@@ -122,6 +131,7 @@ export default defineComponent({
     const saveEdit = () => {
       isEditting.value = false
       const content = unref(rows).reduce((acc, item) => {
+        if (!item.name) return acc
         try {
           acc[item.name] = JSON.parse(item.value)
         } catch {
@@ -139,7 +149,6 @@ export default defineComponent({
       })
     }
 
-
     watch(
       () => unref(props.content),
       (newVal, oldVal) => {
@@ -150,9 +159,9 @@ export default defineComponent({
               let value = ''
               if (i[1]) {
                 if (typeof i[1] === 'string') {
-                  value = i[1]
+                  value = decodeStringGeoServer(i[1])
                 } else {
-                  value = JSON.stringify(i[1])
+                  value = decodeStringGeoServer(JSON.stringify(i[1]))
                   type = 'object'
                 }
               }

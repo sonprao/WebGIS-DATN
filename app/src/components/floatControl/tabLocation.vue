@@ -8,26 +8,31 @@
       <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
         <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"
           scroll-target="#scroll-area-with-virtual-scroll-1 > .scroll">
-          <q-item :key="item.id + index">
-            <q-item-section avatar>
-              <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>
-                <span v-html="item.name"></span>
-              </q-item-label>
-              <q-item-label caption>
-                {{ item.description }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <div class="text-grey-8 q-gutter-xs">
-                <q-btn v-if="layerCheckbox.includes(item)" flat dense round size="12px" class="gt-xs"
-                  icon="center_focus_strong" @click="actionFocusLayer(item.vectorLayer)" />
-              </div>
-            </q-item-section>
-            <q-separator />
-          </q-item>
+          <q-expansion-item :key="item.id + index" expand-icon-toggle expand-separator>
+            <template v-slot:header>
+              <q-item-section avatar>
+                <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  <span v-html="item.name"></span>
+                </q-item-label>
+                <q-item-label caption>
+                  {{ item.description }}
+                </q-item-label>
+              </q-item-section>
+              <q-separator />
+            </template>
+            <q-card style="margin:0 10px">
+              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  label="Properties filter" />
+              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable label="Select operator" option-label="name" option-value="function"/>
+              <q-input  v-model="item.search" clearable bottom-slots label="Feature filter">
+                <template v-slot:after>
+                  <q-btn round dense flat icon="search" @click="searchCQL(index)"/>
+                </template>
+              </q-input>
+            </q-card>
+          </q-expansion-item>
           <!-- </q-scroll-area> -->
         </q-virtual-scroll>
       </q-scroll-area>
@@ -59,12 +64,12 @@ import { register } from "ol/proj/proj4";
 import _difference from "lodash/difference";
 import _debounce from "lodash/debounce";
 import _isEmpty from "lodash/isEmpty";
-import { MAP_LAYERS } from "src/constants/layer.js";
+import _isFunction from "lodash/isFunction";
+import { MAP_LAYERS, CQL_OPERATORS } from "src/constants/layer.js";
 import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
-  transformProjection,
 } from "src/utils/openLayers.js";
 import { getLayerByLocation } from "src/api/mapLayer";
 export default defineComponent({
@@ -82,17 +87,35 @@ export default defineComponent({
       rowsNumber: 21,
       count: 21,
     })
-    const onSearch = async () => {
-      const response = await getLayerByLocation({
-        locationId: unref(location).id,
-        per_page: unref(layerPagination).rowsPerPage,
-        page: 1,
-        search: unref(searchLayer),
-      })
-      if (response) {
-        dataLayers.value = response.data;
-        layerPagination.value.page = response.page;
-        layerPagination.value.rowsPerPage = response.per_page;
+    const onSearch = async (val) => {
+      if (!val) {
+        dataLayers.value = unref(defaultOptions)
+        layerPagination.value = {
+          page: 1,
+          rowsPerPage: 20,
+          rowsNumber: 21,
+          count: 21,
+        }
+        return
+      }
+      const _val = val.toLowerCase()
+      const _tempData = unref(defaultOptions).filter(
+        (opt) => opt.name.toLowerCase().includes(_val))
+      if (_tempData.length) {
+        dataLayers.value = _tempData
+      } else {
+        const response = await getLayerByLocation({
+          locationId: unref(location).id,
+          per_page: unref(layerPagination).rowsPerPage,
+          page: 1,
+          search: unref(searchLayer),
+        })
+        if (response) {
+          dataLayers.value = response.data;
+          layerPagination.value.rowsNumber = 21;
+          layerPagination.value.page = 1;
+          layerPagination.value.rowsPerPage = response.per_page;
+        }
       }
     }
     const onScroll = _debounce(
@@ -153,6 +176,23 @@ export default defineComponent({
           duration: 1000,
         });
     };
+
+    const updateCQL = (val, index) => {
+      dataLayers.value[index].search = val
+    }
+    const searchCQL = (index) => {
+      const a = unref(dataLayers)[index]
+      if (_isFunction(a?.operator?.function) && a?.propertiesCQL) {
+        a.vectorLayer.getSource().updateParams({
+          "CQL_FILTER": a.operator.function(a.propertiesCQL, a.search)
+        })
+      } else {
+        a.vectorLayer.getSource().updateParams({
+          "CQL_FILTER": null,
+        })
+      } 
+    }
+
     onMounted(() => {
       if (!_isEmpty(unref(location))) {
         setModel(unref(location))
@@ -171,11 +211,17 @@ export default defineComponent({
                 unref(map).addLayer(currentLayer.vectorLayer)
                 // layer.vectorLayer?.setVisible?.(true);
               } else {
-                currentLayer.vectorLayer = actionAddLayerGeoJSON({
+                currentLayer.vectorLayer = actionAddLayerWMS({
                   layer,
                   workspace,
                   map,
                 });
+                fetch(
+                  `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
+                ).then((response) => response.json()).then((response) => {
+                  const fetchColumn = response?.features?.[0]?.properties || {}
+                  currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
+                })                
               }
             });
           } else {
@@ -213,7 +259,10 @@ export default defineComponent({
       selectAll,
       actionFocusLayer,
       onScroll,
+      updateCQL,
+      searchCQL,
       SCROLL_STYLE,
+      CQL_OPERATORS: CQL_OPERATORS,
     };
   },
 });
