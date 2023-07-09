@@ -33,6 +33,7 @@
               </q-input>
             </q-card>
           </q-expansion-item>
+          <!-- </q-scroll-area> -->
         </q-virtual-scroll>
       </q-scroll-area>
     </q-list>
@@ -70,6 +71,7 @@ import {
   actionAddLayerGeoJSON,
   actionAddLayerWMS,
 } from "src/utils/openLayers.js";
+import { $bus } from "boot/bus.js";
 import { getLayerByLocation } from "src/api/mapLayer";
 export default defineComponent({
   name: "TabLocation",
@@ -227,7 +229,8 @@ export default defineComponent({
             const { workspace } = unref(location);
             diff.forEach((layer) => {
               if (layer.vectorLayer) {
-                unref(map).removeLayer(layer.vectorLayer)
+                unref(map).removeLayer(layer.vectorLayer);
+                $bus.emit("remove-layer",layer.url);
               }
             });
           }

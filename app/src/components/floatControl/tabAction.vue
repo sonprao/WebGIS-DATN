@@ -259,6 +259,10 @@ export default defineComponent({
         clearControl();
       }
     };
+    const updateGeolocation = () => {
+      unref(geoLocation).updateGeolocation();
+    }
+    $bus.on("on-update-geolocation", updateGeolocation)
     const clearControl = () => {
       // unbind event movePointer
       unByKey(unref(movePointer));

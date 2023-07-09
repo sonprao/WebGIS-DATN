@@ -198,6 +198,11 @@ export default defineComponent({
       unref(overlay).setPosition(undefined);
     };
     $bus.on("close-float-detail", actionClosePopup);
+    const onRemoveLayer = (layerUrl) => {
+        if (unref(layerForImage).url === layerUrl) actionClosePopup();
+    };
+
+    $bus.on("remove-layer", onRemoveLayer);
 
     const getFeatureAPI = _debounce((featureId) => {
       getFeature({ name: featureId })
@@ -341,11 +346,12 @@ export default defineComponent({
                   const features = new GeoJSON().readFeatures(html)
                   if (features.length) {
                     const isSelected = unref(layerForImage).getSource().getFeatures()
-                    console.log(unref(layerForImage), features)
                     if (isSelected.some((f) => f?.getId?.() === features[0].getId?.())) {
                       actionClosePopup();
                       return;
                     }
+                    unref(layerForImage).url = layer.url;
+                    unref(layerForImage).getSource().clear();
                     unref(layerForImage).getSource().addFeatures(features)
                     unref(map).getView().fit(
                       features[0].getGeometry().getExtent(),

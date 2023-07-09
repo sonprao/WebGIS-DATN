@@ -497,6 +497,7 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
       unref(map).addLayer(vectorLayer);
     })
   });
+  imageLayer.url = layer.url;
   unref(map).addLayer(imageLayer);
   return imageLayer
 };
