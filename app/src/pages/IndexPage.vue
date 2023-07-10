@@ -341,7 +341,6 @@ export default defineComponent({
                   const features = new GeoJSON().readFeatures(html)
                   if (features.length) {
                     const isSelected = unref(layerForImage).getSource().getFeatures()
-                    console.log(unref(layerForImage), features)
                     if (isSelected.some((f) => f?.getId?.() === features[0].getId?.())) {
                       actionClosePopup();
                       return;
@@ -360,6 +359,8 @@ export default defineComponent({
                         floatDetailProps.value.image = response;
                       });
                     }, 1500);
+                  } else {
+                    actionClosePopup();
                   }
                 });
             }
