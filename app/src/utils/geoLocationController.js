@@ -10,6 +10,7 @@ import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
 import { useLocationStore } from "stores/location";
+import Geometry from "@arcgis/core/geometry/Geometry";
 class GeoLocationController {
   constructor(option = {}) {
     this.map = option.map;
@@ -67,6 +68,14 @@ class GeoLocationController {
     const accuracyFeature = this.accuracyFeature;
     const positionFeature = this.positionFeature;
     this.view = this.map.getView();
+
+    const currentLocation = [108.153325,16.075325];
+    const coordinates = transform( currentLocation,
+      'EPSG:4326', 'EPSG:3857');
+    //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
+    positionFeature.setGeometry(
+      coordinates ? new Point(coordinates) : null
+    );
     if (!geolocation?.getPosition()) {
       geolocation.setTracking(true);
       geolocation.on("change:accuracyGeometry", function () {
@@ -91,8 +100,8 @@ class GeoLocationController {
         source: new VectorSource({
           features: [this.accuracyFeature, this.positionFeature],
         }),
-      });
-    } else if (this.vectorLayer) {
+      }) }
+    else if (this.vectorLayer) {
       this.vectorLayer.set("visible", true, false);
       this.vectorLayer.changed();
       this.zoomToLocation(this.geolocation.getPosition());
