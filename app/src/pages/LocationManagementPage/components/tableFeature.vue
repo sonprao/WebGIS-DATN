@@ -95,7 +95,12 @@ export default defineComponent({
         label: $t("Feature name"),
         field: "name",
       },
-      { name: "properties", align: "center", label: $t("Properties") },
+      {
+        name: "properties",
+        align: "center",
+        label: $t("Properties"),
+        style: "min-width: 500px; width: 500px;",
+      },
       { name: "action", align: "center", label: $t("Action") },
     ]);
     const featurePagination = ref({
@@ -120,11 +125,13 @@ export default defineComponent({
       }
     };
     const onDeleteFeature = async (row) => {
-      await deleteFeature(row)
-      const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
-      const _tempFeatures = props?.propsLayer?.features || []
-      _tempFeatures.splice(index, 1)
-      Object.assign(props.propsLayer, { ...props.propsLayer, features: _tempFeatures });
+      const resolve= () => {
+        const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
+        const _tempFeatures = props?.propsLayer?.features || []
+        _tempFeatures.splice(index, 1)
+        Object.assign(props.propsLayer, { ...props.propsLayer, features: _tempFeatures });
+      }
+      await deleteFeature(row, resolve)
     };
     const scrollTable = ref(null);
     const currentPopupRef = ref(null);

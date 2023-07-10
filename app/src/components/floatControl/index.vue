@@ -74,7 +74,7 @@ export default defineComponent({
     const expanded = ref(false);
     const tabList = computed(() => [
       {
-        label: $t('Action'),
+        label: $t('Tools'),
         component: 'tab-action',
         props: {
           tab: tabModel,

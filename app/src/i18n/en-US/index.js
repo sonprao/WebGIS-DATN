@@ -41,6 +41,7 @@ export default {
   // Float control
   'Layer': 'Layer',
   'Action': 'Action',
+  'Tools': 'Tools',
   'Click to continue drawing the line': 'Click to continue drawing the line',
   'Click to continue drawing the polygon': 'Click to continue drawing the polygon',
   'Click to start drawing': 'Click to start drawing',

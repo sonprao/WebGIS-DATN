@@ -58,7 +58,7 @@ app.post('/api/mapLayers',  mapLayerAPI.create)
 app.put('/api/mapLayers/:id', mapLayerAPI.updateOrCreate)
 app.get('/api/mapLayers/:id', mapLayerAPI.find)
 app.get('/api/mapLayers/getByLocation/:locationId', mapLayerAPI.getbyLocation)
-app.delete('/api/mapLayers', mapLayerAPI.delete)
+app.delete('/api/mapLayers/:id', mapLayerAPI.delete)
 // feature
 app.post('/api/features',featureAPI.create)
 app.get('/api/features/:name', featureAPI.get)
