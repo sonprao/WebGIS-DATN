@@ -23,9 +23,6 @@
             <q-uploader-add-trigger />
             <q-tooltip>{{ $t("Pick Files") }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="scope.canUpload && checkboxList.length > 0" icon="cloud_upload" @click="saveFile" round dense flat>
-            <q-tooltip>{{ ("Upload") }}</q-tooltip>
-          </q-btn>
           <q-btn v-if="scope.isUploading" icon="clear" @click="scope.abort" round dense flat>
             <q-tooltip>{{ $t("Abort Upload") }}</q-tooltip>
           </q-btn>
@@ -34,9 +31,6 @@
       <template v-slot:list="scope">
         <q-list separator>
           <q-item v-for="(file, index) of scope.files" :key="file.__key">
-            <q-item-section side top>
-              <q-checkbox v-model="checkboxList" :val="file.__key" color="secondary" />
-            </q-item-section>
             <q-item-section>
               <q-item-label class="full-width ellipsis">
                 {{ file.name }}
@@ -370,7 +364,7 @@ export default defineComponent({
           features.forEach((f) => {
             extend(_extent, f.getGeometry().getExtent())
           });
-          _extent = transformExtent(_extent, unref(uploadList)[index].projection, unref(map).getView().getProjection().getCode())
+          // _extent = transformExtent(_extent, unref(uploadList)[index].projection, unref(map).getView().getProjection().getCode())
         }
         unref(map).getView().fit(_extent, {
           duration: 1000,

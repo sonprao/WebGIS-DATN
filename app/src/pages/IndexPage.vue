@@ -234,7 +234,7 @@ export default defineComponent({
     }, 200);
 
     const getFeatureUpload = (feature) => {
-      const objData = JSON.parse(writeGeoJSON({ feature, map: unref(map) }))
+      const objData = writeGeoJSON({ feature, map: unref(map) })
       onShowDetail({
         content: objData,
       });

@@ -27,7 +27,8 @@ class GeoLocationController {
       trackingOptions: {
         enableHighAccuracy: false,
       },
-      projection: this.view.getProjection(),
+      projection: 'EPSG:3857',
+      //projection: this.view.getProjection(),
     });
     const accuracyFeature = new Feature();
     const positionFeature = new Feature();
@@ -69,17 +70,20 @@ class GeoLocationController {
     if (!geolocation?.getPosition()) {
       geolocation.setTracking(true);
       geolocation.on("change:accuracyGeometry", function () {
-        accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
+        // accuracyFeature.setGeometry(geolocation.getAccuracyGeometry()); uncomment this to get the real location
       });
       geolocation.on(
         "change:position",
         function () {
-          const coordinates = geolocation.getPosition();
+          const currentLocation = [108.153325,16.075325];
+          const coordinates = transform( currentLocation,
+                  'EPSG:4326', 'EPSG:3857');
+          //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
           positionFeature.setGeometry(
             coordinates ? new Point(coordinates) : null
           );
           const locationStore = useLocationStore();
-          locationStore.setLocation(this.geolocation.getPosition());
+          locationStore.setLocation(coordinates);
         }.bind(this)
       );
       this.vectorLayer = new VectorLayer({
