@@ -74,13 +74,6 @@ export const createTextStyle = function (feature, resolution, dom) {
   const height = 1;
   const weight = "bold";
   const overflow = "true";
-  // if (dom.font.value == "'Open Sans'" && !openSansAdded) {
-  //   const openSans = document.createElement('link');
-  //   openSans.href = 'https://fonts.googleapis.com/css?family=Open+Sans';
-  //   openSans.rel = 'stylesheet';
-  //   document.head.appendChild(openSans);
-  //   openSansAdded = true;
-  // }
   const font = weight + " " + size + "/" + height + " " + "arial";
   const fillColor = dom.layer_color;
   const outlineColor = "#fffff";
@@ -223,10 +216,6 @@ export const FeatureUtils = {
         color = "WHITE";
     }
     return color;
-    // let style = feature.getStyle();
-    // if (_isArray(style)) style[0].getFill().setColor(color);
-    // else if (_isFunction(style)) style().getFill().setColor(color);
-    // else style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
@@ -248,13 +237,9 @@ export const transformProjection = async (option) => {
   const projections = mapStore.getProjections;
   let response = null;
   if (from !== "EPSG:4326") {
-    // if (definition) proj4.defs(from, definition);
-    // else proj4.defs(from);
     response = await fromEPSGCode(from)
     return transform(coordinates, response, to);
   } else if (to !== "EPSG:4326") {
-    // if (definition) proj4.defs(to, definition);
-    // else proj4.defs(to);
     response = await fromEPSGCode(to)
     return transform(coordinates, from, response);
   }
@@ -269,9 +254,6 @@ const styleCache = {};
 const style1 = new Style({
   image: new CircleStyle({
     radius: 20,
-    // stroke: new Stroke({
-    //   color: "rgb(232, 232, 232)",
-    // }),
     fill: new Fill({
       color: "rgb(255,0,0, 0.1)",
     }),
@@ -281,9 +263,6 @@ const style1 = new Style({
 const style2 = new Style({
   image: new CircleStyle({
     radius: 10,
-    // stroke: new Stroke({
-    //   color: "rgb(255,0,0, 0.5)",
-    // }),
     fill: new Fill({
       color: "#fff",
     }),
@@ -342,7 +321,6 @@ const clusterStyleFunction = function (feature, resolution) {
         }),
         geometry: f.getGeometry()
       });
-      // f.setStyle(defaultStyle);
       style.push(defaultStyle)
     })
   }
@@ -421,30 +399,11 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map}) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  // const styleLayer = new Image({
-  // source: new ImageWMS({
-  //   url: 'http://localhost:8081/geoserver/wms',
-  //   params: {
-  //     'REQUEST': 'GetLegendGraphic',
-  //     'VERSION': '1.0.0',
-  //     'FORMAT': 'image/png',
-  //     'WIDTH': 200,
-  //     'HEIGHT': 200,
-  //     'LEGEND_OPTIONS': 'layout:horizontal',
-  //     'LAYER': 'danang:datdanang'
-  //   },
-  // }),
-  // });
-  // unref(map).addLayer(styleLayer)
   const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
       FORMAT: "image/png",
-      'FORMAT_OPTIONS': 'layout:style-editor-legend;fontAntiAliasing:true;dpi:113',
-      BBOX: unref(map).getView().calculateExtent().join(","),
-      WIDTH: 500,
-      HEIGHT: 500,
     },
     crossOrigin: "anonymous",
     serverType: "geoserver",

@@ -3,8 +3,6 @@ const fetch = require("node-fetch");
 const baseUrl = dotenv.parsed.GEO_SERVER_URL;
 const username = dotenv.parsed.GEO_SERVER_ADMIN;
 const password = dotenv.parsed.GEO_SERVER_PASSWORD;
-// const relativeUrl = '/rest/workspaces.json';
-// const url = `${baseUrl}${relativeUrl}`
 const encodedCredentials = Buffer.from(`${username}:${password}`).toString(
   "base64"
 );

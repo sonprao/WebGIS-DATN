@@ -6,7 +6,7 @@
     clearable
     color="white"
     text-color="#666666"
-    toggle-color="teal"
+    toggle-color="secondary"
     v-model="buttonModel"
     :options="options"
     @update:model-value="selectControl"

@@ -4,10 +4,10 @@
       <q-tooltip>{{ $t("Back to world map") }}</q-tooltip>
     </q-btn>
     <q-select class="searchClass shadow-10" ref="locationSearchRef" v-model="searchLocation" rounded outlined
-      bg-color="white" color="teal" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')"
+      bg-color="white" color="secondary" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')"
       option-label="name" option-value="name" :options="options" @filter="filterFn" @update:model-value="setModel">
       <template v-slot:append>
-        <q-icon name="search" color="teal" />
+        <q-icon name="search" color="secondary" />
       </template>
       <template v-slot:no-option>
         <q-item>

@@ -5,10 +5,10 @@
     </q-card-section>
     <q-card-section>
       <q-select class="searchClass" ref="locationSearchRef" v-model="locationSearch" outlined bg-color="white"
-        color="teal" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')" option-label="name"
+        color="secondary" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')" option-label="name"
         option-value="name" :options="LocationOptions" @filter="filterFn" @update:model-value="locationSetModel">
         <template v-slot:append>
-          <q-icon name="search" color="teal" />
+          <q-icon name="search" color="secondary" />
         </template>
         <template v-slot:no-option>
           <q-item>

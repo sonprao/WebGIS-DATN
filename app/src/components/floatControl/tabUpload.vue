@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-uploader ref="uploaderRef" label="Custom header" multiple color="teal" style="max-width: 300px"
+    <q-uploader ref="uploaderRef" label="Custom header" multiple color="secondary" style="max-width: 300px"
       :filter="checkFileType" max-file-size="50000000" accept=".json" @added="addEvent" @removed="removeEvent"
       @rejected="onRejected">
       <template v-slot:header="scope">

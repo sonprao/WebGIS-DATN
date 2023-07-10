@@ -112,7 +112,7 @@ export default defineComponent({
     const rows = ref(
       Object.entries(props.content).map((i) => {
         let value = "";
-        if (i[1]) {
+        if (i[1] !== undefined && i[1]!== null) {
           if (typeof i[1] === "string") {
             value = i[1];
           } else {
@@ -206,7 +206,7 @@ export default defineComponent({
           rows.value = Object.entries(props.content).map((i) => {
             let type = "string";
             let value = "";
-            if (i[1]) {
+            if (i[1] !== undefined && i[1] !== null) {
               if (typeof i[1] === "string") {
                 value = decodeStringGeoServer(i[1]);
               } else {

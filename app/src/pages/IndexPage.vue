@@ -129,8 +129,13 @@ export default defineComponent({
       if (content) {
         floatDetailProps.value.content =
           typeof content === "string" ? JSON.parse(content) : content;
-        if (floatDetailProps.value?.content?.RefName) {
-          floatDetailProps.value.title = floatDetailProps.value?.content?.RefName;
+        if (floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat) {
+          const _title = floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat;
+          try {
+            floatDetailProps.value.title = decodeURIComponent(escape(_title));
+          } catch {
+            floatDetailProps.value.title = _title;
+          }
         }
       }
       if (coordinate) {
@@ -211,6 +216,7 @@ export default defineComponent({
       const properties = feature.getProperties()
       delete properties.geometry
       floatDetailProps.value.id = feature.getId();
+      floatDetailProps.value.title = feature.getId();
        onShowDetail({
         content: properties || {},
       });
@@ -355,7 +361,6 @@ export default defineComponent({
                   const features = new GeoJSON().readFeatures(html)
                   if (features.length) {
                     const isSelected = unref(layerForImage).getSource().getFeatures()
-                    // console.log(unref(layerForImage), features)
                     if (isSelected.some((f) => f?.getId?.() === features[0].getId?.())) {
                       actionClosePopup();
                       return;

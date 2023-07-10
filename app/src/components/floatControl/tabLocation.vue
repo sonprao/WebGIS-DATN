@@ -2,16 +2,16 @@
   <div>
     <q-input v-if="defaultOptions.length > 0" debounce="300" class="searchClass" :label="$t('Search layer')"
       v-model="searchLayer" @update:model-value="onSearch" />
-    <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="primary" :label="$t('Select All')"
+    <q-checkbox v-if="dataLayers.length > 0" v-model="layerCheckAll" :val="true" color="secondary" :label="$t('Select All')"
       @update:model-value="selectAll" />
     <q-list overlay>
       <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
         <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"
           scroll-target="#scroll-area-with-virtual-scroll-1 > .scroll">
-          <q-expansion-item :key="item.id + index" expand-icon-toggle expand-separator>
+          <q-expansion-item :key="item.id + index" expand-icon-toggle expand-separator @before-show="beforeShow(item.id)">
             <template v-slot:header>
               <q-item-section avatar>
-                <q-checkbox v-model="layerCheckbox" :val="item" color="primary" />
+                <q-checkbox v-model="layerCheckbox" :val="item" color="secondary" />
               </q-item-section>
               <q-item-section>
                 <q-item-label>
@@ -24,9 +24,10 @@
               <q-separator />
             </template>
             <q-card style="margin:0 10px">
-              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  :label="$t('Properties filter')" />
-              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable :label="$t('Select operator')" option-label="name" option-value="function"/>
-              <q-input  v-model="item.search" clearable bottom-slots :label="$t('Feature filter')">
+              <div ref="imageRef"><img :id="`legend_${item.id}`" /></div>
+              <q-select v-model="item.propertiesCQL" :options="item.listPropertiesCQL" clearable  :label="$t('Properties filter')" color="secondary"/>
+              <q-select v-model="item.operator" :options="CQL_OPERATORS" clearable :label="$t('Select operator')" option-label="name" option-value="function" color="secondary"/>
+              <q-input  v-model="item.search" clearable bottom-slots :label="$t('Feature filter')" color="secondary" @clear="searchCQL(index)">
                 <template v-slot:after>
                   <q-btn round dense flat icon="search" @click="searchCQL(index)"/>
                 </template>
@@ -60,7 +61,8 @@ import { useMapStore } from "stores/map";
 import { Map, View } from "ol";
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
-
+import { ImageWMS } from "ol/source";
+import { Image } from "ol/layer";
 import _difference from "lodash/difference";
 import _debounce from "lodash/debounce";
 import _isEmpty from "lodash/isEmpty";
@@ -183,7 +185,7 @@ export default defineComponent({
     }
     const searchCQL = (index) => {
       const a = unref(dataLayers)[index]
-      if (_isFunction(a?.operator?.function) && a?.propertiesCQL) {
+      if (_isFunction(a?.operator?.function) && a?.propertiesCQL && !(a.search === '' || a.search === null)) {
         a.vectorLayer.getSource().updateParams({
           "CQL_FILTER": a.operator.function(a.propertiesCQL, a.search)
         })
@@ -192,6 +194,20 @@ export default defineComponent({
           "CQL_FILTER": null,
         })
       } 
+    }
+    const beforeShow = (id) => {
+      const currentLayer = unref(dataLayers).find((l) => l.id === id);
+      if (_isEmpty(currentLayer.listPropertiesCQL))
+        fetch(
+          `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${currentLayer.url}&outputFormat=json&propertyName=*&count=1`
+        ).then((response) => response.json()).then((response) => {
+          const fetchColumn = response?.features?.[0]?.properties || {}
+          currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
+        })
+      const img = document.getElementById(`legend_${id}`);
+      if (img) {
+        img.src = `${process.env.GEO_SERVER_URL}/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image%2Fpng&WIDTH=10&HEIGHT=10&LAYER=${currentLayer.url}`;
+      }
     }
 
     onMounted(() => {
@@ -208,21 +224,17 @@ export default defineComponent({
               const currentLayer = unref(dataLayers).find(
                 (l) => layer.id === l.id
               );
-              // if (currentLayer.vectorLayer) {
-              //   unref(map).addLayer(currentLayer.vectorLayer)
-              // } else {
-                currentLayer.vectorLayer = actionAddLayerWMS({
+              currentLayer.vectorLayer = actionAddLayerWMS({
                 layer,
                 workspace,
                 map,
               });
-              fetch(
-                `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
-              ).then((response) => response.json()).then((response) => {
-                const fetchColumn = response?.features?.[0]?.properties || {}
-                currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
-              })
-              // }
+              // fetch(
+              //   `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
+              // ).then((response) => response.json()).then((response) => {
+              //   const fetchColumn = response?.features?.[0]?.properties || {}
+              //   currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
+              // })
             });
           } else {
             const diff = _difference(oldVal, newVal);
@@ -263,6 +275,7 @@ export default defineComponent({
       searchCQL,
       SCROLL_STYLE,
       CQL_OPERATORS: CQL_OPERATORS,
+      beforeShow,
     };
   },
 });

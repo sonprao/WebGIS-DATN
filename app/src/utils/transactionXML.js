@@ -1,28 +1,5 @@
-import { Map, Feature } from "ol";
 import _isFunction from "lodash/isFunction";
 import _isArray from "lodash/isArray";
-import { Fill, Stroke, Text, Style, Circle as CircleStyle } from "ol/style";
-import { ScaleLine } from "ol/control";
-import { ImageWMS, TileWMS, Cluster } from "ol/source";
-import VectorSource from "ol/source/Vector";
-import {
-  Vector as VectorLayer,
-  VectorImage as VectorImageLayer,
-  Image,
-  Tile as TileLayer,
-} from "ol/layer";
-import GeoJSON from "ol/format/GeoJSON";
-import { Draw, Modify, Snap } from "ol/interaction";
-// geolocation
-import Geolocation from "ol/Geolocation";
-import Point from "ol/geom/Point";
-
-// vue
-import { ref, unref, computed } from "vue";
-import { useMapStore } from "stores/map";
-
-import { Loading } from "quasar";
-
 import GML from "ol/format/GML";
 import { Buffer } from "buffer";
 
@@ -37,8 +14,6 @@ const encodedCredentials = Buffer.from(`${username}:${password}`).toString(
   "base64"
 );
 export const addXML = ({feature, workspace, layer, resolve = () => {}}) => {
-  // const workspace = 'danang'
-  // const layer = 'bien_utm'
   const gml = new GML({
     srsName: "urn:ogc:def:crs:EPSG::5899",
     multiCurve: true,
@@ -113,8 +88,6 @@ export const addXML = ({feature, workspace, layer, resolve = () => {}}) => {
 };
 
 export const deleteXML = ({feature, workspace, layer, resolve = () => {}}) => {
-  // const workspace = 'danang'
-  // const layer = 'bien_utm'
   const rid = feature?.getId?.() || null
   const transactionXML =
     '<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">' +
@@ -206,7 +179,6 @@ export const updateXML = ({feature, workspace='danang', layer='bien_utm', resolv
       return response.text();
     })
     .then(function (responseText) {
-      console.log(responseText);  
       // Handle the response
     });
 };

@@ -1,7 +1,7 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-right" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 400px">
-      <q-carousel swipeable animated v-model="slideImage" control-color="secondary" arrows navigation infinite
+      <q-carousel swipeable animated v-model="slideImage" control-color="secondary" navigation infinite
         ref="carousel" style="height: 200px">
         <q-carousel-slide :name="1" :img-src="image" />
         <template v-slot:control>
@@ -30,7 +30,7 @@
         </div>
       </q-card-section>
       <q-separator />
-      <q-tabs v-model="detailTab" class="bg-teal text-white">
+      <q-tabs v-model="detailTab" class="bg-secondary text-white">
         <q-tab v-for="(tab, index) of detailTabList" :key="index" :label="tab.label" :name="tab.component" @click="() => {
           tabExpanded = true;
         }
@@ -228,4 +228,11 @@ body {
   background: $secondary;
   cursor: auto !important;
 }
+
+.my-card {
+  .q-carousel__navigation-inner{
+    display: none !important;
+  }
+}
+  
 </style>
