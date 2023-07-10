@@ -208,21 +208,21 @@ export default defineComponent({
               const currentLayer = unref(dataLayers).find(
                 (l) => layer.id === l.id
               );
-              if (currentLayer.vectorLayer) {
-                unref(map).addLayer(currentLayer.vectorLayer)
-              } else {
+              // if (currentLayer.vectorLayer) {
+              //   unref(map).addLayer(currentLayer.vectorLayer)
+              // } else {
                 currentLayer.vectorLayer = actionAddLayerWMS({
-                  layer,
-                  workspace,
-                  map,
-                });
-                fetch(
-                  `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
-                ).then((response) => response.json()).then((response) => {
-                  const fetchColumn = response?.features?.[0]?.properties || {}
-                  currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
-                })                
-              }
+                layer,
+                workspace,
+                map,
+              });
+              fetch(
+                `${process.env.GEO_SERVER_URL}/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=${layer.url}&outputFormat=json&propertyName=*&count=1`
+              ).then((response) => response.json()).then((response) => {
+                const fetchColumn = response?.features?.[0]?.properties || {}
+                currentLayer.listPropertiesCQL = Object.keys(fetchColumn)
+              })
+              // }
             });
           } else {
             const diff = _difference(oldVal, newVal);

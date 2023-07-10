@@ -23,7 +23,7 @@ module.exports = {
     for (const ml of mapLayers) {
       const url = ml.url;
       fetch(
-        `${baseUrl}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=50&outputFormat=application%2Fjson`,
+        `${baseUrl}/${workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`,
         {
           method: "GET",
           headers: {

@@ -262,7 +262,7 @@ export const transformProjection = async (option) => {
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
 };
 
 const styleCache = {};
@@ -421,83 +421,42 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map}) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const source = new VectorSource({
-    wrapX: false,
-    zIndex: 2,
-  });
-
-  const clusterSource = new Cluster({
-    distance: 20,
-    minDistance: 10,
-    source: source,
-    geometryFunction: _geometryFunction,
-    zIndex: 2,
-  });
-
-  const vectorLayer = new VectorImageLayer({
-    id: `cluster_${layer.id}`,
-    name: layer.name,
-    source: clusterSource,
-    style: clusterStyleFunction,
-    zindex: 2,
-  });
+  // const styleLayer = new Image({
+  // source: new ImageWMS({
+  //   url: 'http://localhost:8081/geoserver/wms',
+  //   params: {
+  //     'REQUEST': 'GetLegendGraphic',
+  //     'VERSION': '1.0.0',
+  //     'FORMAT': 'image/png',
+  //     'WIDTH': 200,
+  //     'HEIGHT': 200,
+  //     'LEGEND_OPTIONS': 'layout:horizontal',
+  //     'LAYER': 'danang:datdanang'
+  //   },
+  // }),
+  // });
+  unref(map).addLayer(styleLayer)
   const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
       LAYERS: layer.url,
       FORMAT: "image/png",
+      'FORMAT_OPTIONS': 'layout:style-editor-legend;fontAntiAliasing:true;dpi:113',
+      BBOX: unref(map).getView().calculateExtent().join(","),
+      WIDTH: 500,
+      HEIGHT: 500,
     },
     crossOrigin: "anonymous",
     serverType: "geoserver",
     zIndex: 1,
+    imageSize: [500, 500]
   });
-
-  wmsSource.once("imageloadend", function (evt) {
-    const extent = evt.image.getExtent()
-    unref(map).getView().fit(extent, {
-      padding: [100, 100, 100 ,100],
-      duration: 1000,
-    })
-    console.log(unref(map), extent)
-  })
-
   // Create a new Image layer
   const imageLayer = new Image({
-    id: `image_${layer.id}`,
+    id: `${layer.url}`,
     source: wmsSource,
     zIndex: 1,
   });
-  getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
-    const defaultProjection = unref(map).getView().getProjection().getCode()
-    const listExternalFeatures = []
-    response.forEach(async (res) => {
-      const jsonData = JSON.parse(res.properties);
-      const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
-      let dataProjection = "EPSG:3857"
-      if (crsName) {
-        dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-        await fromEPSGCode(dataProjection)
-      }
-      if (jsonData?.hasOwnProperty('features')) {
-        const feature = new GeoJSON().readFeatures(jsonData);
-        feature.forEach((f) => {
-          f.getGeometry().transform(dataProjection, defaultProjection)
-          f.setId(res.name);
-        })
-        listExternalFeatures.push([...feature]);
-      } else {
-        const feature = new GeoJSON().readFeature(jsonData);
-        feature.set('id', res.name);
-        listExternalFeatures.push(feature);
-      }
-    });
-    wmsSource.on("imageloadend", () => {
-      source.addFeatures(listExternalFeatures.flat());
-      vectorLayer.setZIndex(2);
-      unref(map).addLayer(vectorLayer);
-    })
-  });
-  imageLayer.url = layer.url;
   unref(map).addLayer(imageLayer);
   return imageLayer
 };
