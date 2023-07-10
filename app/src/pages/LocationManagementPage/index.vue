@@ -37,9 +37,9 @@
           />
         </q-btn>
         <q-space />
-        <q-btn color="primary" icon="sync" @click="onSyncWorkspace">
+        <!-- <q-btn color="primary" icon="sync" @click="onSyncWorkspace">
           <q-tooltip>{{ $t('synchronized data from geoserver') }}</q-tooltip>
-        </q-btn>
+        </q-btn> -->
         <q-input :label="$t('Search for location')" debounce="300" color="primary" v-model="locationFilter" @update:model-value="getAll()">
           <template v-slot:append>
             <q-icon name="search" />
@@ -152,6 +152,7 @@ export default defineComponent({
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
     const $t = i18n.global.t;
+    // deprecated for synchronize with command instead
     const onSyncWorkspace = async () => {
       await syncWorkspace({
         workspaces: unref(workspaces).map((sp) => sp.name)

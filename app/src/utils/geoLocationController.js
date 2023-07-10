@@ -59,21 +59,6 @@ class GeoLocationController {
 
   updateGeolocation() {
     this.geolocation.setProjection(this.map.getView().getProjection());
-    // const viewProjection = this.view.getProjection(); // View cu chua update
-    // const newViewProj = this.map.getView().getProjection(); // View da update
-    // this.view = this.map.getView()
-    // const coordinates = this.geolocation.getPosition();
-    // if (coordinates) {
-    //   const transformedCoordinates = transform(
-    //     coordinates,
-    //     viewProjection,
-    //     newViewProj
-    //   );
-    //
-    //   // Perform actions with the updated geolocation coordinates
-    //   this.positionFeature.setGeometry(
-    //     transformedCoordinates ? new Point(transformedCoordinates) : null
-    //   );
   }
 
   getCurrentLocation() {

@@ -197,7 +197,7 @@ export default defineComponent({
       }
     };
     const geoServerUrl = ({ url, workspace }) => {
-      return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
+      return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
     };
     const onDeleteLayer = async (row) => { };
     const scrollTable = ref(null);

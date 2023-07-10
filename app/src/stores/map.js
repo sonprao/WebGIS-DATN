@@ -4,14 +4,21 @@ export const useMapStore = defineStore('map', {
   state: () => ({
     location: {},
     projections: {},
+    selectedFeature: {
+      layer: null,
+      feature: null,
+    }
   }),
 
   getters: {
     getLocation (state) {
       return state.location;
     },
-     getProjections (state) {
+    getProjections (state) {
       return state.projections;
+    },
+    getSelectedFeature (state) {
+      return state.selectedFeature;
     },
   },
 
@@ -24,5 +31,12 @@ export const useMapStore = defineStore('map', {
       Object.assign(this.projections, {...this.projections, ...projection})
       if (_isFunction(resolve)) resolve()
     },
+    setSelectedFeature({ layer, feature, resolve }) {
+      this.selectedFeature = {
+        layer,
+        feature,
+      }
+      if (_isFunction(resolve)) resolve()
+    }
   }
 })

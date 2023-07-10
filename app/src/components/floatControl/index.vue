@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-card class="my-card" flat bordered style="">
-      <q-tabs v-model="tabModel" class="bg-teal text-white" style="min-height: 56px;">
+      <q-tabs v-model="tabModel" class="bg-secondary text-white" style="min-height: 56px;">
         <q-tab v-for="(tab, index) of tabList" 
           :key="index"
           :label="tab.label"

@@ -6,7 +6,7 @@
     clearable
     color="white"
     text-color="#666666"
-    toggle-color="teal"
+    toggle-color="secondary"
     v-model="buttonModel"
     :options="options"
     @update:model-value="selectControl"
@@ -151,6 +151,7 @@ import { writeGeoJSON } from "src/utils/openLayers";
 import { captureScreenshot } from "src/utils/html2Canvas";
 import { drawStyle, formatArea, formatLength } from "src/utils/measure";
 import { LAYER_TYPE } from "src/constants/enum";
+import { useMapStore } from "stores/map";
 
 export default defineComponent({
   name: "TabAction",
@@ -167,6 +168,7 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
     const map = inject("map", {});
+    const mapStore = useMapStore(); 
     const continueLineMsg = computed(() =>
       $t("Click to continue drawing the line")
     );
@@ -398,6 +400,10 @@ export default defineComponent({
       if (index !== -1) {
         const feature = unref(source).getFeatureById(unref(drawList)[index].id);
         if (feature) {
+          mapStore.setSelectedFeature({
+            feature: feature,
+            layer: null,
+          })
           const geoJsonData = await writeGeoJSON({ feature, map: unref(map) });
           zoomToDraw(
             unref(drawList)[index].position,

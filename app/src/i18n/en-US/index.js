@@ -121,4 +121,12 @@ export default {
   "Select operator": "Select operator",
   "Properties filter": "Properties filter",
   "Feature filter": "Feature filter",
+  // operator
+  "EQUALS": "EQUALS",
+  "NOT EQUALS": "NOT EQUALS",
+  "GREATER THAN": "GREATER THAN",
+  "GREATER THAN EQUALS": "GREATER THAN EQUALS",
+  "LESS THAN": "LESS THAN",
+  "LESS THAN EQUALS": "LESS THAN EQUALS",
+  "ILIKE": "ILIKE",
 }

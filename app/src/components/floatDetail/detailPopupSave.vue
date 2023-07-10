@@ -1,14 +1,14 @@
 <template>
   <q-card class="bg-secondary shadow-2 popupCardClass">
     <q-card-section style="padding-bottom: 0; margin: 0">
-      <div class="text-h6 text-white">Add new feature</div>
+      <div class="text-h6 text-white">{{$t("Add feature")}}</div>
     </q-card-section>
     <q-card-section>
       <q-select class="searchClass" ref="locationSearchRef" v-model="locationSearch" outlined bg-color="white"
-        color="teal" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')" option-label="name"
+        color="secondary" use-input hide-dropdown-icon input-debounce="400" :label="$t('Select location')" option-label="name"
         option-value="name" :options="LocationOptions" @filter="filterFn" @update:model-value="locationSetModel">
         <template v-slot:append>
-          <q-icon name="search" color="teal" />
+          <q-icon name="search" color="secondary" />
         </template>
         <template v-slot:no-option>
           <q-item>
@@ -26,11 +26,11 @@
           <template v-slot:append>
             <q-icon name="search" />
           </template>
-          <template v-slot:after>
+          <!-- <template v-slot:after>
             <q-btn round dense flat icon="add">
               <q-tooltip>{{ $t("Create new layer") }}</q-tooltip>
             </q-btn>
-          </template>
+          </template> -->
         </q-input>
         <q-scroll-area class="layerClass" v-bind="SCROLL_STYLE.SECONDARY" id="scroll-area-with-virtual-scroll-1">
           <q-virtual-scroll :items="dataLayers" separator v-slot="{ item, index }" @virtual-scroll="onScroll"
@@ -122,6 +122,7 @@ import { getLayerByLocation } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
 import { createFeature, updateFeature } from "src/api/feature";
 import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
+import { addXML } from "src/utils/transactionXML";
 
 export default defineComponent({
   name: "detailPopupSave",
@@ -210,6 +211,7 @@ export default defineComponent({
       const query = {};
       getAllLocation(query).then((response) => {
         defaultOptions.value = response.data;
+        LocationOptions.value = response.data;
       });
     });
     // table
@@ -275,13 +277,20 @@ export default defineComponent({
 
     // table
     const onSave = async () => {
-      const feature = {
-        properties: JSON.stringify(props.content || null),
-      };
-      const response = await createFeature({
-        features: [feature],
-        layerId: unref(layerRadio).id,
-      });
+      // const feature = {
+      //   properties: JSON.stringify(props.content || null),
+      // };
+      const feature = mapStore.getSelectedFeature.feature
+      const workspace = unref(LocationOptions).find((e) => e.name === unref(locationSearch)).workspace
+      const layerName = unref(layerRadio).url.replace(`${workspace}:`,'')
+      const resolve = () => {
+        layer?.getSource().updateParams()
+      }
+      await addXML({ feature, workspace, layer: layerName, resolve })
+      // const response = await createFeature({
+      //   features: [feature],
+      //   layerId: unref(layerRadio).id,
+      // });
     };
     return {
       vm,

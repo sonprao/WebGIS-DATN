@@ -47,6 +47,7 @@ export default {
   // user management
   "Disable user": "Vô hiệu hóa người dùng",
   Columns: "Cột",
+  'Email': 'Email',
   Name: "Tên",
   Role: "Vai trò",
   Activate: "Đang hoạt động",
@@ -61,10 +62,10 @@ export default {
   Layers: "Các lớp bản đồ",
   Projections: "Các trục chiếu",
   Url: "Url",
-  "Search for location": "Search for location",
-  "Search for layer": "Search for layer",
-  "Search for feature": "Search for feature",
-  "Search for projection": "Search for projection",
+  "Search for location": "Tìm địa điểm",
+  "Search for layer": "Tìm lớp (Layer)",
+  "Search for feature": "Tìm đặc trưng (feature)",
+  "Search for projection": "Tìm trục chiếu",
   "Add location": "Thêm địa điểm",
   "Add layer": "Thêm lớp (layer)",
   "Add feature": "Thêm đặc trưng (feature)",
@@ -105,7 +106,7 @@ export default {
   "Feature name": "Tên đặc trưng (feature)",
   Properties: "Thuộc tính",
   Projection: "Trục chiếu",
-  "Layer type": "Layer type",
+  "Layer type": "Kiểu lớp",
   Type: "Type",
   // tab upload
   "Import file here": "Thêm tệp tại đây",
@@ -120,5 +121,12 @@ export default {
   "Select operator": "Chọn cách tìm",
   "Properties filter": "Lọc thuộc tính",
   "Feature filter": "Tìm kiếm feature",
-
+  // operator
+  "EQUALS": "Bằng",
+  "NOT EQUALS": "Không bằng",
+  "GREATER THAN": "Lớn hơn",
+  "GREATER THAN EQUALS": "Lớn hơn bằng",
+  "LESS THAN": "Bé hơn",
+  "LESS THAN EQUALS": "Bé hơn bằng",
+  "ILIKE": "Giống",
 };
