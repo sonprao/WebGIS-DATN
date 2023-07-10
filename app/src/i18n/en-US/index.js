@@ -47,7 +47,6 @@ export default {
   // user management
   'Disable user': 'Disable user',
   'Columns': 'Columns',
-  'Email': 'Email',
   'Name': 'Name',
   'Role': 'Role',
   'Activate': 'Activate',
@@ -95,7 +94,7 @@ export default {
   'Fclass': 'Fclass',
   'One way': 'One way',
   'Max speed': 'Max speed',
-  "Updating": "Updating", 
+  "Updating": "Updating",
   "Search layer": "Search layer",
   "Fields": "Fields",
   "Add field": "Add field",
@@ -121,6 +120,14 @@ export default {
   "Select operator": "Select operator",
   "Properties filter": "Properties filter",
   "Feature filter": "Feature filter",
+  //Profile
+  "First Name": "First Name",
+  "Last Name": "Last Name",
+  "Date of Birth": "Date of Birth",
+  "Gender": "Gender",
+  "Phone Number" : "Phone Number",
+  "Address": "Address",
+  "Current Location": "Current Location",
   // operator
   "EQUALS": "EQUALS",
   "NOT EQUALS": "NOT EQUALS",

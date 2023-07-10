@@ -17,8 +17,8 @@ export default {
   "Projections management": "Quản lý trục chiếu",
   Settings: "Cài đặt",
   //profile
-  "Basic information": "Basic information",
-  "Communicate information": "Communicate information",
+  "Basic information": "Thông tin cơ bản",
+  "Communicate information": "Thông tin liên hệ",
   Profile: "Trang cá nhân",
   Email: "Email",
   Username: "Username",
@@ -47,7 +47,6 @@ export default {
   // user management
   "Disable user": "Vô hiệu hóa người dùng",
   Columns: "Cột",
-  'Email': 'Email',
   Name: "Tên",
   Role: "Vai trò",
   Activate: "Đang hoạt động",
@@ -121,6 +120,14 @@ export default {
   "Select operator": "Chọn cách tìm",
   "Properties filter": "Lọc thuộc tính",
   "Feature filter": "Tìm kiếm feature",
+  //Profile
+  "First Name": "Họ",
+  "Last Name": "Tên",
+  "Date of Birth": "Ngày sinh",
+  "Gender": "Giới tính",
+  "Phone Number" : "Số điện thoại",
+  "Address": "Địa chỉ",
+  "Current Location": "Nơi ở hiện tại",
   // operator
   "EQUALS": "Bằng",
   "NOT EQUALS": "Không bằng",
