@@ -366,6 +366,8 @@ export default defineComponent({
                         floatDetailProps.value.image = response;
                       });
                     }, 1500);
+                  } else {
+                    actionClosePopup();
                   }
                 });
             }
