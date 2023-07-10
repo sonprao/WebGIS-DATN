@@ -129,8 +129,8 @@ export default defineComponent({
       if (content) {
         floatDetailProps.value.content =
           typeof content === "string" ? JSON.parse(content) : content;
-        if (floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat) {
-          const _title = floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat;
+        if (floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat || floatDetailProps.value?.content?.name) {
+          const _title = floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat || floatDetailProps.value?.content?.name;
           try {
             floatDetailProps.value.title = decodeURIComponent(escape(_title));
           } catch {
