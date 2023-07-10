@@ -6,12 +6,12 @@
       <!-- layer header -->
       <template v-slot:top>
         <div class="text-h6 text-white">{{ $t("Layers") }}</div>
-        <q-btn class="bg-white text-primary" rounded icon="add" style="margin-left: 10px">
+        <!-- <q-btn class="bg-white text-primary" rounded icon="add" style="margin-left: 10px">
           <q-tooltip anchor="center right" self="center start">{{
             $t("Add layer")
           }}</q-tooltip>
           <popupLayer v-model:row="newLayer" :layer-rows="propsLocation?.mapLayers" :location="propsLocation" />
-        </q-btn>
+        </q-btn> -->
         <q-space />
         <q-input :label="$t('Search for layer')" debounce="300" class="bg-white" color="black" v-model="layerFilter" @update:model-value="getLayerRows">
           <template v-slot:append>
@@ -94,7 +94,7 @@ import {
 import { useQuasar } from "quasar";
 import { i18n } from "boot/i18n.js";
 import { LAYER_TYPE } from "src/constants/enum";
-import { getLayerByLocation } from "src/api/mapLayer";
+import { getLayerByLocation, deleteMapLayer } from "src/api/mapLayer";
 import { getFeaturesByLayer } from "src/api/feature";
 import { getAllProjection } from "src/api/projection";
 import PopupLayer from "src/pages/LocationManagementPage/components/popupLayer.vue";
@@ -197,9 +197,17 @@ export default defineComponent({
       }
     };
     const geoServerUrl = ({ url, workspace }) => {
-      return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
+      return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${url}&maxFeatures=52000&outputFormat=application%2Fjson`;
     };
-    const onDeleteLayer = async (row) => { };
+    const onDeleteLayer = async (row) => {
+      const resolve = () => {
+        const index = props?.propsLocation?.mapLayers?.findIndex((f) => f.id === row.id)
+        const _tempLayers = props?.propsLocation?.mapLayers || []
+        _tempLayers.splice(index, 1)
+        Object.assign(props.propsLocation, { ...props.propsLocation, mapLayers: _tempLayers });
+      }
+      await deleteMapLayer(row, resolve)
+    };
     const scrollTable = ref(null);
     const currentPopupRef = ref(null);
     const showPopup = (ref) => {

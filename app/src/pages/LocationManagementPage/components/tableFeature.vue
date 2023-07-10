@@ -4,12 +4,12 @@
     v-model:pagination="featurePagination">
     <template v-slot:top>
       <div class="text-h6">{{ $t("Features") }}</div>
-      <q-btn class="bg-primary text-white" rounded icon="add" style="margin-left: 10px">
+      <!-- <q-btn class="bg-primary text-white" rounded icon="add" style="margin-left: 10px">
         <q-tooltip anchor="center right" self="center start">{{
           $t("Add feature")
         }}</q-tooltip>
         <popupFeature v-model:row="newFeature" :feature-rows="propsLayer.features" :layer="propsLayer" />
-      </q-btn>
+      </q-btn> -->
       <q-space />
       <q-input :label="$t('Search for feature')" debounce="300" class="bg-white" color="black" v-model="featureFilter" @update:model-value="getFeatureRows">
         <template v-slot:append>
@@ -95,7 +95,12 @@ export default defineComponent({
         label: $t("Feature name"),
         field: "name",
       },
-      { name: "properties", align: "center", label: $t("Properties") },
+      {
+        name: "properties",
+        align: "center",
+        label: $t("Properties"),
+        style: "min-width: 500px; width: 500px;",
+      },
       { name: "action", align: "center", label: $t("Action") },
     ]);
     const featurePagination = ref({
@@ -120,11 +125,13 @@ export default defineComponent({
       }
     };
     const onDeleteFeature = async (row) => {
-      await deleteFeature(row)
-      const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
-      const _tempFeatures = props?.propsLayer?.features || []
-      _tempFeatures.splice(index, 1)
-      Object.assign(props.propsLayer, { ...props.propsLayer, features: _tempFeatures });
+      const resolve= () => {
+        const index = props?.propsLayer?.features?.findIndex((f) => f.id === row.id)
+        const _tempFeatures = props?.propsLayer?.features || []
+        _tempFeatures.splice(index, 1)
+        Object.assign(props.propsLayer, { ...props.propsLayer, features: _tempFeatures });
+      }
+      await deleteFeature(row, resolve)
     };
     const scrollTable = ref(null);
     const currentPopupRef = ref(null);

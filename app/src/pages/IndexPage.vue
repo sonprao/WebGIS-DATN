@@ -43,6 +43,8 @@ import { scaleControl } from "src/utils/openLayers";
 import { transform, Projection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import { useLocationStore } from "stores/location";
+import { useMapStore } from "stores/map";
+
 import proj4 from "proj4";
 register(proj4);
 
@@ -85,6 +87,7 @@ export default defineComponent({
     const $q = useQuasar();
     const $t = i18n.global.t;
     const locationStore = useLocationStore();
+    const mapStore = useMapStore();
     const showDetail = ref(false);
     const floatDetailProps = ref({
       title: null,
@@ -126,8 +129,13 @@ export default defineComponent({
       if (content) {
         floatDetailProps.value.content =
           typeof content === "string" ? JSON.parse(content) : content;
-        if (floatDetailProps.value?.content?.RefName) {
-          floatDetailProps.value.title = floatDetailProps.value?.content?.RefName;
+        if (floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat) {
+          const _title = floatDetailProps.value?.content?.RefName || floatDetailProps.value?.content?.tendat;
+          try {
+            floatDetailProps.value.title = decodeURIComponent(escape(_title));
+          } catch {
+            floatDetailProps.value.title = _title;
+          }
         }
       }
       if (coordinate) {
@@ -204,18 +212,25 @@ export default defineComponent({
 
     $bus.on("remove-layer", onRemoveLayer);
 
-    const getFeatureAPI = _debounce((featureId) => {
-      getFeature({ name: featureId })
-        .then((response) => {
-          if (FEATURE_TYPE[1] === response.type) {
-            floatDetailProps.value.feature_type = response.type;
-          }
-          floatDetailProps.value.id = response.id;
-          onShowDetail({
-            content: JSON.parse(response?.properties || false),
-          });
-        })
-        .catch((e) => console.log(e));
+    const getFeatureAPI = _debounce((feature) => {
+      const properties = feature.getProperties()
+      delete properties.geometry
+      floatDetailProps.value.id = feature.getId();
+      floatDetailProps.value.title = feature.getId();
+       onShowDetail({
+        content: properties || {},
+      });
+      // getFeature({ name: featureId })
+      //   .then((response) => {
+      //     if (FEATURE_TYPE[1] === response.type) {
+      //       floatDetailProps.value.feature_type = response.type;
+      //     }
+      //     floatDetailProps.value.id = response.id;
+      //     onShowDetail({
+      //       content: JSON.parse(response?.properties || false),
+      //     });
+      //   })
+      //   .catch((e) => console.log(e));
     }, 200);
 
     const getFeatureUpload = (feature) => {
@@ -353,6 +368,10 @@ export default defineComponent({
                     unref(layerForImage).url = layer.url;
                     unref(layerForImage).getSource().clear();
                     unref(layerForImage).getSource().addFeatures(features)
+                    mapStore.setSelectedFeature({
+                      layer,
+                      feature: features[0]
+                    })
                     unref(map).getView().fit(
                       features[0].getGeometry().getExtent(),
                       {
@@ -360,7 +379,7 @@ export default defineComponent({
                         padding: [100, 100, 100, 100],
                       }
                     )
-                    if (features[0].getId?.()) getFeatureAPI(features[0].getId?.());
+                    if (features[0].getId?.()) getFeatureAPI(features[0]);
                     setTimeout(() => {
                       captureScreenshot().then((response) => {
                         floatDetailProps.value.image = response;

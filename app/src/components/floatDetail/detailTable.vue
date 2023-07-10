@@ -18,11 +18,6 @@
         $t("Edit")
       }}</q-tooltip>
     </q-btn>
-    <q-btn v-if="isEditting" class="gt-xs" size="12px" flat dense round icon="add" @click="addField">
-      <q-tooltip anchor="top left" self="center middle">{{
-        $t("Add field")
-      }}</q-tooltip>
-    </q-btn>
     <q-btn v-if="isEditting && ableToDelete" class="gt-xs" size="12px" flat dense round icon="delete"
       @click="onDeleteFeature">
       <q-tooltip anchor="top left" self="center middle">{{
@@ -36,8 +31,7 @@
       <template v-slot:body="props">
         <q-tr :props="props">
           <q-td key="name" :props="props" class="captionClass" style="padding: 0">
-            <q-input v-if="isEditting" filled autogrow color="secondary" v-model="props.row.name" />
-            <span v-else>
+            <span>
               {{ props.row.name }}
             </span>
           </q-td>
@@ -75,6 +69,7 @@ import detailPopupSave from "src/components/floatDetail/detailPopupSave.vue";
 import { LAYER_TYPE, FEATURE_TYPE } from "src/constants/enum";
 import { SCROLL_STYLE } from "src/constants/virtual-scroll.js";
 import { getFeaturesByLayer, deleteFeature } from "src/api/feature";
+import { deleteXML } from "src/utils/transactionXML";
 
 export default defineComponent({
   name: "detailTable",
@@ -94,6 +89,8 @@ export default defineComponent({
     const userStore = useUserStore();
     const mapStore = useMapStore();
     const location = computed(() => mapStore.getLocation);
+    const workspace = computed(() => mapStore.getLocation.workspace);
+    const layer = computed(() => mapStore.getSelectedFeature.layer);
     const { role } = userStore.getUser;
 
     const isEditting = ref(false);
@@ -101,7 +98,7 @@ export default defineComponent({
       () => unref(isEditting) && props.type !== LAYER_TYPE[0]
     );
     const ableToDelete = computed(
-      () => unref(isEditting) && props.feature_type !== FEATURE_TYPE[0]
+      () => unref(isEditting) && unref(layer)?.get("id")?.includes?.(unref(workspace))
     );
 
     const decodeStringGeoServer = (string) => {
@@ -115,7 +112,7 @@ export default defineComponent({
     const rows = ref(
       Object.entries(props.content).map((i) => {
         let value = "";
-        if (i[1]) {
+        if (i[1] !== undefined && i[1]!== null) {
           if (typeof i[1] === "string") {
             value = i[1];
           } else {
@@ -174,11 +171,17 @@ export default defineComponent({
           persistent: true,
         }).onOk(async () => {
           try {
-            const response = await deleteFeature({ id: props.id });
-            cons.log(response)
-            if (response) {
-
+            const {layer, feature} = mapStore.getSelectedFeature
+            const layerName = layer?.get?.("id")?.replace?.(`${unref(workspace)}:`, "")
+            
+            const resolve = () => {
+              layer?.getSource().updateParams()
             }
+            await deleteXML({workspace: unref(workspace), layer: layerName, feature, resolve});
+            // const response = await deleteFeature({ id: props.id });
+            // if (response) {
+
+            // }
           } catch (e) {
             cons.log(e)
             //
@@ -203,7 +206,7 @@ export default defineComponent({
           rows.value = Object.entries(props.content).map((i) => {
             let type = "string";
             let value = "";
-            if (i[1]) {
+            if (i[1] !== undefined && i[1] !== null) {
               if (typeof i[1] === "string") {
                 value = decodeStringGeoServer(i[1]);
               } else {
@@ -217,6 +220,14 @@ export default defineComponent({
               type,
             };
           });
+        }
+      }
+    );
+    watch(
+      () => unref(props.id),
+      (newVal, oldVal) => {
+        if (!_isEqual(newVal, oldVal)) {
+          isEditting.value = false
         }
       }
     );

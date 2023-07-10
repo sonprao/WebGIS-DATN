@@ -277,15 +277,16 @@ module.exports = {
 
    */
   delete: async (req, res) => {
-    const { id } = req.query;
+    const { id } = req.params;
     try {
       const deleteMapLayer = await prisma.mapLayer.delete({
         where: {
-          id: id,
+          id: parseInt(id),
         },
       });
       res.json(deleteMapLayer);
-    } catch {
+    } catch (e) {
+      console.log(e)
       res.status(400).json({message: "Layer delete attempt failed!"})
     }
   },

@@ -74,13 +74,6 @@ export const createTextStyle = function (feature, resolution, dom) {
   const height = 1;
   const weight = "bold";
   const overflow = "true";
-  // if (dom.font.value == "'Open Sans'" && !openSansAdded) {
-  //   const openSans = document.createElement('link');
-  //   openSans.href = 'https://fonts.googleapis.com/css?family=Open+Sans';
-  //   openSans.rel = 'stylesheet';
-  //   document.head.appendChild(openSans);
-  //   openSansAdded = true;
-  // }
   const font = weight + " " + size + "/" + height + " " + "arial";
   const fillColor = dom.layer_color;
   const outlineColor = "#fffff";
@@ -223,10 +216,6 @@ export const FeatureUtils = {
         color = "WHITE";
     }
     return color;
-    // let style = feature.getStyle();
-    // if (_isArray(style)) style[0].getFill().setColor(color);
-    // else if (_isFunction(style)) style().getFill().setColor(color);
-    // else style.getFill().setColor(color);
   },
 
   // TODO: get other Properties of the feature here
@@ -248,13 +237,9 @@ export const transformProjection = async (option) => {
   const projections = mapStore.getProjections;
   let response = null;
   if (from !== "EPSG:4326") {
-    // if (definition) proj4.defs(from, definition);
-    // else proj4.defs(from);
     response = await fromEPSGCode(from)
     return transform(coordinates, response, to);
   } else if (to !== "EPSG:4326") {
-    // if (definition) proj4.defs(to, definition);
-    // else proj4.defs(to);
     response = await fromEPSGCode(to)
     return transform(coordinates, from, response);
   }
@@ -262,16 +247,13 @@ export const transformProjection = async (option) => {
 };
 
 export const getGeoJsonUrl = function (workspace, urlName) {
-  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
+  return `${process.env.GEO_SERVER_URL}/${workspace}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${urlName}&maxFeatures=52000&outputFormat=application%2Fjson`;
 };
 
 const styleCache = {};
 const style1 = new Style({
   image: new CircleStyle({
     radius: 20,
-    // stroke: new Stroke({
-    //   color: "rgb(232, 232, 232)",
-    // }),
     fill: new Fill({
       color: "rgb(255,0,0, 0.1)",
     }),
@@ -281,9 +263,6 @@ const style1 = new Style({
 const style2 = new Style({
   image: new CircleStyle({
     radius: 10,
-    // stroke: new Stroke({
-    //   color: "rgb(255,0,0, 0.5)",
-    // }),
     fill: new Fill({
       color: "#fff",
     }),
@@ -342,7 +321,6 @@ const clusterStyleFunction = function (feature, resolution) {
         }),
         geometry: f.getGeometry()
       });
-      // f.setStyle(defaultStyle);
       style.push(defaultStyle)
     })
   }
@@ -421,26 +399,6 @@ export const actionAddLayerGeoJSON = ({ layer, workspace, map}) => {
  * @returns {Style}
  */
 export const actionAddLayerWMS = ({ layer, workspace, map }) => {
-  const source = new VectorSource({
-    wrapX: false,
-    zIndex: 2,
-  });
-
-  const clusterSource = new Cluster({
-    distance: 20,
-    minDistance: 10,
-    source: source,
-    geometryFunction: _geometryFunction,
-    zIndex: 2,
-  });
-
-  const vectorLayer = new VectorImageLayer({
-    id: `cluster_${layer.id}`,
-    name: layer.name,
-    source: clusterSource,
-    style: clusterStyleFunction,
-    zindex: 2,
-  });
   const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
@@ -450,54 +408,14 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
     crossOrigin: "anonymous",
     serverType: "geoserver",
     zIndex: 1,
+    imageSize: [500, 500]
   });
-
-  wmsSource.once("imageloadend", function (evt) {
-    const extent = evt.image.getExtent()
-    unref(map).getView().fit(extent, {
-      padding: [100, 100, 100 ,100],
-      duration: 1000,
-    })
-    console.log(unref(map), extent)
-  })
-
   // Create a new Image layer
   const imageLayer = new Image({
-    id: `image_${layer.id}`,
+    id: `${layer.url}`,
     source: wmsSource,
     zIndex: 1,
   });
-  getExternalFeaturesByLayer({ layerId: layer.id }).then((response) => {
-    const defaultProjection = unref(map).getView().getProjection().getCode()
-    const listExternalFeatures = []
-    response.forEach(async (res) => {
-      const jsonData = JSON.parse(res.properties);
-      const crsName = jsonData?.crs?.properties?.name?.replace?.("::", ":") || null
-      let dataProjection = "EPSG:3857"
-      if (crsName) {
-        dataProjection = crsName.match(/EPSG:\d+/)[0] || "EPSG:3857"
-        await fromEPSGCode(dataProjection)
-      }
-      if (jsonData?.hasOwnProperty('features')) {
-        const feature = new GeoJSON().readFeatures(jsonData);
-        feature.forEach((f) => {
-          f.getGeometry().transform(dataProjection, defaultProjection)
-          f.setId(res.name);
-        })
-        listExternalFeatures.push([...feature]);
-      } else {
-        const feature = new GeoJSON().readFeature(jsonData);
-        feature.set('id', res.name);
-        listExternalFeatures.push(feature);
-      }
-    });
-    wmsSource.on("imageloadend", () => {
-      source.addFeatures(listExternalFeatures.flat());
-      vectorLayer.setZIndex(2);
-      unref(map).addLayer(vectorLayer);
-    })
-  });
-  imageLayer.url = layer.url;
   unref(map).addLayer(imageLayer);
   return imageLayer
 };

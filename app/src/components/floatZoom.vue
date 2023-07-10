@@ -6,7 +6,7 @@
       style="flex-direction: column; gap: 2px"
     >
       <q-btn
-        color="teal"
+        color="secondary"
         text-color="white"
         round
         icon="add"
@@ -20,7 +20,7 @@
       </q-btn>
       <q-space />
       <q-btn
-        color="teal"
+        color="secondary"
         text-color="white"
         round
         icon="remove"

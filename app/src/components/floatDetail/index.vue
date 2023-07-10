@@ -1,7 +1,7 @@
 <template>
   <q-page-sticky class="stickyClass" position="top-right" :offset="[10, 10]">
     <q-card class="my-card" flat bordered style="width: 400px">
-      <q-carousel swipeable animated v-model="slideImage" control-color="secondary" arrows navigation infinite
+      <q-carousel swipeable animated v-model="slideImage" control-color="secondary" navigation infinite
         ref="carousel" style="height: 200px">
         <q-carousel-slide :name="1" :img-src="image" />
         <template v-slot:control>
@@ -30,7 +30,7 @@
         </div>
       </q-card-section>
       <q-separator />
-      <q-tabs v-model="detailTab" class="bg-teal text-white">
+      <q-tabs v-model="detailTab" class="bg-secondary text-white">
         <q-tab v-for="(tab, index) of detailTabList" :key="index" :label="tab.label" :name="tab.component" @click="() => {
           tabExpanded = true;
         }
@@ -75,6 +75,8 @@ import { updateFeature } from "src/api/feature";
 
 import DetailTable from 'src/components/floatDetail/detailTable.vue'
 import { LAYER_TYPE, FEATURE_TYPE } from "src/constants/enum";
+import { useMapStore } from "stores/map";
+import { updateXML } from "src/utils/transactionXML";
 
 export default defineComponent({
   name: "FloatDetail",
@@ -110,6 +112,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const vm = getCurrentInstance().proxy;
     const $q = useQuasar();
+    const mapStore = useMapStore();
+    const workspace = computed(() => mapStore.getLocation.workspace);
     const $t = i18n.global.t;
     const slideImage = ref(1);
     const styleImage = computed(() => ({
@@ -137,17 +141,21 @@ export default defineComponent({
     const updateContent = async (content) => {
       if (!_isEqual(content, props.content)) {
         let _tempContent = content
-        if (typeof _tempContent !== 'string') {
-          _tempContent = JSON.stringify(content)
-        }
+        // if (typeof _tempContent !== 'string') {
+        //   _tempContent = JSON.stringify(content)
+        // }
         if (props.id) {
           try {
-            const response = await updateFeature({
-              id: props.id,
-              feature: {
-                properties: _tempContent,
-              }
-            })
+            const feature = mapStore.getSelectedFeature.feature
+            const layer = mapStore.getSelectedFeature.layer.get("id").replace(`${unref(workspace)}:`, '')
+            feature.setProperties(_tempContent)
+            updateXML({ workspace: unref(workspace), layer, feature })
+            // const response = await updateFeature({
+            //   id: props.id,
+            //   feature: {
+            //     properties: _tempContent,
+            //   }
+            // })
           } catch (e) {
             console.log(e)
           }
@@ -219,4 +227,11 @@ body {
   background: $secondary;
   cursor: auto !important;
 }
+
+.my-card {
+  .q-carousel__navigation-inner{
+    display: none !important;
+  }
+}
+  
 </style>

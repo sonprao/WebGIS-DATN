@@ -5,19 +5,19 @@
           <div class="text-h4">{{$t("Profile")}}</div>
           <div class="text-h6">{{$t("Basic information")}}</div>
           <q-card-section horizontal>
-            <q-input label="First Name" v-model="userProfile.given_name" />
-            <q-input label="Last Name" v-model="userProfile.family_name" />
-            <q-input label="Date of birth" v-model="userProfile.birthday" />
-            <q-input label="Gender" v-model="userProfile.gender" />
+            <q-input :label="$t('First Name')" v-model="userProfile.given_name" />
+            <q-input :label="$t('Last Name')"  v-model="userProfile.family_name" />
+            <q-input :label="$t('Date of Birth')"  v-model="userProfile.birthday" />
+            <q-input :label="$t('Gender')" v-model="userProfile.gender" />
           </q-card-section>
           <div class="text-h6">{{$t("Communicate information")}}</div>
           <q-card-section horizontal>
-            <q-input label="Email" v-model="userProfile.email" />
-            <q-input label="Phone number" v-model="userProfile.phone_number" />
+            <q-input :label="$t('Email')" v-model="userProfile.email" />
+            <q-input :label="$t('Phone Number')" v-model="userProfile.phone_number" />
           </q-card-section>
           <q-card-section horizontal>
-            <q-input label="Address" v-model="userProfile.address" />
-            <q-input label="Current location" v-model="userProfile.current_location" />
+            <q-input :label="$t('Address')" v-model="userProfile.address" />
+            <q-input :label="$t('Current Location')" v-model="userProfile.current_location" />
           </q-card-section>
         </q-card-section>
         <q-separator vertical />

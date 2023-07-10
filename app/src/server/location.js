@@ -74,8 +74,8 @@ module.exports = {
         },
         include: {
           mapLayers: {
-            skip: 0 * 20,
-            take: 20,
+            skip: 0 * 50,
+            take: 50,
           },
           view: {
             include: {

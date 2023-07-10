@@ -78,7 +78,7 @@ module.exports = {
           for (const layer of dataStores) {
             try {
               const layerAPI = await fetch(
-                `${baseUrl}/${workspace.name}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer.name}&maxFeatures=52000&outputFormat=application%2Fjson`,
+                `${baseUrl}/${workspace.name}/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=${layer.name}&maxFeatures=52000&outputFormat=application%2Fjson`,
                 {
                   method: "GET",
                   headers: {
