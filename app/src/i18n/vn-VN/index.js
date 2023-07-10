@@ -40,7 +40,8 @@ export default {
   Help: "Trợ giúp",
   // Float control
   Layer: "Layer",
-  Action: "Action",
+  Action: "Tương tác",
+  "Tools": "Công cụ",
   "Click to continue drawing the line": "Click để tiếp tục vẽ đường",
   "Click to continue drawing the polygon": "Click để tiếp tục vẽ hình",
   "Click to start drawing": "Click để bắt đầu vẽ",
