@@ -435,7 +435,7 @@ export const actionAddLayerWMS = ({ layer, workspace, map }) => {
   //   },
   // }),
   // });
-  unref(map).addLayer(styleLayer)
+  // unref(map).addLayer(styleLayer)
   const wmsSource = new ImageWMS({
     url: `${process.env.GEO_SERVER_URL}/${workspace}/wms`,
     params: {
