@@ -10,7 +10,6 @@ import Point from "ol/geom/Point";
 import { transform } from "ol/proj";
 import { transformProjection } from "src/utils/openLayers.js";
 import { useLocationStore } from "stores/location";
-import Geometry from "@arcgis/core/geometry/Geometry";
 class GeoLocationController {
   constructor(option = {}) {
     this.map = option.map;
@@ -28,8 +27,7 @@ class GeoLocationController {
       trackingOptions: {
         enableHighAccuracy: false,
       },
-      projection: 'EPSG:3857',
-      //projection: this.view.getProjection(),
+      projection: this.view.getProjection(),
     });
     const accuracyFeature = new Feature();
     const positionFeature = new Feature();
@@ -60,13 +58,6 @@ class GeoLocationController {
   }
 
   updateGeolocation() {
-    const currentLocation = [108.153325,16.075325];
-    const coordinates = transform( currentLocation,
-      'EPSG:4326', this.map.getView().getProjection());
-    //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
-    this.positionFeature.setGeometry(
-      coordinates ? new Point(coordinates) : null
-    );
     this.geolocation.setProjection(this.map.getView().getProjection());
   }
 
@@ -75,31 +66,20 @@ class GeoLocationController {
     const accuracyFeature = this.accuracyFeature;
     const positionFeature = this.positionFeature;
     this.view = this.map.getView();
-
-    const currentLocation = [108.153325,16.075325];
-    const coordinates = transform( currentLocation,
-      'EPSG:4326', 'EPSG:3857');
-    //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
-    positionFeature.setGeometry(
-      coordinates ? new Point(coordinates) : null
-    );
     if (!geolocation?.getPosition()) {
       geolocation.setTracking(true);
       geolocation.on("change:accuracyGeometry", function () {
-        // accuracyFeature.setGeometry(geolocation.getAccuracyGeometry()); uncomment this to get the real location
+        accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
       });
       geolocation.on(
         "change:position",
         function () {
-          const currentLocation = [108.153325,16.075325];
-          const coordinates = transform( currentLocation,
-                  'EPSG:4326', 'EPSG:3857');
-          //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
+          const coordinates = geolocation.getPosition();
           positionFeature.setGeometry(
             coordinates ? new Point(coordinates) : null
           );
           const locationStore = useLocationStore();
-          locationStore.setLocation(coordinates);
+          locationStore.setLocation(this.geolocation.getPosition());
         }.bind(this)
       );
       this.vectorLayer = new VectorLayer({
@@ -107,8 +87,8 @@ class GeoLocationController {
         source: new VectorSource({
           features: [this.accuracyFeature, this.positionFeature],
         }),
-      }) }
-    else if (this.vectorLayer) {
+      });
+    } else if (this.vectorLayer) {
       this.vectorLayer.set("visible", true, false);
       this.vectorLayer.changed();
       this.zoomToLocation(this.geolocation.getPosition());
