@@ -60,6 +60,13 @@ class GeoLocationController {
   }
 
   updateGeolocation() {
+    const currentLocation = [108.153325,16.075325];
+    const coordinates = transform( currentLocation,
+      'EPSG:4326', this.map.getView().getProjection());
+    //const coordinates = geolocation.getPosition(); // uncomment this to get the real location
+    this.positionFeature.setGeometry(
+      coordinates ? new Point(coordinates) : null
+    );
     this.geolocation.setProjection(this.map.getView().getProjection());
   }
 
